@@ -1,7 +1,7 @@
-const API_URL = "#"
+const API_URL = "https://backendapp-037y.onrender.com"
 const salidaItem= document.getElementById('outItem');
 
-fetch(`${API_URL}/games`)
+fetch(`${API_URL}/items`)
   .then(res => res.json())
   .then(items => {
     salidaItem.innerHTML = ""
