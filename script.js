@@ -1,4 +1,4 @@
-
+alert("JS CARGADO")
 
 const API_URL = "https://backendapp-037y.onrender.com"
 
