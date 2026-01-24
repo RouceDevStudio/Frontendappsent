@@ -45,9 +45,8 @@ body{
     justify-content: center;
     padding: 5px;
     border: 2px solid #A7FF37;
-    z-index: 1000;
+    z-index: 10000;
 }
-
 
 .UpIcon a{
     color: #A7FF37;
@@ -56,8 +55,8 @@ body{
 }
 
 .buscador-icon {
-    position: absolute;
-    left: 10px; /* Lo aleja del borde izquierdo */
+    position: fixed;
+    left: 40px; /* Lo aleja del borde izquierdo */
     font-size: 2.5rem;
     color: #5EFF43; /* Tu color verde */
     transition: opacity 0.3s ease; /* Transición suave */
@@ -201,4 +200,36 @@ body{
         grid-template-columns: 1fr; /* Una sola columna en pantallas pequeñas */
         padding: 10px;
     }
+}
+.footer-legal {
+    background-color: #1a1a1a;
+    color: #888;
+    padding: 30px 20px;
+    margin-top: 50px;
+    border-top: 1px solid #333;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.footer-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.legal-text {
+    margin: 15px 0;
+    font-style: italic;
+    color: #666;
+}
+
+.footer-links a {
+    color: #5EFF43; /* Tu verde neón */
+    text-decoration: none;
+    margin: 0 10px;
+    font-weight: bold;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
 }
