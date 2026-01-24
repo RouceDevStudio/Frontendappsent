@@ -1,18 +1,25 @@
+
+
 const API_URL = "https://backendapp-037y.onrender.com"
-const salidaItem= document.getElementById('outItem');
 
-fetch(`${API_URL}/items`)
-  .then(res => res.json())
-  .then(items => {
-    salidaItem.innerHTML = ""
+const output = document.getElementById("output")
 
-    items.forEach(item => {
-      const div = document.createElement("div")
-      div.textContent = item.name
-      salidaItem.appendChild(div)
-    })
+async function cargarContenido() {
+  const res = await fetch(`${API_URL}/items`)
+  const items = await res.json()
+  
+  output.innerHTML = ""
+  
+  items.forEach(item => {
+    const div = document.createElement("div")
+    div.innerHTML = `
+      <h4>${item.title}</h4>
+      <p>${item.description}</p>
+      <hr>
+    `
+    output.appendChild(div)
   })
+}
 
-
-
-
+// Se ejecuta apenas carga la página
+cargarContenido()
