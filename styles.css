@@ -1,0 +1,177 @@
+*{
+  margin: 0 0 0 0;
+}
+
+body{
+    background: #212121;
+}
+
+.boxHead{
+  top: 0;
+  position: fixed;
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  z-index: 10000;
+  padding: 10px;
+}
+
+.buscador-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 20px auto;
+    display: flex;
+    align-items: center;
+    top:15px;
+    left: 15px;
+    
+}
+
+.buscador-icon {
+    position: absolute;
+    left: 10px; /* Lo aleja del borde izquierdo */
+    font-size: 2.5rem;
+    color: #5EFF43; /* Tu color verde */
+    transition: opacity 0.3s ease; /* Transición suave */
+    pointer-events: none; /* Permite que el clic pase a través del icono al input */
+    z-index: 2000;
+    font-weight: 50px;
+    background: #000000;
+    border-radius: 50%;
+}
+
+.buscador-container:hover .buscador-icon {
+    opacity: 0;
+}
+
+#buscador{
+  z-index: 1000;
+  position: fixed;
+  height: 2.5rem;
+  width: 1.5rem;
+  border-radius: 50px;
+  border: none;
+  font-size: 20px;
+  padding: 5px 15px;
+  background: #000000;
+  transition: all ease-in-out .45s;
+  border: 2px solid #B0FF08;
+}
+
+#buscador:hover{
+  height: 2.5rem;
+  width: 20rem;
+  outline: none;
+  border: none;
+  color: #5EFF00;
+  font-weight: 15px;
+  box-shadow: 0 5px 15px #AAFF63AB;
+}
+
+
+
+/* =========================================
+   CONTENEDOR PRINCIPAL (Donde caen los juegos)
+   ========================================= */
+#output {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Crea columnas automáticas */
+    gap: 25px; /* Espacio entre tarjetas */
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* =========================================
+   TARJETA DEL JUEGO (La Card)
+   ========================================= */
+.juego-card {
+    background-color: #1a1a1a; /* Fondo oscuro */
+    border: 2px solid #5EFF43; /* Tu color verde */
+    border-radius: 12px;
+    overflow: hidden; /* Corta la imagen para que encaje en los bordes */
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Efecto al pasar el mouse por la tarjeta */
+.juego-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(94, 255, 67, 0.2);
+}
+
+/* =========================================
+   IMAGEN DEL JUEGO
+   ========================================= */
+.juego-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover; /* Ajusta la imagen sin deformarla */
+    border-bottom: 2px solid #5EFF43;
+    display: block;
+}
+
+/* Contenedor del texto (padding para que no pegue a los bordes) */
+.card-content {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Empuja el botón hacia abajo si hay poco texto */
+}
+
+/* =========================================
+   TÍTULO Y DESCRIPCIÓN
+   ========================================= */
+.juego-titulo {
+    color: #FF4343; /* Tu color rojo */
+    font-size: 1.4rem;
+    margin: 0 0 10px 0;
+    text-transform: uppercase;
+    font-family: sans-serif;
+}
+
+.juego-descripcion {
+    color: #ffffff;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    word-break: break-word; /* Rompe palabras largas (el error de tu video) */
+}
+
+/* =========================================
+   BOTÓN DE DESCARGA
+   ========================================= */
+.boton-descargar {
+    margin-top: auto; /* Siempre se queda al final de la tarjeta */
+    background-color: #5EFF43;
+    color: #000000;
+    text-align: center;
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background 0.3s ease;
+}
+
+.boton-descargar:hover {
+    background-color: #ffffff;
+    color: #000;
+}
+
+/* Si el botón recibe un clic */
+.boton-descargar:active {
+    transform: scale(0.98);
+}
+
+/* =========================================
+   RESPONSIVE (Para celulares)
+   ========================================= */
+@media (max-width: 600px) {
+    #output {
+        grid-template-columns: 1fr; /* Una sola columna en pantallas pequeñas */
+        padding: 10px;
+    }
+}
