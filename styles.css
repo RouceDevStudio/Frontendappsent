@@ -45,7 +45,9 @@ body{
     justify-content: center;
     padding: 5px;
     border: 2px solid #A7FF37;
+    z-index: 1000;
 }
+
 
 .UpIcon a{
     color: #A7FF37;
