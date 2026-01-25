@@ -4,7 +4,9 @@ const buscador = document.getElementById("buscador");
 
 let todosLosItems = [];
 
+// ==========================================
 // 1. CARGAR DATOS DESDE MONGODB
+// ==========================================
 async function cargarContenido() {
   try {
     output.innerHTML = `
@@ -31,27 +33,50 @@ async function cargarContenido() {
   }
 }
 
-// 2. RENDERIZAR TARJETAS
-function renderizar(lista) {
+// ==========================================
+// 2. FUNCIÓN PARA IR AL PERFIL (NUEVO)
+// ==========================================
+function prepararPerfil(nombreUsuario) {
+  // Guardamos en la memoria del navegador a quién queremos visitar
+  localStorage.setItem("ver_perfil_de", nombreUsuario);
+  // Saltamos a la página de perfil
+  window.location.href = "perfil.html";
+}
+
+// ==========================================
+// 3. RENDERIZAR TARJETAS (MODIFICADO)
+// ==========================================
+function renderizar(lista, esBusquedaDePerfil = false) {
   output.innerHTML = "";
   
   if (lista.length === 0) {
-    output.innerHTML = "<p style='color:#888; text-align:center; width:100%; margin-top:50px;'>No hay archivos disponibles en este sector.</p>";
+    output.innerHTML = "<p style='color:#888; text-align:center; width:100%; margin-top:50px;'>No hay resultados que coincidan.</p>";
     return;
+  }
+
+  // Si la búsqueda detecta un usuario exacto, podríamos añadir un mensaje aquí
+  if (esBusquedaDePerfil) {
+    const bannerPerfil = document.createElement("div");
+    bannerPerfil.style = "grid-column: 1/-1; background: rgba(94, 255, 67, 0.05); border: 1px dashed #5EFF43; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center; color: #5EFF43; font-size: 13px;";
+    bannerPerfil.innerHTML = `✨ Se muestran resultados del colaborador seleccionado`;
+    output.appendChild(bannerPerfil);
   }
 
   lista.forEach(item => {
     const div = document.createElement("div");
     div.classList.add("juego-card");
     
+    const nombreAutor = item.usuario || 'Cloud User';
+
     div.innerHTML = `
       <div class="close-btn">✕</div>
       ${item.image ? `<img src="${item.image}" class="juego-img" alt="${item.title}">` : '<div style="height:120px; background:#111; display:flex; align-items:center; justify-content:center; color:#333;"><ion-icon name="image-outline" style="font-size:2rem;"></ion-icon></div>'}
       
       <div class="card-content">
-        <div class="user-tag" style="background: rgba(94, 255, 67, 0.1); color: #5EFF43; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 10px; margin-bottom: 12px; border: 1px solid rgba(94, 255, 67, 0.2); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
-            <ion-icon name="cloud-done-outline"></ion-icon> 
-            <span>${item.usuario || 'Cloud User'}</span>
+        <div class="user-tag" onclick="event.stopPropagation(); prepararPerfil('${nombreAutor}')" 
+             style="background: rgba(94, 255, 67, 0.1); color: #5EFF43; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 10px; margin-bottom: 12px; border: 1px solid rgba(94, 255, 67, 0.2); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: 0.3s;">
+            <ion-icon name="person-circle-outline"></ion-icon> 
+            <span>${nombreAutor}</span>
         </div>
 
         <h4 class="juego-titulo" style="margin-bottom: 8px;">${item.title || "Archivo sin nombre"}</h4>
@@ -70,7 +95,7 @@ function renderizar(lista) {
                 <p style="font-size:10px; color:#555;">ID: ${item._id ? item._id.slice(-6) : 'N/A'}</p>
             </div>
             <p style="font-size:11px; color:#777; margin-top:8px;">
-                Este recurso es gestionado por el repositorio de <b>${item.usuario || 'la comunidad'}</b>.
+                Toca el nombre del colaborador arriba para ver su perfil completo.
             </p>
         </div>
       </div>
@@ -106,20 +131,36 @@ function renderizar(lista) {
   });
 }
 
-// 3. BUSCADOR INTEGRADO
+// ==========================================
+// 4. BUSCADOR INTEGRADO (REFORZADO)
+// ==========================================
 if (buscador) {
   buscador.addEventListener("input", (e) => {
     const textoUsuario = e.target.value.toLowerCase().trim();
+    
+    if (textoUsuario === "") {
+        renderizar(todosLosItems);
+        return;
+    }
+
     const itemsFiltrados = todosLosItems.filter(item => {
-      return (item.title || "").toLowerCase().includes(textoUsuario) || 
-             (item.description || "").toLowerCase().includes(textoUsuario) ||
-             (item.usuario || "").toLowerCase().includes(textoUsuario);
+      const enTitulo = (item.title || "").toLowerCase().includes(textoUsuario);
+      const enDesc = (item.description || "").toLowerCase().includes(textoUsuario);
+      const enUsuario = (item.usuario || "").toLowerCase().includes(textoUsuario);
+      
+      return enTitulo || enDesc || enUsuario;
     });
-    renderizar(itemsFiltrados);
+
+    // Si el texto coincide exactamente con un nombre de usuario, avisamos al render
+    const esNombreDeUsuario = todosLosItems.some(item => (item.usuario || "").toLowerCase() === textoUsuario);
+    
+    renderizar(itemsFiltrados, esNombreDeUsuario);
   });
 }
 
-// 4. LÓGICA DEL ICONO DE BÚSQUEDA
+// ==========================================
+// 5. LÓGICA DEL ICONO DE BÚSQUEDA
+// ==========================================
 const ioIcon = document.getElementById('ioIcon');
 const buscadorInput = document.getElementById('buscador');
 

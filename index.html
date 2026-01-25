@@ -2,37 +2,41 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Front Output</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UpGames - Repositorio Cloud</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header>
-  
-    <div class="buscador-container">
-    <ion-icon name="search-outline" class="buscador-icon" id="ioIcon"></ion-icon>
-    <input type="text" id="buscador" placeholder="Buscar juego...">
-    
-</div>
 
-<div class="UpIcon">
-      <a href="https://roucedevstudio.github.io/Frontendappback/"><ion-icon name="cloud-upload-sharp"></ion-icon>
-      </a>
-</div>
-  
+<header>
+    <div class="buscador-container">
+        <ion-icon name="search-outline" class="buscador-icon" id="ioIcon"></ion-icon>
+        <input type="text" id="buscador" placeholder="Buscar juego...">
+    </div>
+
+    <div class="header-right-actions">
+        <div class="ProfileIcon" id="btn-mi-perfil" title="Mi Perfil">
+            <ion-icon name="person-circle-sharp"></ion-icon>
+        </div>
+
+        <div class="UpIcon">
+            <a href="https://roucedevstudio.github.io/Frontendappback/">
+                <ion-icon name="cloud-upload-sharp"></ion-icon>
+            </a>
+        </div>
+    </div>
 </header>
 
-  <div class="containGames">
+<div class="containGames">
     <div class="games" id="output"></div>
-  </div>
-  
-  
-  <footer class="footer-legal">
+</div>
+
+<footer class="footer-legal">
     <div class="footer-content">
         <p><strong>UpGames</strong> © 2026 - Plataforma de Almacenamiento Neutral</p>
         <p class="legal-text">
             Este sitio funciona como un intermediario técnico que almacena contenido generado por usuarios. 
-            No promovemos la piratería ni somos responsables del contenido subido por terceros. 
-            Si crees que un archivo infringe tus derechos de autor, por favor contáctanos para su eliminación inmediata.
+            No promovemos la piratería ni somos responsables del contenido subido por terceros.
         </p>
         <div class="footer-links">
             <a href="#">DMCA / Copyright</a> | 
@@ -43,6 +47,24 @@
 
 <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
 <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-  <script src="script.js"></script>
+
+<script src="script.js"></script>
+
+<script>
+    const btnMiPerfil = document.getElementById('btn-mi-perfil');
+    if(btnMiPerfil) {
+        btnMiPerfil.addEventListener('click', () => {
+            const miUsuario = localStorage.getItem("user_admin"); 
+            if (miUsuario) {
+                localStorage.setItem("ver_perfil_de", miUsuario);
+                window.location.href = "https://roucedevstudio.github.io/PerfilApp/";
+            } else {
+                alert("Debes iniciar sesión para acceder a tu perfil.");
+                window.location.href = "login.html";
+            }
+        });
+    }
+</script>
+
 </body>
 </html>
