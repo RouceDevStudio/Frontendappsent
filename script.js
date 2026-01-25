@@ -34,17 +34,24 @@ async function cargarContenido() {
 }
 
 // ==========================================
-// 2. FUNCIÓN PARA IR AL PERFIL (NUEVO)
+// 2. FUNCIÓN PARA IR AL PERFIL (CORREGIDA)
 // ==========================================
 function prepararPerfil(nombreUsuario) {
-  // Guardamos en la memoria del navegador a quién queremos visitar
-  localStorage.setItem("ver_perfil_de", nombreUsuario);
-  // Saltamos a la página de perfil
-  window.location.href = "perfil.html";
+  // Evitamos el error 404 si el perfil es anónimo o genérico
+  if (!nombreUsuario || nombreUsuario === 'Cloud User' || nombreUsuario === 'Anónimo') {
+      alert("Este usuario es temporal y no tiene un perfil configurado.");
+      return;
+  }
+
+  // Guardamos el nombre limpio en la memoria
+  localStorage.setItem("ver_perfil_de", nombreUsuario.trim());
+  
+  // REDIRECCIÓN A GITHUB PAGES (Asegúrate que el nombre del repo sea exacto)
+  window.location.href = "https://roucedevstudio.github.io/PerfilApp/";
 }
 
 // ==========================================
-// 3. RENDERIZAR TARJETAS (MODIFICADO)
+// 3. RENDERIZAR TARJETAS
 // ==========================================
 function renderizar(lista, esBusquedaDePerfil = false) {
   output.innerHTML = "";
@@ -54,11 +61,10 @@ function renderizar(lista, esBusquedaDePerfil = false) {
     return;
   }
 
-  // Si la búsqueda detecta un usuario exacto, podríamos añadir un mensaje aquí
   if (esBusquedaDePerfil) {
     const bannerPerfil = document.createElement("div");
     bannerPerfil.style = "grid-column: 1/-1; background: rgba(94, 255, 67, 0.05); border: 1px dashed #5EFF43; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center; color: #5EFF43; font-size: 13px;";
-    bannerPerfil.innerHTML = `✨ Se muestran resultados del colaborador seleccionado`;
+    bannerPerfil.innerHTML = `✨ Mostrando resultados de un colaborador`;
     output.appendChild(bannerPerfil);
   }
 
@@ -73,19 +79,18 @@ function renderizar(lista, esBusquedaDePerfil = false) {
       ${item.image ? `<img src="${item.image}" class="juego-img" alt="${item.title}">` : '<div style="height:120px; background:#111; display:flex; align-items:center; justify-content:center; color:#333;"><ion-icon name="image-outline" style="font-size:2rem;"></ion-icon></div>'}
       
       <div class="card-content">
-        <div class="user-tag" onclick="event.stopPropagation(); prepararPerfil('${nombreAutor}')" 
-             style="background: rgba(94, 255, 67, 0.1); color: #5EFF43; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 10px; margin-bottom: 12px; border: 1px solid rgba(94, 255, 67, 0.2); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: 0.3s;">
+        <div class="user-tag" onclick="event.stopPropagation(); prepararPerfil('${nombreAutor}')">
             <ion-icon name="person-circle-outline"></ion-icon> 
             <span>${nombreAutor}</span>
         </div>
 
-        <h4 class="juego-titulo" style="margin-bottom: 8px;">${item.title || "Archivo sin nombre"}</h4>
+        <h4 class="juego-titulo">${item.title || "Archivo sin nombre"}</h4>
         
-        <div class="cloud-note" style="font-size: 13px; line-height: 1.4; color: #aaa;">
-            ${item.description || "Sin descripción proporcionada por el colaborador."}
+        <div class="cloud-note">
+            ${item.description || "Sin descripción disponible."}
         </div>
 
-        <a href="${item.link}" class="boton-descargar" target="_blank" onclick="event.stopPropagation();" style="margin-top: 15px;">
+        <a href="${item.link}" class="boton-descargar" target="_blank" onclick="event.stopPropagation();">
             ACCEDER A LA NUBE
         </a>
 
@@ -95,7 +100,7 @@ function renderizar(lista, esBusquedaDePerfil = false) {
                 <p style="font-size:10px; color:#555;">ID: ${item._id ? item._id.slice(-6) : 'N/A'}</p>
             </div>
             <p style="font-size:11px; color:#777; margin-top:8px;">
-                Toca el nombre del colaborador arriba para ver su perfil completo.
+                Toca el nombre del colaborador para ver su perfil.
             </p>
         </div>
       </div>
@@ -104,7 +109,6 @@ function renderizar(lista, esBusquedaDePerfil = false) {
     // --- LÓGICA DE EXPANSIÓN ---
     div.addEventListener("click", () => {
         const estaExpandida = div.classList.contains("expandida");
-
         document.querySelectorAll(".juego-card.expandida").forEach(card => {
             card.classList.remove("expandida");
             card.querySelector(".info-extra").style.display = "none";
@@ -113,9 +117,6 @@ function renderizar(lista, esBusquedaDePerfil = false) {
         if (!estaExpandida) {
             div.classList.add("expandida");
             div.querySelector(".info-extra").style.display = "block";
-            document.body.style.overflow = "hidden";
-        } else {
-            document.body.style.overflow = "auto";
         }
     });
 
@@ -124,7 +125,6 @@ function renderizar(lista, esBusquedaDePerfil = false) {
         e.stopPropagation();
         div.classList.remove("expandida");
         div.querySelector(".info-extra").style.display = "none";
-        document.body.style.overflow = "auto";
     });
 
     output.appendChild(div);
@@ -132,54 +132,37 @@ function renderizar(lista, esBusquedaDePerfil = false) {
 }
 
 // ==========================================
-// 4. BUSCADOR INTEGRADO (REFORZADO)
+// 4. BUSCADOR
 // ==========================================
 if (buscador) {
   buscador.addEventListener("input", (e) => {
-    const textoUsuario = e.target.value.toLowerCase().trim();
-    
-    if (textoUsuario === "") {
+    const texto = e.target.value.toLowerCase().trim();
+    if (texto === "") {
         renderizar(todosLosItems);
         return;
     }
 
-    const itemsFiltrados = todosLosItems.filter(item => {
-      const enTitulo = (item.title || "").toLowerCase().includes(textoUsuario);
-      const enDesc = (item.description || "").toLowerCase().includes(textoUsuario);
-      const enUsuario = (item.usuario || "").toLowerCase().includes(textoUsuario);
-      
-      return enTitulo || enDesc || enUsuario;
-    });
+    const filtrados = todosLosItems.filter(item => 
+      (item.title || "").toLowerCase().includes(texto) || 
+      (item.description || "").toLowerCase().includes(texto) || 
+      (item.usuario || "").toLowerCase().includes(texto)
+    );
 
-    // Si el texto coincide exactamente con un nombre de usuario, avisamos al render
-    const esNombreDeUsuario = todosLosItems.some(item => (item.usuario || "").toLowerCase() === textoUsuario);
-    
-    renderizar(itemsFiltrados, esNombreDeUsuario);
+    const esAutor = todosLosItems.some(item => (item.usuario || "").toLowerCase() === texto);
+    renderizar(filtrados, esAutor);
   });
 }
 
 // ==========================================
-// 5. LÓGICA DEL ICONO DE BÚSQUEDA
+// 5. ICONO BUSCADOR
 // ==========================================
 const ioIcon = document.getElementById('ioIcon');
-const buscadorInput = document.getElementById('buscador');
-
-if (ioIcon && buscadorInput) {
+if (ioIcon && buscador) {
     ioIcon.addEventListener('click', () => {
-        buscadorInput.classList.toggle('buscadorHidden');
+        buscador.classList.toggle('buscadorHidden');
         ioIcon.style.opacity = "0";
-        ioIcon.style.pointerEvents = "none";
-        buscadorInput.focus();
-    });
-
-    buscadorInput.addEventListener('blur', () => {
-        if (buscadorInput.value === "") {
-            ioIcon.style.opacity = "1";
-            ioIcon.style.pointerEvents = "auto";
-            buscadorInput.classList.remove('buscadorHidden');
-        }
+        buscador.focus();
     });
 }
 
-// Iniciar al cargar
 document.addEventListener("DOMContentLoaded", cargarContenido);
