@@ -166,3 +166,33 @@ if (ioIcon && buscador) {
 }
 
 document.addEventListener("DOMContentLoaded", cargarContenido);
+
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Obtenemos el usuario actual para que el contrato sea personal
+    const usuarioActivo = localStorage.getItem("user_admin") || "Invitado";
+    
+    // 2. Creamos una llave única que combina el usuario con la versión de los términos
+    // Esto hace que si cambian de cuenta o cierran sesión, la llave desaparezca o cambie
+    const llaveLegal = `aceptacion_v1_${usuarioActivo}`;
+    const yaAcepto = localStorage.getItem(llaveLegal);
+
+    if (!yaAcepto) {
+        const mensajeLegal = `⚖️ TÉRMINOS DE NEUTRALIDAD Y SEGURIDAD UPGAMES:
+
+1. UpGames es un servicio de ALOJAMIENTO de enlaces. No suministramos ni somos dueños del contenido vinculado.
+2. La responsabilidad legal de los archivos recae exclusivamente en el usuario que los publica.
+3. UpGames NO edita el contenido del usuario, EXCEPTO en casos de material sensible, para adultos (NSFW) o ilegal, el cual será eliminado sin previo aviso.
+4. Al continuar, declaras que eres responsable de los links que compartes y eximes a la plataforma de cualquier reclamo legal.
+
+¿Aceptas estos términos de intermediación?`;
+
+        if (confirm(mensajeLegal)) {
+            // Se almacena en LocalStorage: No volverá a salir mientras no borren datos o cambien de usuario
+            localStorage.setItem(llaveLegal, "true");
+        } else {
+            // Si rechaza, limpiamos sesión y lo sacamos
+            localStorage.removeItem("user_admin");
+            window.location.href = "https://www.google.com";
+        }
+    }
+});
