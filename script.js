@@ -7,7 +7,7 @@ let todosLosItems = [];
 
 async function cargarContenido() {
     try {
-        output.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:#5EFF43; padding:50px;">☁️ Sincronizando repositorio...</p>`;
+        output.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:#5EFF43; padding:50px;">☁️ Sincronizando nube...</p>`;
         const res = await fetch(`${API_URL}/items`);
         const data = await res.json();
         todosLosItems = Array.isArray(data) ? data.filter(item => item.status === "aprobado") : [];
@@ -19,10 +19,7 @@ async function cargarContenido() {
 
 function renderizar(lista) {
     output.innerHTML = "";
-    if (lista.length === 0) {
-        output.innerHTML = `<p style="grid-column:1/-1; text-align:center; opacity:0.5; padding:50px;">Sin resultados.</p>`;
-        return;
-    }
+    if (lista.length === 0) return;
 
     lista.forEach((item) => {
         const card = document.createElement("div");
@@ -30,50 +27,35 @@ function renderizar(lista) {
         const autor = item.usuario || 'Cloud User';
         const shortID = item._id ? item._id.slice(-6) : 'e29b43';
 
-        // La estructura NO incluye la X inicialmente para evitar el error visual
         card.innerHTML = `
             <div class="close-btn"><ion-icon name="close-outline"></ion-icon></div>
-            <img src="${item.image || ''}" class="juego-img" alt="banner">
-            
+            <img src="${item.image || ''}" class="juego-img">
             <div class="card-content">
                 <div class="user-tag" onclick="event.stopPropagation(); prepararPerfil('${autor}')">
                     <ion-icon name="person-circle"></ion-icon> <span>${autor}</span>
                 </div>
-                
                 <h4 class="juego-titulo">${item.title}</h4>
-                
                 <p class="cloud-note">${item.description || 'Sin descripción.'}</p>
-                
                 <div class="boton-descargar">ACCEDER A LA NUBE</div>
-
                 <div class="info-verificacion">
                     <div class="verificado-flex">
-                        <div class="status-check">
-                            <ion-icon name="shield-checkmark"></ion-icon> Verificado
-                        </div>
+                        <div class="status-check"><ion-icon name="shield-checkmark"></ion-icon> Verificado</div>
                         <div class="file-id">ID: ${shortID}</div>
                     </div>
-                    <p class="footer-nota">Toca el nombre del colaborador para ver su perfil.</p>
                 </div>
             </div>
         `;
 
         card.addEventListener("click", () => {
             if (!card.classList.contains("expandida")) {
-                // Cerrar cualquier otra
                 document.querySelectorAll(".juego-card").forEach(c => c.classList.remove("expandida"));
-                
                 card.classList.add("expandida");
                 overlay.style.display = "block";
                 document.body.style.overflow = "hidden";
-                
-                // Si el item tiene link, hacerlo funcional en el botón al expandir
-                const btn = card.querySelector(".boton-descargar");
-                btn.onclick = () => window.open(item.link, "_blank");
+                card.querySelector(".boton-descargar").onclick = () => window.open(item.link, "_blank");
             }
         });
 
-        // Evento para el botón de cerrar (solo funciona cuando está expandida)
         card.querySelector(".close-btn").addEventListener("click", (e) => {
             e.stopPropagation();
             card.classList.remove("expandida");
@@ -85,17 +67,36 @@ function renderizar(lista) {
     });
 }
 
+// FUNCIÓN PARA VER EL PERFIL DE OTROS (Al tocar el nombre en la carta)
+function prepararPerfil(nombre) {
+    if (!nombre || nombre === 'Cloud User') {
+        alert("Este colaborador no tiene un perfil configurado.");
+        return;
+    }
+    localStorage.setItem("ver_perfil_de", nombre.trim());
+    window.location.href = "https://roucedevstudio.github.io/PerfilApp/";
+}
+
+// FUNCIÓN PARA MI PROPIO PERFIL (Icono del header)
+const btnPerfil = document.getElementById('btn-mi-perfil');
+if (btnPerfil) {
+    btnPerfil.addEventListener('click', () => {
+        const miUsuario = localStorage.getItem("user_admin"); // Asegúrate de que este dato exista al loguear
+        if (miUsuario) {
+            localStorage.setItem("ver_perfil_de", miUsuario);
+            window.location.href = "https://roucedevstudio.github.io/PerfilApp/";
+        } else {
+            alert("No hemos detectado tu sesión. Por favor, inicia sesión.");
+            // Opcional: window.location.href = "login.html";
+        }
+    });
+}
+
 overlay.addEventListener("click", () => {
     document.querySelectorAll(".juego-card").forEach(c => c.classList.remove("expandida"));
     overlay.style.display = "none";
     document.body.style.overflow = "auto";
 });
-
-function prepararPerfil(nombre) {
-    if (!nombre || nombre === 'Cloud User') return alert("Perfil no configurado.");
-    localStorage.setItem("ver_perfil_de", nombre.trim());
-    window.location.href = "https://roucedevstudio.github.io/PerfilApp/";
-}
 
 buscador.addEventListener("input", (e) => {
     const term = e.target.value.toLowerCase();
