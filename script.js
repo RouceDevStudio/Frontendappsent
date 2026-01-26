@@ -2,17 +2,12 @@ const API_URL = "https://backendapp-037y.onrender.com";
 const output = document.getElementById("output");
 const buscador = document.getElementById("buscador");
 const overlay = document.getElementById("overlay");
-
-// Selector del ícono de perfil superior
-const btnMiPerfilPropio = document.querySelector(".perfil-icon") || 
-                           document.querySelector("#btn-mi-perfil") ||
-                           document.querySelector("ion-icon[name='person-circle']")?.parentElement;
+const btnMiPerfil = document.getElementById("btn-mi-perfil");
 
 let todosLosItems = [];
-let todosLosUsuarios = [];
 
 // ==========================================
-// 1. ALERTA LEGAL OBLIGATORIA (ESTRICTA)
+// 1. ALERTA LEGAL ORIGINAL (PROTECCIÓN TOTAL)
 // ==========================================
 function verificarTerminos() {
     const aceptado = localStorage.getItem("terminos_aceptados_v2");
@@ -31,92 +26,98 @@ function verificarTerminos() {
 }
 
 // ==========================================
-// 2. CARGA DE DATOS
+// 2. CARGA DE CONTENIDO
 // ==========================================
 async function cargarContenido() {
+    verificarTerminos();
     try {
-        verificarTerminos(); // Se dispara al iniciar la App
-        
-        output.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:#5EFF43; padding:50px; font-family:monospace;">📡 ESCANEANDO RED...</p>`;
-        
-        const resItems = await fetch(`${API_URL}/items`);
-        const dataItems = await resItems.json();
-        todosLosItems = Array.isArray(dataItems) ? dataItems.filter(i => i.status === "aprobado") : [];
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedId = urlParams.get('id');
 
-        try {
-            const resUsers = await fetch(`${API_URL}/auth/users`);
-            if (resUsers.ok) {
-                todosLosUsuarios = await resUsers.json();
-            }
-        } catch (e) { console.error("Error en base de datos de usuarios"); }
+        const res = await fetch(`${API_URL}/items`);
+        const data = await res.json();
+        todosLosItems = data.filter(i => i.status === "aprobado");
 
         renderizar(todosLosItems);
-    } catch (error) {
-        output.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:red; padding:50px;">❌ ERROR DE CONEXIÓN</p>`;
-    }
+
+        if (sharedId) {
+            setTimeout(() => {
+                const card = document.querySelector(`[data-id="${sharedId}"]`);
+                if (card) card.click();
+            }, 600);
+        }
+    } catch (e) { console.error("Error en la red cloud."); }
 }
 
 // ==========================================
-// 3. RENDERIZADO
+// 3. RENDERIZADO DE CARTAS (CON ESTADO DE LINK)
 // ==========================================
-function renderizar(lista, perfilesEncontrados = []) {
+function renderizar(lista) {
     output.innerHTML = "";
-
-    // Sección de Perfiles (Cards Pro)
-    if (perfilesEncontrados.length > 0) {
-        const pTitle = document.createElement("h3");
-        pTitle.className = "seccion-titulo";
-        pTitle.innerText = "COLABORADORES ENCONTRADOS";
-        output.appendChild(pTitle);
-
-        perfilesEncontrados.forEach(u => {
-            const nombre = u.usuario;
-            const pCard = document.createElement("div");
-            pCard.className = "perfil-card-busqueda";
-            pCard.innerHTML = `
-                <div class="perfil-card-avatar"><ion-icon name="person-circle-outline"></ion-icon></div>
-                <span class="perfil-card-name">${nombre}</span>
-                <button class="perfil-card-btn">VER PERFIL</button>
-            `;
-            pCard.onclick = () => prepararPerfil(nombre);
-            output.appendChild(pCard);
-        });
-        const hr = document.createElement("div");
-        hr.style = "grid-column: 1/-1; height: 1px; background: rgba(94, 255, 67, 0.1); margin: 20px 0;";
-        output.appendChild(hr);
-    }
-
-    // Renderizado de Juegos / Videos
-    lista.forEach((item) => {
+    lista.forEach(item => {
         const card = document.createElement("div");
         card.className = "juego-card";
-        const autor = item.usuario || 'Cloud User';
-        const url = item.image || '';
-        const esVideo = /\.(mp4|webm|mov|ogg)$/i.test(url);
-        
-        const mediaHtml = esVideo 
-            ? `<video src="${url}" class="juego-img" autoplay muted loop playsinline></video>`
-            : `<img src="${url}" class="juego-img" loading="lazy">`;
+        card.setAttribute("data-id", item._id);
+
+        // Lógica de Estado de Link (Check de Verificación)
+        const numReportes = item.reportes || 0;
+        const estaOnline = numReportes < 3;
+        const statusClase = estaOnline ? "status-online" : "status-review";
+        const statusTexto = estaOnline ? "Online" : "En Revisión";
+        const statusIcon = estaOnline ? "checkmark-circle-sharp" : "alert-circle-sharp";
+
+        const esVideo = /\.(mp4|webm|mov)$/i.test(item.image);
+        const media = esVideo 
+            ? `<video src="${item.image}" class="juego-img" autoplay muted loop playsinline></video>`
+            : `<img src="${item.image}" class="juego-img">`;
 
         card.innerHTML = `
+            <div class="status-badge ${statusClase}">
+                <ion-icon name="${statusIcon}"></ion-icon> <span>${statusTexto}</span>
+            </div>
             <div class="close-btn"><ion-icon name="close-outline"></ion-icon></div>
-            ${mediaHtml}
+            ${media}
             <div class="card-content">
-                <div class="user-tag" onclick="event.stopPropagation(); prepararPerfil('${autor}')">
-                    <ion-icon name="person-circle"></ion-icon> <span>${autor}</span>
+                <div class="user-tag">
+                    <ion-icon name="person-circle"></ion-icon> <span>${item.usuario || 'Cloud User'}</span>
                 </div>
                 <h4 class="juego-titulo">${item.title}</h4>
-                <p class="cloud-note">${item.description || 'Sin descripción.'}</p>
-                <div class="boton-descargar">ACCEDER A LA NUBE</div>
+                
+                <div class="social-actions">
+                    <button class="action-btn" title="Favorito" onclick="event.stopPropagation(); fav('${item._id}')"><ion-icon name="heart-sharp"></ion-icon></button>
+                    <button class="action-btn" title="Compartir" onclick="event.stopPropagation(); share('${item._id}', '${item.title}')"><ion-icon name="share-social-sharp"></ion-icon></button>
+                    <button class="action-btn" title="Reportar Link" onclick="event.stopPropagation(); report('${item._id}')"><ion-icon name="flag-sharp"></ion-icon></button>
+                </div>
+
+                <p class="cloud-note">${item.description || 'Sin descripción disponible.'}</p>
+                
+                <div class="info-verificacion">
+                    <div class="verificado-flex">
+                        <span class="status-text ${estaOnline ? 'online' : 'review'}">
+                            <ion-icon name="${statusIcon}"></ion-icon> Estado: ${statusTexto}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="boton-descargar-full" onclick="event.stopPropagation(); window.open('${item.link}', '_blank')">ACCEDER A LA NUBE</div>
+                
+                <div class="comentarios-section">
+                    <h5>Playlist de Comentarios</h5>
+                    <div class="comentarios-list" id="list-${item._id}"></div>
+                    <div class="add-comment">
+                        <input type="text" id="input-${item._id}" placeholder="Escribe un comentario..." onclick="event.stopPropagation();">
+                        <button onclick="event.stopPropagation(); postComm('${item._id}')">ENVIAR</button>
+                    </div>
+                </div>
             </div>
         `;
 
         card.onclick = () => {
             if (!card.classList.contains("expandida")) {
-                document.querySelectorAll(".juego-card").forEach(c => c.classList.remove("expandida"));
                 card.classList.add("expandida");
                 overlay.style.display = "block";
                 document.body.style.overflow = "hidden";
+                cargarComm(item._id);
             }
         };
 
@@ -126,51 +127,73 @@ function renderizar(lista, perfilesEncontrados = []) {
             overlay.style.display = "none";
             document.body.style.overflow = "auto";
         };
+
         output.appendChild(card);
     });
 }
 
 // ==========================================
-// 4. NAVEGACIÓN (Botón Perfil y Redirección)
+// 4. FUNCIONES SOCIALES Y COMENTARIOS
 // ==========================================
-function prepararPerfil(nombre) {
-    if (!nombre) return;
-    localStorage.setItem("ver_perfil_de", nombre.trim());
-    window.location.assign("https://roucedevstudio.github.io/PerfilApp/");
-}
-
-if (btnMiPerfilPropio) {
-    btnMiPerfilPropio.style.cursor = "pointer";
-    btnMiPerfilPropio.addEventListener("click", (e) => {
-        e.preventDefault();
-        const miUsuarioLogueado = localStorage.getItem("user_admin"); 
-        
-        if (miUsuarioLogueado) {
-            prepararPerfil(miUsuarioLogueado);
-        } else {
-            alert("Inicia sesión para acceder a tu perfil.");
-            window.location.assign("https://roucedevstudio.github.io/LoginApp/");
-        }
+async function fav(id) {
+    const user = localStorage.getItem("user_admin");
+    if(!user) return alert("Inicia sesión para guardar en tu bóveda.");
+    const res = await fetch(`${API_URL}/favoritos/add`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({usuario:user, itemId:id})
     });
+    const d = await res.json(); alert(d.mensaje || "Guardado.");
 }
 
-buscador.addEventListener("input", (e) => {
-    const term = e.target.value.toLowerCase().trim();
-    if (term.length === 0) { renderizar(todosLosItems); return; }
-    const filtrados = todosLosItems.filter(item => 
-        (item.title || "").toLowerCase().includes(term) || 
-        (item.usuario || "").toLowerCase().includes(term)
-    );
-    const usuariosMatch = todosLosUsuarios.filter(u => 
-        (u.usuario || "").toLowerCase().includes(term)
-    );
-    renderizar(filtrados, usuariosMatch);
-});
+function share(id, title) {
+    const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
+    navigator.clipboard.writeText(url);
+    alert("Enlace de la bóveda copiado.");
+}
 
-overlay.onclick = () => {
-    document.querySelectorAll(".juego-card.expandida").forEach(c => c.classList.remove("expandida"));
-    overlay.style.display = "none";
-    document.body.style.overflow = "auto";
+async function report(id) {
+    if(confirm("¿Reportar que este link no funciona?")) {
+        await fetch(`${API_URL}/items/report/${id}`, { method: 'PUT' });
+        alert("Reporte enviado. Si acumulamos más de 3, el estado cambiará a Revisión.");
+        cargarContenido(); // Recargamos para ver el cambio de estado si aplica
+    }
+}
+
+async function cargarComm(id) {
+    const box = document.getElementById(`list-${id}`);
+    const res = await fetch(`${API_URL}/comentarios/${id}`);
+    const data = await res.json();
+    box.innerHTML = data.map(c => `<div class="comm-item"><strong>${c.usuario}:</strong> ${c.texto}</div>`).join('');
+}
+
+async function postComm(id) {
+    const user = localStorage.getItem("user_admin");
+    const txt = document.getElementById(`input-${id}`).value;
+    if(!user || !txt.trim()) return;
+    await fetch(`${API_URL}/comentarios`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ usuario:user, texto:txt, itemId:id })
+    });
+    document.getElementById(`input-${id}`).value = "";
+    cargarComm(id);
+}
+
+// ==========================================
+// 5. NAVEGACIÓN Y BÚSQUEDA
+// ==========================================
+buscador.oninput = (e) => {
+    const term = e.target.value.toLowerCase();
+    renderizar(todosLosItems.filter(i => i.title.toLowerCase().includes(term)));
+};
+
+btnMiPerfil.onclick = () => {
+    const u = localStorage.getItem("user_admin");
+    if(u) {
+        localStorage.setItem("ver_perfil_de", u);
+        window.location.href = "https://roucedevstudio.github.io/PerfilApp/";
+    } else {
+        window.location.href = "https://roucedevstudio.github.io/LoginApp/";
+    }
 };
 
 document.addEventListener("DOMContentLoaded", cargarContenido);
