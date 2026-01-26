@@ -56,7 +56,7 @@ header {
 /* --- GRID --- */
 #output { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 15px; max-width: 1200px; margin: 0 auto; }
 
-/* --- CLOUD LOADER (NUEVO) --- */
+/* --- CLOUD LOADER --- */
 .cloud-loader-container {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 100px 20px; text-align: center;
@@ -89,10 +89,22 @@ header {
 .status-review { background: var(--warning); color: #000; }
 
 .card-content { padding: 10px; }
-.juego-titulo { font-size: 0.85rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.juego-titulo { font-size: 0.85rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 5px 0; }
+
+.category-badge {
+    display: inline-block;
+    font-size: 9px;
+    text-transform: uppercase;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #222;
+    color: var(--primary);
+    border: 1px solid #333;
+}
 
 .social-actions { display: flex; gap: 12px; margin-top: 8px; border-top: 1px solid #222; padding-top: 8px; }
-.action-btn { background: transparent; border: none; color: var(--primary); font-size: 1.1rem; }
+.action-btn { background: transparent; border: none; color: var(--primary); font-size: 1.1rem; cursor: pointer; }
 
 /* OCULTOS EN MINIATURA */
 .cloud-note, .comentarios-section, .info-verificacion, .close-btn, .boton-descargar-full { display: none; }
@@ -104,7 +116,28 @@ header {
 .expandida .close-btn { display: flex; position: absolute; top: 15px; right: 15px; background: var(--danger); width: 32px; height: 32px; border-radius: 50%; align-items: center; justify-content: center; z-index: 100; border: 2px solid #fff; }
 .expandida .juego-img { height: 200px; }
 .expandida .cloud-note { display: block; font-size: 0.9rem; color: #bbb; border-left: 3px solid var(--primary); padding-left: 10px; margin: 15px 0; }
-.expandida .boton-descargar-full { display: block; background: var(--primary); color: #000; text-align: center; padding: 15px; border-radius: 10px; font-weight: bold; margin-bottom: 20px; cursor: pointer; }
-.expandida .comentarios-section { display: block; border-top: 1px solid #333; padding-top: 15px; }
+.expandida .boton-descargar-full { display: block; background: var(--primary); color: #000; text-align: center; padding: 15px; border-radius: 10px; font-weight: bold; margin-bottom: 20px; cursor: pointer; text-decoration: none; }
+
+/* SECCIÓN COMENTARIOS MEJORADA */
+.expandida .comentarios-section { 
+    display: block; 
+    border-top: 1px solid #333; 
+    padding: 15px;
+    background: rgba(0,0,0,0.3);
+}
+
+.comentarios-list { max-height: 150px; overflow-y: auto; margin-bottom: 15px; }
+.comm-item { background: #111; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 0.8rem; border-left: 2px solid var(--primary); }
+
+.add-comment { 
+    display: flex; gap: 10px; background: #000; padding: 5px; border-radius: 12px; border: 1px solid #222;
+}
+
+.add-comment input { flex: 1; background: transparent; border: none; color: #fff; padding: 10px; outline: none; font-size: 0.85rem; }
+.add-comment button { 
+    background: var(--primary); border: none; padding: 0 20px; border-radius: 10px; font-weight: 800; color: #000; cursor: pointer; transition: 0.3s;
+}
+
+.add-comment button:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--primary); }
 
 .footer-legal { text-align: center; padding: 40px 20px; color: #666; font-size: 0.75rem; }

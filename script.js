@@ -10,7 +10,7 @@ let todosLosItems = [];
 function verificarTerminos() {
     const aceptado = localStorage.getItem("terminos_aceptados_v2");
     if (!aceptado) {
-        alert("AVISO LEGAL:\n1. Servicio de alojamiento técnico.\n2. Responsabilidad del usuario.\n3. UpGames no edita contenido ajeno.");
+        alert("AVISO LEGAL:\n1. Servicio de alojamiento técnico.\n2. Responsabilidad del usuario.\n3. UpGames no edita contenido ajeno ni supervisa la propiedad intelectual.");
         localStorage.setItem("terminos_aceptados_v2", "true");
     }
 }
@@ -24,7 +24,6 @@ async function cargarContenido() {
         const res = await fetch(`${API_URL}/items`);
         const data = await res.json();
         
-        // OCULTAR LOADER AL RECIBIR DATOS
         if (loadingState) loadingState.style.display = "none";
 
         todosLosItems = data.filter(i => i.status === "aprobado");
@@ -54,6 +53,9 @@ function renderizar(lista) {
         const statusTexto = estaOnline ? "Online" : "En Revisión";
         const statusIcon = estaOnline ? "checkmark-circle-sharp" : "alert-circle-sharp";
 
+        // Lógica de Categoría (Etiqueta)
+        const categoriaLabel = item.category ? item.category : "Undefined";
+
         const esVideo = /\.(mp4|webm|mov)$/i.test(item.image);
         const media = esVideo 
             ? `<video src="${item.image}" class="juego-img" autoplay muted loop playsinline></video>`
@@ -66,7 +68,10 @@ function renderizar(lista) {
             <div class="close-btn"><ion-icon name="close-outline"></ion-icon></div>
             ${media}
             <div class="card-content">
-                <div style="color:var(--primary); font-size:10px; margin-bottom:5px;">@${item.usuario || 'Cloud User'}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <div style="color:var(--primary); font-size:10px;">@${item.usuario || 'Cloud User'}</div>
+                    <span class="category-badge">${categoriaLabel}</span>
+                </div>
                 <h4 class="juego-titulo">${item.title}</h4>
                 <div class="social-actions">
                     <button class="action-btn" onclick="event.stopPropagation(); fav('${item._id}')"><ion-icon name="heart-sharp"></ion-icon></button>
@@ -75,10 +80,12 @@ function renderizar(lista) {
                 </div>
                 <p class="cloud-note">${item.description || 'Sin descripción.'}</p>
                 <div class="boton-descargar-full" onclick="event.stopPropagation(); window.open('${item.link}', '_blank')">ACCEDER A LA NUBE</div>
+                
                 <div class="comentarios-section">
+                    <h5 style="font-size: 0.7rem; color: #555; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Zona de Opiniones</h5>
                     <div class="comentarios-list" id="list-${item._id}"></div>
                     <div class="add-comment">
-                        <input type="text" id="input-${item._id}" placeholder="Opinar..." onclick="event.stopPropagation();">
+                        <input type="text" id="input-${item._id}" placeholder="Escribe algo brutal..." onclick="event.stopPropagation();">
                         <button onclick="event.stopPropagation(); postComm('${item._id}')">OK</button>
                     </div>
                 </div>
@@ -86,10 +93,12 @@ function renderizar(lista) {
         `;
 
         card.onclick = () => {
-            card.classList.add("expandida");
-            overlay.style.display = "block";
-            document.body.style.overflow = "hidden";
-            cargarComm(item._id);
+            if (!card.classList.contains("expandida")) {
+                card.classList.add("expandida");
+                overlay.style.display = "block";
+                document.body.style.overflow = "hidden";
+                cargarComm(item._id);
+            }
         };
 
         card.querySelector(".close-btn").onclick = (e) => {
@@ -106,23 +115,23 @@ function renderizar(lista) {
 async function share(id) {
     const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
     await navigator.clipboard.writeText(url);
-    alert("Link copiado.");
+    alert("Enlace de la bóveda copiado.");
 }
 
 async function fav(id) {
     const user = localStorage.getItem("user_admin");
-    if(!user) return alert("Inicia sesión.");
+    if(!user) return alert("Inicia sesión para guardar favoritos.");
     await fetch(`${API_URL}/favoritos/add`, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({usuario:user, itemId:id})
     });
-    alert("Añadido a favoritos.");
+    alert("Guardado en tu bóveda personal.");
 }
 
 async function report(id) {
-    if(confirm("¿Reportar link caído?")) {
+    if(confirm("¿Reportar que este link no funciona?")) {
         await fetch(`${API_URL}/items/report/${id}`, { method: 'PUT' });
-        alert("Reporte enviado.");
+        alert("Reporte enviado. Revisaremos el estado del servidor.");
         cargarContenido();
     }
 }
@@ -137,7 +146,9 @@ async function cargarComm(id) {
 async function postComm(id) {
     const user = localStorage.getItem("user_admin");
     const txt = document.getElementById(`input-${id}`).value;
-    if(!user || !txt.trim()) return;
+    if(!user) return alert("Debes estar logueado para comentar.");
+    if(!txt.trim()) return;
+    
     await fetch(`${API_URL}/comentarios`, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ usuario:user, texto:txt, itemId:id })
