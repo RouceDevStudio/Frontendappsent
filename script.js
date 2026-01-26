@@ -7,6 +7,7 @@ const loadingState = document.getElementById("loading-state");
 
 let todosLosItems = [];
 
+// 1. GESTIÓN LEGAL Y TÉRMINOS
 function verificarTerminos() {
     const aceptado = localStorage.getItem("terminos_aceptados_v2");
     if (!aceptado) {
@@ -15,20 +16,24 @@ function verificarTerminos() {
     }
 }
 
+// 2. CARGA DE DATOS DESDE LA NUBE
 async function cargarContenido() {
     verificarTerminos();
     try {
         const urlParams = new URLSearchParams(window.location.search);
         const sharedId = urlParams.get('id');
 
+        // Petición al backend
         const res = await fetch(`${API_URL}/items`);
         const data = await res.json();
         
         if (loadingState) loadingState.style.display = "none";
 
+        // Filtramos solo los aprobados para el público
         todosLosItems = data.filter(i => i.status === "aprobado");
         renderizar(todosLosItems);
 
+        // Lógica de Deep Linking (Abrir carta compartida)
         if (sharedId) {
             setTimeout(() => {
                 const card = document.querySelector(`[data-id="${sharedId}"]`);
@@ -36,15 +41,23 @@ async function cargarContenido() {
             }, 600);
         }
     } catch (e) { 
-        if (loadingState) loadingState.innerHTML = "<p style='color:red;'>ERROR DE CONEXIÓN CLOUD</p>";
+        if (loadingState) {
+            loadingState.innerHTML = `
+                <div style="text-align:center; color:#ff4343;">
+                    <ion-icon name="cloud-offline" style="font-size:3rem;"></ion-icon>
+                    <p>ERROR DE CONEXIÓN CON EL NÚCLEO</p>
+                    <button onclick="location.reload()" style="background:var(--primary); border:none; padding:5px 15px; border-radius:5px; cursor:pointer;">REINTENTAR</button>
+                </div>
+            `;
+        }
         console.error("Error en la red cloud."); 
     }
 }
 
+// 3. MOTOR DE RENDERIZADO (UI/UX)
 function renderizar(lista) {
     output.innerHTML = "";
 
-    // LÓGICA DE "NO SE ENCONTRARON RESULTADOS"
     if (lista.length === 0) {
         output.innerHTML = `
             <div class="no-results">
@@ -62,12 +75,14 @@ function renderizar(lista) {
         card.className = "juego-card";
         card.setAttribute("data-id", item._id);
 
+        // Lógica de Estado del Link (Online/Revisión)
         const estaOnline = (item.reportes || 0) < 3;
         const statusClase = estaOnline ? "status-online" : "status-review";
         const statusTexto = estaOnline ? "Online" : "En Revisión";
         const statusIcon = estaOnline ? "checkmark-circle-sharp" : "alert-circle-sharp";
-        const categoriaLabel = item.category ? item.category : "Undefined";
+        const categoriaLabel = (item.category && item.category.trim() !== "") ? item.category : "Undefined";
 
+        // Detección de Video o Imagen
         const esVideo = /\.(mp4|webm|mov)$/i.test(item.image);
         const media = esVideo 
             ? `<video src="${item.image}" class="juego-img" autoplay muted loop playsinline></video>`
@@ -81,29 +96,40 @@ function renderizar(lista) {
             ${media}
             <div class="card-content">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                    <div style="color:var(--primary); font-size:10px;">@${item.usuario || 'Cloud User'}</div>
+                    <div style="color:var(--primary); font-size:10px; font-weight:bold; opacity:0.8;">@${item.usuario || 'Cloud User'}</div>
                     <span class="category-badge">${categoriaLabel}</span>
                 </div>
                 <h4 class="juego-titulo">${item.title}</h4>
                 <div class="social-actions">
-                    <button class="action-btn" onclick="event.stopPropagation(); fav('${item._id}')"><ion-icon name="heart-sharp"></ion-icon></button>
-                    <button class="action-btn" onclick="event.stopPropagation(); share('${item._id}')"><ion-icon name="share-social-sharp"></ion-icon></button>
-                    <button class="action-btn" onclick="event.stopPropagation(); report('${item._id}')"><ion-icon name="flag-sharp"></ion-icon></button>
+                    <button class="action-btn" title="Favorito" onclick="event.stopPropagation(); fav('${item._id}')"><ion-icon name="heart-sharp"></ion-icon></button>
+                    <button class="action-btn" title="Compartir" onclick="event.stopPropagation(); share('${item._id}')"><ion-icon name="share-social-sharp"></ion-icon></button>
+                    <button class="action-btn" title="Reportar Link" onclick="event.stopPropagation(); report('${item._id}')"><ion-icon name="flag-sharp"></ion-icon></button>
                 </div>
-                <p class="cloud-note">${item.description || 'Sin descripción.'}</p>
+                <p class="cloud-note">${item.description || 'Sin descripción disponible en los servidores.'}</p>
                 <div class="boton-descargar-full" onclick="event.stopPropagation(); window.open('${item.link}', '_blank')">ACCEDER A LA NUBE</div>
                 
-                <div class="comentarios-section">
-                    <h5 style="font-size: 0.7rem; color: #555; margin-bottom: 10px; text-transform: uppercase;">Zona de Opiniones</h5>
-                    <div class="comentarios-list" id="list-${item._id}"></div>
-                    <div class="add-comment">
-                        <input type="text" id="input-${item._id}" placeholder="Escribe algo..." onclick="event.stopPropagation();">
-                        <button onclick="event.stopPropagation(); postComm('${item._id}')">OK</button>
+                <div class="comentarios-section" style="margin-top:20px; border-top:1px solid #222; padding-top:15px;">
+                    <h5 style="font-size: 0.7rem; color: var(--primary); margin-bottom: 10px; text-transform: uppercase; letter-spacing:1px;">Opiniones de la Comunidad</h5>
+                    
+                    <div class="comentarios-list" id="list-${item._id}" 
+                         style="max-height: 140px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px;">
+                         <p style="font-size: 0.7rem; color: #444; text-align: center;">Cargando opiniones...</p>
+                    </div>
+
+                    <div class="add-comment" style="display: flex; gap: 8px;">
+                        <input type="text" id="input-${item._id}" placeholder="Escribe tu reseña..." 
+                               style="flex: 1; background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 6px; font-size: 0.8rem; outline:none;"
+                               onclick="event.stopPropagation();">
+                        <button onclick="event.stopPropagation(); postComm('${item._id}')" 
+                                style="background: var(--primary); border: none; padding: 0 15px; border-radius: 6px; color: #000; font-weight: bold; cursor:pointer;">
+                            OK
+                        </button>
                     </div>
                 </div>
             </div>
         `;
 
+        // Evento Expandir
         card.onclick = () => {
             if (!card.classList.contains("expandida")) {
                 card.classList.add("expandida");
@@ -113,6 +139,7 @@ function renderizar(lista) {
             }
         };
 
+        // Evento Cerrar
         card.querySelector(".close-btn").onclick = (e) => {
             e.stopPropagation();
             card.classList.remove("expandida");
@@ -124,53 +151,115 @@ function renderizar(lista) {
     });
 }
 
-// Funciones sociales y búsqueda se mantienen igual...
+// 4. FUNCIONES DE INTERACCIÓN SOCIAL
 async function share(id) {
     const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
-    await navigator.clipboard.writeText(url);
-    alert("Enlace copiado.");
+    try {
+        await navigator.clipboard.writeText(url);
+        alert("Enlace de acceso directo copiado al portapapeles.");
+    } catch (err) {
+        alert("No se pudo copiar el enlace automáticamente.");
+    }
 }
 
 async function fav(id) {
     const user = localStorage.getItem("user_admin");
-    if(!user) return alert("Inicia sesión.");
-    await fetch(`${API_URL}/favoritos/add`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({usuario:user, itemId:id})
-    });
-    alert("Guardado en favoritos.");
-}
+    if(!user) return alert("Debes iniciar sesión para guardar en tu Bóveda.");
+    
+    try {
+        const resCheck = await fetch(`${API_URL}/favoritos/${user}`);
+        const favs = await resCheck.json();
+        const existe = favs.find(f => f.itemId && (f.itemId._id === id || f.itemId === id));
 
-async function report(id) {
-    if(confirm("¿Reportar link caído?")) {
-        await fetch(`${API_URL}/items/report/${id}`, { method: 'PUT' });
-        alert("Reporte enviado.");
-        cargarContenido();
+        if (existe) {
+            const resDel = await fetch(`${API_URL}/favoritos/delete/${existe._id}`, { method: 'DELETE' });
+            if(resDel.ok) alert("🗑️ Objeto retirado de tu Bóveda.");
+        } else {
+            const resAdd = await fetch(`${API_URL}/favoritos/add`, {
+                method:'POST', 
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ usuario: user.trim(), itemId: id })
+            });
+            if(resAdd.ok) alert("✨ Objeto guardado en tu Bóveda.");
+        }
+    } catch (e) {
+        console.error("Error en la gestión de favoritos.");
     }
 }
 
+async function report(id) {
+    if(confirm("¿El link está caído o el archivo es incorrecto? Se enviará un reporte técnico.")) {
+        try {
+            const res = await fetch(`${API_URL}/items/report/${id}`, { method: 'PUT' });
+            if(res.ok) {
+                alert("Reporte registrado. Si llega a 3 reportes, el link entrará en revisión.");
+                cargarContenido();
+            }
+        } catch (e) { alert("Error al enviar reporte."); }
+    }
+}
+
+// 5. SISTEMA DE COMENTARIOS (CONTENEDOR FIJO)
 async function cargarComm(id) {
     const box = document.getElementById(`list-${id}`);
-    const res = await fetch(`${API_URL}/comentarios/${id}`);
-    const data = await res.json();
-    box.innerHTML = data.map(c => `<div class="comm-item"><strong>${c.usuario}:</strong> ${c.texto}</div>`).join('');
+    try {
+        // Obtenemos solo los comentarios vinculados a esta ID
+        const res = await fetch(`${API_URL}/comentarios/${id}`);
+        const data = await res.json();
+        
+        if (data.length === 0) {
+            box.innerHTML = `<p style="font-size: 0.7rem; color: #555; text-align: center; margin-top:10px;">No hay opiniones. ¡Sé el primero!</p>`;
+            return;
+        }
+
+        box.innerHTML = data.map(c => `
+            <div class="comm-item" style="background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 6px; border-left: 3px solid var(--primary);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                    <span style="color: var(--primary); font-size: 0.7rem; font-weight: bold;">@${c.usuario}</span>
+                    <span style="font-size:0.6rem; color:#444;">${new Date(c.fecha || Date.now()).toLocaleDateString()}</span>
+                </div>
+                <p style="font-size: 0.75rem; color: #ddd; line-height:1.3; margin:0;">${c.texto}</p>
+            </div>
+        `).join('');
+        
+        // Desplazar scroll al final
+        box.scrollTop = box.scrollHeight;
+    } catch (e) {
+        box.innerHTML = `<p style="color: #ff4343; font-size: 0.7rem; text-align:center;">Error al sincronizar opiniones.</p>`;
+    }
 }
 
 async function postComm(id) {
     const user = localStorage.getItem("user_admin");
-    const txt = document.getElementById(`input-${id}`).value;
-    if(!user || !txt.trim()) return;
-    await fetch(`${API_URL}/comentarios`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ usuario:user, texto:txt, itemId:id })
-    });
-    document.getElementById(`input-${id}`).value = "";
-    cargarComm(id);
+    const input = document.getElementById(`input-${id}`);
+    const txt = input.value;
+
+    if(!user) return alert("Inicia sesión para participar.");
+    if(!txt.trim()) return alert("El comentario no puede estar vacío.");
+
+    try {
+        const res = await fetch(`${API_URL}/comentarios`, {
+            method:'POST', 
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ usuario: user, texto: txt, itemId: id })
+        });
+        
+        if(res.ok) {
+            input.value = "";
+            cargarComm(id);
+        }
+    } catch (e) {
+        alert("Error al publicar.");
+    }
 }
 
+// 6. FILTRADO Y NAVEGACIÓN
 buscador.oninput = (e) => {
     const term = e.target.value.toLowerCase();
-    const filtrados = todosLosItems.filter(i => i.title.toLowerCase().includes(term));
+    const filtrados = todosLosItems.filter(i => 
+        i.title.toLowerCase().includes(term) || 
+        (i.category && i.category.toLowerCase().includes(term))
+    );
     renderizar(filtrados);
 };
 
@@ -184,4 +273,5 @@ btnMiPerfil.onclick = () => {
     }
 };
 
+// Inicialización
 document.addEventListener("DOMContentLoaded", cargarContenido);
