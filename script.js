@@ -43,6 +43,20 @@ async function cargarContenido() {
 
 function renderizar(lista) {
     output.innerHTML = "";
+
+    // LÓGICA DE "NO SE ENCONTRARON RESULTADOS"
+    if (lista.length === 0) {
+        output.innerHTML = `
+            <div class="no-results">
+                <ion-icon name="cloud-offline-outline"></ion-icon>
+                <h3>¡Vaya! La nube está vacía</h3>
+                <p>No encontramos lo que buscas. ¿Por qué no eres el primero en subirlo?</p>
+                <a href="https://roucedevstudio.github.io/Frontendappback/" class="btn-subir-vacio">SUBIR ARCHIVO</a>
+            </div>
+        `;
+        return;
+    }
+
     lista.forEach(item => {
         const card = document.createElement("div");
         card.className = "juego-card";
@@ -52,8 +66,6 @@ function renderizar(lista) {
         const statusClase = estaOnline ? "status-online" : "status-review";
         const statusTexto = estaOnline ? "Online" : "En Revisión";
         const statusIcon = estaOnline ? "checkmark-circle-sharp" : "alert-circle-sharp";
-
-        // Lógica de Categoría (Etiqueta)
         const categoriaLabel = item.category ? item.category : "Undefined";
 
         const esVideo = /\.(mp4|webm|mov)$/i.test(item.image);
@@ -82,10 +94,10 @@ function renderizar(lista) {
                 <div class="boton-descargar-full" onclick="event.stopPropagation(); window.open('${item.link}', '_blank')">ACCEDER A LA NUBE</div>
                 
                 <div class="comentarios-section">
-                    <h5 style="font-size: 0.7rem; color: #555; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Zona de Opiniones</h5>
+                    <h5 style="font-size: 0.7rem; color: #555; margin-bottom: 10px; text-transform: uppercase;">Zona de Opiniones</h5>
                     <div class="comentarios-list" id="list-${item._id}"></div>
                     <div class="add-comment">
-                        <input type="text" id="input-${item._id}" placeholder="Escribe algo brutal..." onclick="event.stopPropagation();">
+                        <input type="text" id="input-${item._id}" placeholder="Escribe algo..." onclick="event.stopPropagation();">
                         <button onclick="event.stopPropagation(); postComm('${item._id}')">OK</button>
                     </div>
                 </div>
@@ -112,26 +124,27 @@ function renderizar(lista) {
     });
 }
 
+// Funciones sociales y búsqueda se mantienen igual...
 async function share(id) {
     const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
     await navigator.clipboard.writeText(url);
-    alert("Enlace de la bóveda copiado.");
+    alert("Enlace copiado.");
 }
 
 async function fav(id) {
     const user = localStorage.getItem("user_admin");
-    if(!user) return alert("Inicia sesión para guardar favoritos.");
+    if(!user) return alert("Inicia sesión.");
     await fetch(`${API_URL}/favoritos/add`, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({usuario:user, itemId:id})
     });
-    alert("Guardado en tu bóveda personal.");
+    alert("Guardado en favoritos.");
 }
 
 async function report(id) {
-    if(confirm("¿Reportar que este link no funciona?")) {
+    if(confirm("¿Reportar link caído?")) {
         await fetch(`${API_URL}/items/report/${id}`, { method: 'PUT' });
-        alert("Reporte enviado. Revisaremos el estado del servidor.");
+        alert("Reporte enviado.");
         cargarContenido();
     }
 }
@@ -146,9 +159,7 @@ async function cargarComm(id) {
 async function postComm(id) {
     const user = localStorage.getItem("user_admin");
     const txt = document.getElementById(`input-${id}`).value;
-    if(!user) return alert("Debes estar logueado para comentar.");
-    if(!txt.trim()) return;
-    
+    if(!user || !txt.trim()) return;
     await fetch(`${API_URL}/comentarios`, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ usuario:user, texto:txt, itemId:id })
@@ -159,7 +170,8 @@ async function postComm(id) {
 
 buscador.oninput = (e) => {
     const term = e.target.value.toLowerCase();
-    renderizar(todosLosItems.filter(i => i.title.toLowerCase().includes(term)));
+    const filtrados = todosLosItems.filter(i => i.title.toLowerCase().includes(term));
+    renderizar(filtrados);
 };
 
 btnMiPerfil.onclick = () => {
