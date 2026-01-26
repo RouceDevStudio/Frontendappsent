@@ -386,3 +386,59 @@ header {
     font-weight: 800;
     box-shadow: 0 0 5px rgba(94, 255, 67, 0.2); /* Brillo sutil */
 }
+
+/* --- CLOUD LOADER ESTILOS --- */
+.cloud-loader-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 20px;
+    text-align: center;
+    position: relative;
+}
+
+.cloud-icon-anim {
+    font-size: 4rem;
+    color: var(--primary);
+    filter: drop-shadow(0 0 15px var(--primary));
+    margin-bottom: 20px;
+    z-index: 2;
+}
+
+.radar-circle {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    top: 30%; /* Ajustar según posición del icono */
+    animation: radar-pulse 2s infinite ease-out;
+    opacity: 0;
+}
+
+.cloud-loader-container p {
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    color: var(--primary);
+    text-transform: uppercase;
+    animation: text-pulse 1.5s infinite;
+}
+
+.cloud-loader-container span {
+    font-size: 0.7rem;
+    color: #555;
+    margin-top: 10px;
+}
+
+/* --- ANIMACIONES --- */
+@keyframes radar-pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes text-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}

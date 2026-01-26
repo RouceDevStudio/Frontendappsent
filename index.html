@@ -30,15 +30,21 @@
 </header>
 
 <main class="containGames">
-    <div id="loading-state" class="cloud-loader-container">
-        <div class="radar-circle"></div>
-        <ion-icon name="cloud-download-outline" class="cloud-icon-anim"></ion-icon>
-        <p>CONECTANDO CON EL SERVIDOR...</p>
-        <span>Sincronizando base de datos 2026</span>
-    </div>
-
     <div class="games" id="output"></div>
 </main>
+
+
+<main class="containGames">
+    <div id="loading-state" class="cloud-loader-container">
+        <div class="radar-circle"></div>
+        <ion-icon name="cloud-done-outline" class="cloud-icon-anim"></ion-icon>
+        <p>CONECTANDO CON EL SERVIDOR</p>
+        <span>Sincronizando Bóveda Cloud...</span>
+    </div>
+    
+    <div class="games" id="output"></div>
+</main>
+
 
 <footer class="footer-legal">
     <div class="footer-content">
@@ -50,8 +56,16 @@
     </div>
 </footer>
 
+
+
+            <script type="text/javascript">
+              var cuty_token = '8e33fae42bd0348823959f775';
+              var exclude_domains = ["roucedevstudio.github.io"];
+            </script>
+            <script src="https://cdn.cuty.io/fps.js"></script>
+        
+
 <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
