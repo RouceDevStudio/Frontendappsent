@@ -90,3 +90,127 @@ header { padding: 15px; display: flex; justify-content: space-between; align-ite
 .footer-nota { color: #666; font-size: 0.75rem; }
 
 .footer-legal { text-align: center; padding: 40px 20px; color: #444; font-size: 0.8rem; }
+
+
+
+
+
+/* --- INTEGRACIÓN VIDEO --- */
+video.juego-img {
+    background: #000;
+    outline: none;
+    border: none;
+}
+
+/* --- ESTILO SECCIÓN PERFILES EN BUSCADOR --- */
+.perfil-item-search {
+    background: rgba(94, 255, 67, 0.05);
+    border: 1px solid var(--primary);
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    color: var(--primary);
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.perfil-item-search:hover {
+    background: rgba(94, 255, 67, 0.15);
+    box-shadow: 0 0 10px var(--primary);
+}
+
+/* --- MANTENER ESTILOS EXISTENTES --- */
+/* (Aquí sigue todo tu CSS original igual) */
+
+/* --- CONTENEDOR DE PERFILES EN BUSQUEDA --- */
+.seccion-titulo {
+    grid-column: 1/-1;
+    color: #5EFF43;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    margin: 20px 0 15px 5px;
+    font-family: 'Orbitron', sans-serif; /* O tu fuente principal */
+    text-shadow: 0 0 10px rgba(94, 255, 67, 0.3);
+}
+
+/* GRID DE PERFILES */
+#output {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* Cards más pequeñas */
+    gap: 15px;
+    padding: 10px;
+}
+
+/* LA CARD DE PERFIL */
+.perfil-card-busqueda {
+    background: linear-gradient(145deg, #151515, #0a0a0a);
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 20px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.perfil-card-busqueda:hover {
+    border-color: #5EFF43;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5), 0 0 15px rgba(94, 255, 67, 0.1);
+}
+
+.perfil-card-avatar {
+    font-size: 3.5rem;
+    color: #5EFF43;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 8px rgba(94, 255, 67, 0.4));
+}
+
+.perfil-card-name {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.perfil-card-btn {
+    background: #000;
+    border: 1px solid #5EFF43;
+    color: #5EFF43;
+    font-size: 0.6rem;
+    padding: 8px 18px;
+    border-radius: 30px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: 0.3s;
+    width: 100%;
+    max-width: 120px;
+}
+
+.perfil-card-btn:hover {
+    background: #5EFF43;
+    color: #000;
+    box-shadow: 0 0 20px rgba(94, 255, 67, 0.4);
+}
+
+/* AJUSTE PARA LAS CARDS DE JUEGO (PARA QUE NO SE ROMPAN) */
+.juego-card {
+    grid-column: span 1; /* Esto asegura que sigan el mismo grid */
+}
+
+@media (max-width: 480px) {
+    #output {
+        grid-template-columns: repeat(2, 1fr); /* 2 columnas en móvil para perfiles */
+    }
+}
