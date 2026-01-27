@@ -60,9 +60,9 @@ header {
 
 .header-right-actions { display: flex; gap: 10px; }
 
-.UpIcon, .ProfileIcon { 
-    width: 45px; 
-    height: 45px; 
+.UpIcon, .ProfileIcon, .reportButton { 
+    width: 44px; 
+    height: 44px; 
     border-radius: 50%; 
     border: 2px solid var(--primary); 
     display: flex; 
@@ -71,14 +71,16 @@ header {
     background: #2B2B2B; 
     cursor: pointer; 
     transition: transform var(--transition);
-    will-change: transform; /* Optimiza carga de GPU */
+    will-change: transform;
+    /* Optimiza carga de GPU */
 }
 
-.UpIcon:hover, .ProfileIcon:hover { transform: scale(1.05); }
+.UpIcon:hover, .ProfileIcon, .reportButton:hover { transform: scale(1.05); }
 
-.UpIcon ion-icon, .ProfileIcon ion-icon { 
+.UpIcon ion-icon, .ProfileIcon ion-icon, .reportButton ion-icon
+{ 
     color: var(--primary); 
-    font-size: 1.5rem; 
+    font-size: 1.8rem; 
 }
 
 /* --- GRID DE JUEGOS (UNIFICADO) --- */
