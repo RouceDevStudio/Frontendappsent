@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UpGames | Redirección Segura</title>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <style>
+        :root { --neon-green: #39FF14; --dark-bg: #0a0a0a; --card-bg: #1a1a1a; }
+        body { background-color: var(--dark-bg); color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow-x: hidden; }
+        .container { background: var(--card-bg); padding: 30px; border-radius: 20px; border: 1px solid rgba(57, 255, 20, 0.2); box-shadow: 0 0 20px rgba(0,0,0,0.5); max-width: 90%; width: 450px; text-align: center; }
+        h1 { color: var(--neon-green); font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; }
+        p { color: #aaa; font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px; }
+        .ad-space { background: #000; border: 1px dashed var(--neon-green); padding: 40px 10px; margin: 20px 0; border-radius: 10px; color: #555; }
+        #timer { font-size: 1.2rem; font-weight: bold; color: var(--neon-green); margin: 20px 0; }
+        .btn-neon { background: var(--neon-green); color: #000; padding: 15px 40px; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; box-shadow: 0 0 15px rgba(57, 255, 20, 0.4); display: none; margin: 0 auto; }
+        .btn-neon:hover { transform: scale(1.05); box-shadow: 0 0 25px var(--neon-green); }
+        .footer-note { font-size: 0.7rem; color: #444; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <ion-icon name="shield-checkmark-outline" style="font-size: 48px; color: var(--neon-green);"></ion-icon>
+        <h1>Saliendo de UpGames</h1>
+        <p>Estás siendo redirigido a un servidor externo. Recuerda que UpGames es un directorio neutral y no almacena archivos.</p>
+
+        <div class="ad-space">
+            <span>ESPACIO PUBLICITARIO</span>
+        </div>
+
+        <div id="timer">Preparando enlace en 25...</div>
+        <button id="btn" class="btn-neon">Obtener Enlace</button>
+
+        <div class="ad-space">
+            <span>ESPACIO PUBLICITARIO</span>
+        </div>
+
+        <div class="footer-note">
+            La responsabilidad legal recae en el usuario que indexó el link.
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const destino = urlParams.get('dest');
+        let countdown = 10;
+
+        const interval = setInterval(() => {
+            countdown--;
+            document.getElementById('timer').innerText = `Preparando enlace en ${countdown}...`;
+            if (countdown <= 0) {
+                clearInterval(interval);
+                document.getElementById('timer').style.display = 'none';
+                const b = document.getElementById('btn');
+                b.style.display = 'block';
+                b.onclick = () => { 
+                    if(destino) window.location.href = decodeURIComponent(destino);
+                    else alert("Error: No se encontró el destino.");
+                };
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

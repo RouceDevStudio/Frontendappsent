@@ -202,3 +202,38 @@ async function postComm(id) {
 }
 
 document.addEventListener("DOMContentLoaded", cargarContenido);
+
+
+// 7. SISTEMA DE PUENTE Y MONETIZACIÓN (ADAPTADO A RENDERIZADO DINÁMICO)
+document.addEventListener('click', function(e) {
+    // Buscamos si el clic fue en un enlace (etiqueta <a>)
+    const anchor = e.target.closest('a');
+    
+    if (anchor && anchor.href) {
+        const urlDestino = anchor.href;
+
+        // EXCLUSIÓN 1: Correo legal mr.m0onster@protonmail.com
+        if (urlDestino.includes('mailto:mr.m0onster@protonmail.com')) {
+            return; // No interrumpir contacto legal
+        }
+
+        // EXCLUSIÓN 2: Dominios internos y de desarrollo
+        const dominiosSeguros = [
+            'roucedevstudio.github.io',
+            'backendapp-037y.onrender.com', // Tu API
+            window.location.hostname
+        ];
+
+        const esSeguro = dominiosSeguros.some(dominio => urlDestino.includes(dominio));
+
+        // REDIRECCIÓN AL PUENTE: Solo si es un link externo (como Mediafire, Mega, etc.)
+        if (!esSeguro) {
+            e.preventDefault(); 
+            e.stopPropagation(); // Evita conflictos con el onclick de la card
+            
+            // Redirigir a tu puente en la raíz del repositorio
+            const puenteUrl = './puente.html?dest=' + encodeURIComponent(urlDestino);
+            window.location.href = puenteUrl;
+        }
+    }
+}, true); // El parámetro 'true' es vital: captura el evento antes que otros scripts
