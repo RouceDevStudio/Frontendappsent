@@ -6,14 +6,13 @@ const loadingState = document.getElementById("loading-state");
 
 let todosLosItems = [];
 
-// 1. DESPERTADOR INMEDIATO (Se ejecuta al instante)
+// 1. DESPERTADOR INMEDIATO
 (function despertar() {
     fetch(`${API_URL}/items`, { mode: 'no-cors' }).catch(() => {});
 })();
 
 // 2. CARGA DE DATOS CENTRALIZADA
 async function cargarContenido() {
-    // Verificar términos
     if (!localStorage.getItem("terminos_aceptados_v2")) {
         alert("AVISO LEGAL:\n1. Servicio técnico.\n2. Responsabilidad del usuario.\n3. UpGames no edita contenido ajeno.");
         localStorage.setItem("terminos_aceptados_v2", "true");
@@ -28,7 +27,6 @@ async function cargarContenido() {
         todosLosItems = data.filter(i => i.status === "aprobado");
         renderizar(todosLosItems);
         
-        // Manejo de compartido por ID
         const sharedId = new URLSearchParams(window.location.search).get('id');
         if (sharedId) setTimeout(() => document.querySelector(`[data-id="${sharedId}"]`)?.click(), 500);
         
@@ -79,7 +77,15 @@ function renderizar(lista) {
                     <button class="action-btn" onclick="event.stopPropagation(); report('${item._id}')"><ion-icon name="flag-sharp"></ion-icon></button>
                 </div>
                 <p class="cloud-note">${item.description || 'Sin descripción.'}</p>
-                <div class="boton-descargar-full" onclick="event.stopPropagation(); window.open('${item.link}', '_blank')">ACCEDER A LA NUBE</div>
+                
+                <div class="boton-descargar-full" style="position:relative; cursor:pointer;">
+                    <a href="${item.link}" target="_blank" 
+                       style="position:absolute; top:0; left:0; width:100%; height:100%; text-decoration:none; color:inherit; display:flex; align-items:center; justify-content:center;"
+                       onclick="event.stopPropagation();">
+                       ACCEDER A LA NUBE
+                    </a>
+                    <span style="visibility:hidden">ACCEDER A LA NUBE</span>
+                </div>
                 
                 <div class="comentarios-section">
                     <h5 style="color:var(--primary); font-size:0.7rem; margin-bottom:10px;">OPINIONES</h5>
@@ -110,6 +116,11 @@ function renderizar(lista) {
         fragment.appendChild(card);
     });
     output.appendChild(fragment);
+
+    // FORZAR ESCANEO DE CUTY
+    if (typeof cuty_init === 'function') {
+        setTimeout(cuty_init, 400);
+    }
 }
 
 // 4. FUNCIONES DE PERFIL Y NAVEGACIÓN
@@ -126,7 +137,7 @@ document.getElementById("btn-mi-perfil").onclick = () => {
     else { window.location.href = "https://roucedevstudio.github.io/LoginApp/"; }
 };
 
-// 5. BUSCADOR (Usuarios, Títulos y Categorías)
+// 5. BUSCADOR
 buscador.oninput = (e) => {
     const term = e.target.value.toLowerCase().trim();
     const filtrados = todosLosItems.filter(i =>
@@ -135,7 +146,7 @@ buscador.oninput = (e) => {
     renderizar(filtrados);
 };
 
-// 6. FUNCIONES SOCIALES (API)
+// 6. FUNCIONES SOCIALES
 async function share(id) {
     const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
     await navigator.clipboard.writeText(url);
