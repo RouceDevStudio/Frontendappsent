@@ -408,3 +408,58 @@ header {
 }
 
 .footer-legal { text-align: center; padding: 40px 20px; color: #666; font-size: 0.75rem; }
+
+
+/* --- MIS FUNCIONES DE PERSONALIZACIÓN --- */
+
+/* 1. Tipografía Cyber (Idea 2) */
+.font-cyber {
+    letter-spacing: 0.5px;
+    text-transform: none;
+}
+.font-cyber .juego-titulo {
+    font-family: 'Courier New', monospace; /* Look de código/hacker */
+    font-weight: 900;
+}
+
+/* 2. Neón Respiratorio (Idea 2) */
+.neon-breathing .juego-card {
+    animation: neon-pulse 4s infinite ease-in-out;
+}
+
+@keyframes neon-pulse {
+    0%, 100% { border-color: rgba(94, 255, 67, 0.2); box-shadow: 0 0 5px rgba(var(--primary), 0.1); }
+    50% { border-color: var(--primary); box-shadow: 0 0 15px rgba(var(--primary), 0.3); }
+}
+
+/* 3. Brillo Reactivo al Tacto (Idea 2) */
+.juego-card:active {
+    filter: brightness(1.2) drop-shadow(0 0 10px var(--primary));
+    transform: scale(0.98);
+}
+
+/* 4. Filtro de Cristal Pro (Idea 3) */
+.glass-panel {
+    background: rgba(10, 10, 10, 0.7) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* --- TU IDEA: MODO CARPETA / LISTA --- */
+.view-mode-list .juego-card {
+    height: auto;
+    padding: 10px;
+    grid-template-columns: 80px 1fr auto; /* Estructura de fila */
+    display: grid !important;
+    gap: 15px;
+}
+
+.view-mode-list .juego-img {
+    width: 80px !important;
+    height: 60px !important;
+    border-radius: 8px;
+}
+
+.view-mode-list .cloud-note, 
+.view-mode-list .status-badge { display: none; } /* Limpieza para velocidad */

@@ -232,8 +232,37 @@ document.addEventListener('click', function(e) {
             e.stopPropagation(); // Evita conflictos con el onclick de la card
             
             // Redirigir a tu puente en la raíz del repositorio
-            const puenteUrl = './puente.html?dest=' + encodeURIComponent(urlDestino);
+            const puenteUrl = './puente.html?d:est=' + encodeURIComponent(urlDestino);
             window.location.href = puenteUrl;
         }
     }
 }, true); // El parámetro 'true' es vital: captura el evento antes que otros scripts
+
+// --- UPGAMES ULTIMATE PERSONALIZATION PLUGIN ---
+(function applyUltimateStyle() {
+    const config = JSON.parse(localStorage.getItem("user_style")) || {
+        themeColor: "#5EFF43",
+        layoutMode: "grid",
+        neonStyle: "breathing", // Idea: Neón que respira
+        fontStyle: "cyber",      // Idea: Tipografía técnica
+        glowLevel: "high"        // Idea: Intensidad de brillo
+    };
+
+    const root = document.documentElement;
+
+    // A. Aplicar Color y Brillo (Idea: Glow Dinámico)
+    root.style.setProperty('--primary', config.themeColor);
+    const glowOpacity = config.glowLevel === 'high' ? '0.6' : '0.2';
+    root.style.setProperty('--glow-opacity', glowOpacity);
+
+    // B. Inyectar Clases de Comportamiento (Mis Ideas)
+    const body = document.body;
+    body.classList.add(`font-${config.fontStyle}`);
+    if (config.neonStyle === 'breathing') body.classList.add('neon-breathing');
+
+    // C. Modo de Estructura (Tu Idea + Mi optimización)
+    const outputGrid = document.getElementById("output");
+    if (config.layoutMode === "list") {
+        outputGrid.classList.add('view-mode-list');
+    }
+})();

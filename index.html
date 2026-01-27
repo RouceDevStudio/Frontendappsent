@@ -116,36 +116,31 @@
 </div>
 
 <script>
-function aceptarTerminos() {
-    const modal = document.getElementById('modal-terminos');
-    modal.style.transition = "opacity 0.5s ease, transform 0.5s ease";
-    modal.style.opacity = "0";
-    modal.style.transform = "scale(0.95)";
-    setTimeout(() => {
-        modal.style.display = 'none';
-    }, 500);
-    localStorage.setItem('upgames_v26_auth', 'true');
-}
-
 window.onload = function() {
-    if(localStorage.getItem('upgames_v26_auth') === 'true') {
+    // 1. Verificamos si ya existe la marca en LocalStorage
+    if (localStorage.getItem('upgames_terms_accepted') === 'true') {
         document.getElementById('modal-terminos').style.display = 'none';
-    }
-}
-</script>
-
-
-<script>
-// Lógica de LocalStorage para que solo aparezca una vez
-window.onload = function() {
-    if (!localStorage.getItem('upgames_terms_accepted')) {
+    } else {
+        // Si no existe, nos aseguramos de que el modal sea visible
         document.getElementById('modal-terminos').style.display = 'flex';
     }
 }
 
 function aceptarTerminos() {
+    const modal = document.getElementById('modal-terminos');
+    
+    // 2. Aplicamos la animación de salida (opcional pero elegante)
+    modal.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+    modal.style.opacity = "0";
+    modal.style.transform = "scale(0.95)";
+    
+    // 3. Guardamos la confirmación en LocalStorage
     localStorage.setItem('upgames_terms_accepted', 'true');
-    document.getElementById('modal-terminos').style.display = 'none';
+    
+    // 4. Quitamos el modal del flujo de la página tras la animación
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 500);
 }
 </script>
 
