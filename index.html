@@ -63,49 +63,77 @@
     </div>
 </footer>
 
-<div id="modal-terminos" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; justify-content:center; align-items:center; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-    <div style="background:#0a0a0a; border: 2px solid #00f2ff; box-shadow: 0 0 20px #00f2ff; width:90%; max-width:550px; padding:30px; border-radius:20px; color:white; max-height: 85vh; overflow-y: auto;">
+<div id="modal-terminos" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.97); z-index:9999; justify-content:center; align-items:center; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; backdrop-filter: blur(15px); padding: 15px; box-sizing: border-box;">
+    <div style="background:#0a0a0a; border: 2px solid #00f2ff; box-shadow: 0 0 30px rgba(0, 242, 255, 0.4); width:100%; max-width:580px; padding: clamp(20px, 5vw, 40px); border-radius:25px; color:white; max-height: 92vh; overflow-y: auto; position: relative; box-sizing: border-box;">
         
-        <h2 style="color:#00f2ff; text-align:center; margin-top:0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">¡BIENVENIDO A UPGAMES! 🚀</h2>
-        
-        <p style="font-size:15px; color:#bbb; text-align:center; margin-bottom: 20px;">Antes de comenzar, debes conocer y aceptar los pilares de nuestra plataforma:</p>
-
-        <h3 style="color:#ff00ff; font-size:18px; margin-bottom:8px; border-bottom: 1px solid #333;">1. TÉRMINOS LEGALES ⚖️</h3>
-        <ul style="font-size:14px; padding-left:20px; color:#eee; line-height: 1.5;">
-            <li><b>Directorio Neutral:</b> UpGames <b>no aloja ni distribuye archivos</b>. Somos un directorio técnico de metadatos indexados por la comunidad.</li>
-            <li><b>Responsabilidad:</b> El usuario que indexa un enlace es el único responsable legal del mismo. UpGames es un intermediario técnico pasivo.</li>
-            <li><b>Contacto Legal:</b> Para reclamaciones de derechos de autor, escríbenos a <b>mr.m0onster@protonmail.com</b>. Actuamos en un plazo de 24-72 horas.</li>
-        </ul>
-
-        <h3 style="color:#ff00ff; font-size:18px; margin-bottom:8px; border-bottom: 1px solid #333; margin-top: 20px;">2. POLÍTICAS DE SEGURIDAD 🔐</h3>
-        <ul style="font-size:14px; padding-left:20px; color:#eee; line-height: 1.5;">
-            <li><b>Tolerancia Cero:</b> Prohibido el contenido adulto (NSFW), gore o violencia. El sistema filtra por palabras clave y elimina contenido infractor automáticamente.</li>
-            <li><b>Filtros de Seguridad:</b> Bloqueamos automáticamente archivos ejecutables (.exe) y acortadores maliciosos para proteger la integridad de tu dispositivo.</li>
-            <li><b>Régimen Disciplinario:</b> Dos advertencias equivalen al <b>baneo permanente</b> de la cuenta y el borrado total de tu contenido.</li>
-        </ul>
-
-        <h3 style="color:#ff00ff; font-size:18px; margin-bottom:8px; border-bottom: 1px solid #333; margin-top: 20px;">3. BENEFICIOS Y COMUNIDAD 🎮</h3>
-        <ul style="font-size:14px; padding-left:20px; color:#eee; line-height: 1.5;">
-            <li><b>Apoyo Indie:</b> Si eres desarrollador de juegos o software, ¡publícalo aquí <b>GRATIS</b>! Promociona tus proyectos sin pagar cuotas ni comisiones.</li>
-            <li><b>Sistema de Niveles:</b> Sube de rango para ganar reputación, insignias de verificación y mayor visibilidad en el feed principal.</li>
-            <li><b>Interfaz Gamer:</b> Navegación ultra rápida en modo oscuro neón, 100% intuitiva y optimizada para alto rendimiento.</li>
-        </ul>
-
-        <div style="text-align: center; margin-top: 25px;">
-            <a href="./terminos&condiciones.html" style="color: #00f2ff; text-decoration: none; font-size: 14px; border-bottom: 1px solid #00f2ff; padding-bottom: 2px;">
-                Conoce más sobre nuestros términos y condiciones
-            </a>
+        <div style="text-align:center; margin-bottom: 25px;">
+            <h2 style="color:#00f2ff; margin:0; font-size: clamp(22px, 6vw, 28px); text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 15px #00f2ff;">UPGAMES 🚀</h2>
+            <p style="font-size:12px; color:#39ff14; font-weight: bold; text-transform: uppercase; margin-top: 5px;">Protocolo de Seguridad y Comunidad</p>
         </div>
 
-        <p style="font-size:12px; color:#888; text-align:center; margin-top: 15px;">
-            Al presionar "ACEPTAR", declaras que eres responsable de tu actividad y que conoces nuestra naturaleza como directorio técnico.
-        </p>
+        <div style="margin-bottom: 20px; background: rgba(57, 255, 20, 0.05); padding: 18px; border-radius: 15px; border: 1px solid rgba(57, 255, 20, 0.2);">
+            <h3 style="color:#39ff14; font-size:17px; margin: 0 0 12px 0; display: flex; align-items: center; gap: 10px; text-transform: uppercase;">🛡️ Navegación Blindada</h3>
+            <ul style="font-size:13.5px; padding-left:18px; color:#eee; line-height: 1.6; margin: 0;">
+                <li><b>Escudo Anti-Malware:</b> Filtramos técnicamente cada post para bloquear <b>ejecutables (.exe)</b> y scripts maliciosos.</li>
+                <li><b>Privacidad Total:</b> No solicitamos correos, números ni IPs. Tu anonimato es nuestra prioridad.</li>
+                <li><b>Límite Técnico:</b> El control de UpGames termina en el enlace; la seguridad externa es responsabilidad del host.</li>
+            </ul>
+        </div>
 
-        <button onclick="aceptarTerminos()" style="width:100%; background:#00f2ff; border:none; padding:15px; color:black; font-weight:bold; border-radius:10px; cursor:pointer; margin-top:10px; box-shadow: 0 0 15px #00f2ff; font-size: 16px;">
-            ACEPTAR Y CONTINUAR
-        </button>
+        <div style="margin-bottom: 20px; background: rgba(0, 242, 255, 0.05); padding: 18px; border-radius: 15px; border: 1px solid rgba(0, 242, 255, 0.2);">
+            <h3 style="color:#00f2ff; font-size:17px; margin: 0 0 12px 0; display: flex; align-items: center; gap: 10px; text-transform: uppercase;">🌐 Red Social Gamer</h3>
+            <ul style="font-size:13.5px; padding-left:18px; color:#eee; line-height: 1.6; margin: 0;">
+                <li><b>Interactúa:</b> Sigue publicadores, da Likes y personaliza tu perfil con insignias de rango.</li>
+                <li><b>Launchpad Indie:</b> Espacio 100% gratuito para promocionar tu software sin comisiones.</li>
+            </ul>
+        </div>
+
+        <div style="margin-bottom: 20px; background: rgba(255, 0, 60, 0.1); padding: 18px; border-radius: 15px; border: 1px solid #ff003c;">
+            <h3 style="color:#ff003c; font-size:17px; margin: 0 0 12px 0; text-transform: uppercase; font-weight: bold;">⚠️ Compromiso Obligatorio</h3>
+            <p style="font-size:13px; color:#eee; line-height: 1.5; margin: 0;">
+                Al presionar <b>ACEPTAR</b>, usted declara conocer y aceptar formalmente nuestras condiciones de uso, exenciones de responsabilidad y la jurisdicción de la República de Colombia. El uso de esta interfaz implica su adhesión legal total a nuestros términos.
+            </p>
+        </div>
+
+        <div style="text-align: center; padding: 0 10px;">
+            <p style="font-size:13px; color:#bbb; margin-bottom: 15px;">
+                Cualquier infracción de copyright debe reportarse a <b>mr.m0onster@protonmail.com</b>.
+            </p>
+            
+            <a href="./terminos&condiciones.html" target="_blank" style="color: #00f2ff; text-decoration: none; font-size: 13px; border-bottom: 1px solid #00f2ff; padding-bottom: 2px; opacity: 0.8;">
+                VER CLÁUSULAS Y TÉRMINOS COMPLETOS
+            </a>
+            
+            <p style="font-size:11px; color:#666; margin: 20px 0 15px 0; font-style: italic;">
+                Usted confirma bajo gravedad de juramento que conoce nuestra naturaleza como directorio técnico pasivo.
+            </p>
+
+            <button onclick="aceptarTerminos()" style="width:100%; background: linear-gradient(90deg, #00f2ff, #39ff14); border:none; padding:18px; color:black; font-weight:900; border-radius:15px; cursor:pointer; box-shadow: 0 0 20px rgba(0, 242, 255, 0.5); font-size: 17px; text-transform: uppercase; letter-spacing: 1px;">
+                ACEPTAR Y CONTINUAR
+            </button>
+        </div>
     </div>
 </div>
+
+<script>
+function aceptarTerminos() {
+    const modal = document.getElementById('modal-terminos');
+    modal.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+    modal.style.opacity = "0";
+    modal.style.transform = "scale(0.95)";
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 500);
+    localStorage.setItem('upgames_v26_auth', 'true');
+}
+
+window.onload = function() {
+    if(localStorage.getItem('upgames_v26_auth') === 'true') {
+        document.getElementById('modal-terminos').style.display = 'none';
+    }
+}
+</script>
+
 
 <script>
 // Lógica de LocalStorage para que solo aparezca una vez
