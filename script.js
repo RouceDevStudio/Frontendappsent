@@ -1,7 +1,6 @@
 /**
- * UPGAMES CLOUD PRO - NÚCLEO TOTAL RESTAURADO v2
- * ESTADO: 100% FUNCIONAL Y CONECTADO
- * FUNCIONES PROTEGIDAS: Bóveda, Reportes, Compartir, Perfil, Input, Buscador y Comentarios.
+ * UPGAMES CLOUD PRO - NÚCLEO OUTPUT TOTAL v4.1
+ * SYNC STATUS: FULL COMPATIBILITY WITH BACKEND 2026
  */
 
 const API_URL = "https://backendapp-037y.onrender.com";
@@ -9,24 +8,23 @@ const output = document.getElementById("output");
 const buscador = document.getElementById("buscador");
 let todosLosItems = [];
 
-// 1. CARGA INICIAL (Carga contenido y sincroniza Aura antes de mostrar)
+// 1. CARGA INICIAL Y ESTILO
 async function cargarContenido() {
     try {
-        // Ejecutamos el estilo primero para evitar el flash verde
         await aplicarEstiloUsuario(); 
         
         const res = await fetch(`${API_URL}/items`);
         const data = await res.json();
         
-        // Solo mostramos lo aprobado por el Admin
-        todosLosItems = data.filter(i => i.status === "aprobado");
+        // AJUSTE: Sincronización con estados del backend (Inglés)
+        todosLosItems = data.filter(i => i.status === "approved" || i.status === "aprobado");
         
         const loading = document.getElementById("loading-state");
         if (loading) loading.style.display = "none";
         
         renderizar(todosLosItems);
         
-        // Soporte para links compartidos directamente
+        // Soporte para links directos
         const sharedId = new URLSearchParams(window.location.search).get('id');
         if (sharedId) {
             setTimeout(() => {
@@ -35,24 +33,25 @@ async function cargarContenido() {
             }, 800);
         }
     } catch (e) {
-        console.error("Error en la carga inicial");
+        console.error("Fallo en carga inicial. Reintentando...");
         setTimeout(cargarContenido, 3000);
     }
 }
 
-// 2. BUSCADOR DINÁMICO (Función Sagrada - Intacta)
+// 2. BUSCADOR DINÁMICO (Ajustado a i.username)
 if (buscador) {
     buscador.addEventListener("input", (e) => {
         const term = e.target.value.toLowerCase().trim();
-        const filtrados = todosLosItems.filter(i => 
-            (i.title && i.title.toLowerCase().includes(term)) || 
-            (i.usuario && i.usuario.toLowerCase().includes(term))
-        );
+        const filtrados = todosLosItems.filter(i => {
+            const user = i.username || i.usuario || 'CloudUser';
+            return (i.title && i.title.toLowerCase().includes(term)) || 
+                   (user.toLowerCase().includes(term));
+        });
         renderizar(filtrados);
     });
 }
 
-// 3. MOTOR DE RENDERIZADO (Mantiene todas las acciones: Fav, Share, Report)
+// 3. MOTOR DE RENDERIZADO
 function renderizar(lista) {
     if (!output) return;
     output.innerHTML = "";
@@ -61,6 +60,9 @@ function renderizar(lista) {
         const card = document.createElement("div");
         card.className = "juego-card";
         card.setAttribute("data-id", item._id);
+        
+        // El backend usa 'username'
+        const userDisplay = item.username || item.usuario || 'CloudUser';
         
         const esVideo = /\.(mp4|webm|mov)$/i.test(item.image);
         const media = esVideo ? 
@@ -72,7 +74,7 @@ function renderizar(lista) {
             <div class="status-badge">Online</div>
             ${media}
             <div class="card-content">
-                <span class="user-tag" onclick="event.stopPropagation(); visitarPerfil('${item.usuario}')">@${item.usuario || 'CloudUser'}</span>
+                <span class="user-tag" onclick="event.stopPropagation(); visitarPerfil('${userDisplay}')">@${userDisplay}</span>
                 <h4 class="juego-titulo">${item.title}</h4>
                 
                 <div class="social-actions">
@@ -101,6 +103,7 @@ function renderizar(lista) {
                 </div>
             </div>`;
 
+        // Expandir card
         card.onclick = (e) => {
             if (e.target.closest('.boton-descargar-full') || e.target.closest('.user-tag') || e.target.closest('.action-btn')) return; 
             if (!card.classList.contains("expandida")) {
@@ -110,6 +113,7 @@ function renderizar(lista) {
             }
         };
 
+        // Cerrar card
         card.querySelector(".close-btn").onclick = (e) => {
             e.stopPropagation();
             card.classList.remove("expandida");
@@ -120,36 +124,40 @@ function renderizar(lista) {
     });
 }
 
-// 4. SISTEMA DE PUENTE (Función Sagrada - Intacta)
+// 4. SISTEMA DE PUENTE
 document.addEventListener('click', function(e) {
     const link = e.target.closest('a');
     if (link && link.href) {
         const url = link.href;
         const dominiosSeguros = ['roucedevstudio.github.io', 'backendapp-037y.onrender.com', window.location.hostname];
-        const esExterno = !dominiosSeguros.some(d => url.includes(d)) && !url.includes('mailto:');
+        const esExterno = !dominiosSeguros.some(d => url.includes(d)) && !url.includes('mailto:') && !url.includes('javascript:');
 
-        if (esExterno) {
+        if (esExterno && link.classList.contains('boton-descargar-full')) {
             e.preventDefault();
             window.location.href = './puente.html?d:est=' + encodeURIComponent(url);
         }
     }
 }, true);
 
-// 5. REDIRECCIÓN A PERFIL (Función Sagrada - Intacta)
-function visitarPerfil(usuario) {
-    if (!usuario || usuario === 'undefined') {
+// 5. REDIRECCIÓN A PERFIL
+function visitarPerfil(username) {
+    if (!username || username === 'undefined') {
         alert("Usuario no identificado.");
         return;
     }
-    localStorage.setItem("ver_perfil_de", usuario);
+    localStorage.setItem("ver_perfil_de", username);
     window.location.href = "https://roucedevstudio.github.io/PerfilApp/";
 }
 
-// 6. DETECTOR GLOBAL HEADER (Maneja Perfil e Input/Subir contenido)
+// 6. DETECTOR HEADER
 document.addEventListener("click", (e) => {
-    // Detecta tanto el icono de perfil como el de subir (UpIcon)
     const btnPerfil = e.target.closest(".ProfileIcon") || e.target.closest(".UpIcon");
-    const btnUpload = e.target.closest(".UploadBtn") || e.target.closest(".UpIconUpload"); // Ajusta según tu clase de "Subir"
+    const btnUpload = e.target.closest(".UploadBtn") || e.target.closest(".UpIconUpload"); 
+
+    if (btnUpload) {
+        window.location.href = "https://roucedevstudio.github.io/SubirApp/";
+        return;
+    }
     
     if (btnPerfil) {
         const miUsuario = localStorage.getItem("user_admin");
@@ -161,22 +169,22 @@ document.addEventListener("click", (e) => {
     }
 });
 
-// 7. BÓVEDA (Like/Fav - Conectado al Backend)
+// 7. BÓVEDA
 async function fav(id) {
     const u = localStorage.getItem("user_admin");
-    if(!u) return alert("Inicia sesión para guardar en la Bóveda.");
+    if(!u) return alert("Inicia sesión para guardar.");
     try {
-        const res = await fetch(`${API_URL}/favoritos/add`, {
+        const res = await fetch(`${API_URL}/favorites/add`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ usuario: u, itemId: id })
+            body: JSON.stringify({ username: u, itemId: id })
         });
         if (res.ok) alert("✅ Guardado en tu Bóveda.");
         else alert("ℹ️ Ya está en tu Bóveda.");
-    } catch (e) { alert("❌ Error de servidor."); }
+    } catch (e) { alert("Error de red."); }
 }
 
-// 8. REPORTES Y COMPARTIR (Funciones Sagradas - Intactas)
+// 8. REPORTES Y COMPARTIR
 async function report(id) {
     if (confirm("¿Reportar error en este link?")) {
         await fetch(`${API_URL}/items/report/${id}`, { method: 'PUT' });
@@ -187,16 +195,20 @@ async function report(id) {
 async function share(id) {
     const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
     await navigator.clipboard.writeText(url);
-    alert("Link de acceso copiado.");
+    alert("Enlace copiado al portapapeles.");
 }
 
-// 9. COMENTARIOS (Función Sagrada - Intacta)
+// 9. COMENTARIOS (Carga y Post - Sincronizado con variables 'username' y 'text')
 async function cargarComm(id) {
     const box = document.getElementById(`list-${id}`);
     try {
-        const res = await fetch(`${API_URL}/comentarios/${id}`);
+        const res = await fetch(`${API_URL}/comments/${id}`);
         const data = await res.json();
-        box.innerHTML = data.map(c => `<div class="comm-item"><b>@${c.usuario}:</b> ${c.texto}</div>`).join('') || "Sin opiniones aún.";
+        box.innerHTML = data.map(c => {
+            const user = c.username || c.usuario || 'Anónimo';
+            const texto = c.text || c.texto || '';
+            return `<div class="comm-item"><b>@${user}:</b> ${texto}</div>`;
+        }).join('') || "Sin opiniones aún.";
     } catch(e) { box.innerHTML = "Error."; }
 }
 
@@ -204,22 +216,22 @@ async function postComm(id) {
     const u = localStorage.getItem("user_admin");
     const input = document.getElementById(`input-${id}`);
     if(!u || !input.value.trim()) return;
-    await fetch(`${API_URL}/comentarios`, {
+    
+    await fetch(`${API_URL}/comments`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ usuario: u, texto: input.value, itemId: id })
+        body: JSON.stringify({ username: u, text: input.value, itemId: id })
     });
     input.value = "";
     cargarComm(id);
 }
 
-// 10. PERSONALIZACIÓN GLOBAL (SINCRONIZACIÓN POR USUARIO)
+// 10. AURA Y PERSONALIZACIÓN
 async function aplicarEstiloUsuario() {
     const miUsuario = localStorage.getItem("user_admin");
-    
-    // Respaldo local inmediato
     const auraColor = localStorage.getItem('upgames_aura_color');
     const colorInicial = auraColor || "#5EFF43";
+
     document.documentElement.style.setProperty('--primary', colorInicial);
     document.documentElement.style.setProperty('--neon-green', colorInicial);
 
@@ -233,7 +245,7 @@ async function aplicarEstiloUsuario() {
                 document.documentElement.style.setProperty('--neon-green', colorServer);
                 localStorage.setItem('upgames_aura_color', colorServer);
             }
-        } catch(e) { console.warn("Usando datos locales temporalmente."); }
+        } catch(e) { console.warn("Usando caché local."); }
     }
 }
 
