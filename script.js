@@ -1,6 +1,6 @@
 /**
- * UPGAMES CLOUD PRO - NÚCLEO TOTAL RESTAURADO
- * INCLUYE: BUSCADOR, PUENTE, FAVORITOS, REPORTES, COMENTARIOS Y PERFILES
+ * UPGAMES CLOUD PRO - NÚCLEO TOTAL RESTAURADO v2
+ * FIX: REDIRECCIÓN DE PERFIL Y COMPATIBILIDAD GLOBAL
  */
 
 const API_URL = "https://backendapp-037y.onrender.com";
@@ -8,12 +8,11 @@ const output = document.getElementById("output");
 const buscador = document.getElementById("buscador");
 let todosLosItems = [];
 
-// 1. CARGA INICIAL Y DESPERTAR DEL SERVIDOR
+// 1. CARGA INICIAL
 async function cargarContenido() {
     try {
         const res = await fetch(`${API_URL}/items`);
         const data = await res.json();
-        // Filtramos solo los aprobados
         todosLosItems = data.filter(i => i.status === "aprobado");
         
         const loading = document.getElementById("loading-state");
@@ -36,7 +35,7 @@ async function cargarContenido() {
     }
 }
 
-// 2. BUSCADOR (RESTAURADO)
+// 2. BUSCADOR DINÁMICO
 if (buscador) {
     buscador.addEventListener("input", (e) => {
         const term = e.target.value.toLowerCase().trim();
@@ -48,7 +47,7 @@ if (buscador) {
     });
 }
 
-// 3. MOTOR DE RENDERIZADO (CON TODAS LAS FUNCIONES SOCIALES)
+// 3. MOTOR DE RENDERIZADO
 function renderizar(lista) {
     if (!output) return;
     output.innerHTML = "";
@@ -97,9 +96,8 @@ function renderizar(lista) {
                 </div>
             </div>`;
 
-        // Abrir Carta
         card.onclick = (e) => {
-            if (e.target.closest('.boton-descargar-full')) return; 
+            if (e.target.closest('.boton-descargar-full') || e.target.closest('.user-tag') || e.target.closest('.action-btn')) return; 
             if (!card.classList.contains("expandida")) {
                 card.classList.add("expandida");
                 document.body.style.overflow = "hidden";
@@ -107,7 +105,6 @@ function renderizar(lista) {
             }
         };
 
-        // Cerrar Carta
         card.querySelector(".close-btn").onclick = (e) => {
             e.stopPropagation();
             card.classList.remove("expandida");
@@ -118,7 +115,7 @@ function renderizar(lista) {
     });
 }
 
-// 4. SISTEMA DE PUENTE (RESTAURADO)
+// 4. SISTEMA DE PUENTE
 document.addEventListener('click', function(e) {
     const link = e.target.closest('a');
     if (link && link.href) {
@@ -133,7 +130,32 @@ document.addEventListener('click', function(e) {
     }
 }, true);
 
-// 5. FUNCIONES SOCIALES (FAVORITOS, REPORTES, PERFIL)
+// 5. FUNCIÓN DE REDIRECCIÓN A PERFIL (PROTEGIDA)
+function visitarPerfil(usuario) {
+    if (!usuario || usuario === 'undefined') {
+        alert("Usuario no identificado.");
+        return;
+    }
+    localStorage.setItem("ver_perfil_de", usuario);
+    window.location.href = "https://roucedevstudio.github.io/PerfilApp/";
+}
+
+// 6. DETECTOR GLOBAL PARA EL ICONO DE PERFIL (HEADER)
+document.addEventListener("click", (e) => {
+    // Busca si el clic fue en el contenedor del perfil o en el icono de adentro
+    const btnPerfil = e.target.closest(".ProfileIcon") || e.target.closest(".UpIcon");
+    
+    if (btnPerfil) {
+        const miUsuario = localStorage.getItem("user_admin");
+        if (miUsuario) {
+            visitarPerfil(miUsuario);
+        } else {
+            window.location.href = "https://roucedevstudio.github.io/LoginApp/";
+        }
+    }
+});
+
+// 7. FAVORITOS, REPORTES Y COMPARTIR
 async function fav(id) {
     const u = localStorage.getItem("user_admin");
     if(!u) return alert("Inicia sesión.");
@@ -160,12 +182,7 @@ async function share(id) {
     alert("Link copiado.");
 }
 
-function visitarPerfil(u) {
-    localStorage.setItem("ver_perfil_de", u);
-    window.location.href = "https://roucedevstudio.github.io/PerfilApp/";
-}
-
-// 6. COMENTARIOS
+// 8. COMENTARIOS
 async function cargarComm(id) {
     const box = document.getElementById(`list-${id}`);
     try {
@@ -188,7 +205,7 @@ async function postComm(id) {
     cargarComm(id);
 }
 
-// 7. PERSONALIZACIÓN
+// 9. PERSONALIZACIÓN
 function aplicarEstiloUsuario() {
     const config = JSON.parse(localStorage.getItem("user_style") || "{}");
     if(config.themeColor) document.documentElement.style.setProperty('--primary', config.themeColor);
