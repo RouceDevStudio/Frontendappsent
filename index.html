@@ -31,15 +31,10 @@
         
         <div class="reportButton">
             <a target="_blank" href="mailto:mr.m0onster@protonmail.com">
-                
                 <ion-icon name="flag"></ion-icon>
             </a>
         </div>
-        
-</div>
-    
-    
-    
+    </div>
 </header>
 
 <main class="containGames">
@@ -63,6 +58,7 @@
     </div>
 </footer>
 
+<!-- MODAL DE TÉRMINOS Y CONDICIONES (solo aparece la primera vez) -->
 <div id="modal-terminos" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.97); z-index:9999; justify-content:center; align-items:center; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; backdrop-filter: blur(15px); padding: 15px; box-sizing: border-box;">
     <div style="background:#0a0a0a; border: 2px solid #00f2ff; box-shadow: 0 0 30px rgba(0, 242, 255, 0.4); width:100%; max-width:580px; padding: clamp(20px, 5vw, 40px); border-radius:25px; color:white; max-height: 92vh; overflow-y: auto; position: relative; box-sizing: border-box;">
         
@@ -115,44 +111,39 @@
     </div>
 </div>
 
-<script>
-function aceptarTerminos() {
-    const modal = document.getElementById('modal-terminos');
-    modal.style.transition = "opacity 0.5s ease, transform 0.5s ease";
-    modal.style.opacity = "0";
-    modal.style.transform = "scale(0.95)";
-    setTimeout(() => {
-        modal.style.display = 'none';
-    }, 500);
-    localStorage.setItem('upgames_v26_auth', 'true');
-}
-
-window.onload = function() {
-    if(localStorage.getItem('upgames_v26_auth') === 'true') {
-        document.getElementById('modal-terminos').style.display = 'none';
-    }
-}
-</script>
-
-
-<script>
-// Lógica de LocalStorage para que solo aparezca una vez
-window.onload = function() {
-    if (!localStorage.getItem('upgames_terms_accepted')) {
-        document.getElementById('modal-terminos').style.display = 'flex';
-    }
-}
-
-function aceptarTerminos() {
-    localStorage.setItem('upgames_terms_accepted', 'true');
-    document.getElementById('modal-terminos').style.display = 'none';
-}
-</script>
-
-        
-
+<!-- Scripts -->
 <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
 <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+<!-- Script corregido para la modal (solo una vez) -->
+<script>
+    function aceptarTerminos() {
+        const modal = document.getElementById('modal-terminos');
+        
+        // Animación suave de salida
+        modal.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+        modal.style.opacity = "0";
+        modal.style.transform = "scale(0.92)";
+        
+        setTimeout(() => {
+            modal.style.display = 'none';
+            localStorage.setItem('upgames_terms_accepted', 'true');
+        }, 600);
+    }
+
+    // Verificar al cargar la página
+    window.addEventListener('load', function() {
+        const modal = document.getElementById('modal-terminos');
+        
+        if (localStorage.getItem('upgames_terms_accepted') === 'true') {
+            modal.style.display = 'none';
+        }
+        // Si no está guardado, se muestra por defecto (display:flex en HTML)
+    });
+</script>
+
+<!-- Tu script principal (carga de juegos, etc.) -->
 <script src="script.js"></script>
+
 </body>
 </html>
