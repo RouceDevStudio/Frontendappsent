@@ -5,20 +5,29 @@ const overlay = document.getElementById("overlay");
 const loadingState = document.getElementById("loading-state");
 
 let todosLosItems = [];
+let mapaUsuarios = {}; // Diccionario para cruzar @usuario con su nivel de verificación
 
 // 1. DESPERTADOR INMEDIATO
 (function despertar() {
     fetch(`${API_URL}/items`, { mode: 'no-cors' }).catch(() => {});
 })();
 
-// 2. CARGA DE DATOS CENTRALIZADA
+// 2. CARGA DE DATOS CENTRALIZADA (Cruce de datos local)
 async function cargarContenido() {
-    if (!localStorage.getItem("terminos_aceptados_v2")) {
-        alert("AVISO LEGAL:\n1. Servicio técnico.\n2. Responsabilidad del usuario.\n3. UpGames no edita contenido ajeno.");
-        localStorage.setItem("terminos_aceptados_v2", "true");
+    // Manejo de términos (v2 para coherencia con tu HTML)
+    if (!localStorage.getItem("upgames_terms_accepted")) {
+        // La modal se controla por el script del HTML que ya tienes
     }
     
     try {
+        // PASO A: Obtener niveles de verificación de la ruta /auth/users
+        const resUsers = await fetch(`${API_URL}/auth/users`);
+        const usuarios = await resUsers.json();
+        usuarios.forEach(u => {
+            mapaUsuarios[u.usuario] = u.verificadoNivel || 0;
+        });
+
+        // PASO B: Obtener los items
         const res = await fetch(`${API_URL}/items`);
         const data = await res.json();
         
@@ -31,9 +40,27 @@ async function cargarContenido() {
         if (sharedId) setTimeout(() => document.querySelector(`[data-id="${sharedId}"]`)?.click(), 500);
         
     } catch (e) {
+        console.error("Error de carga:", e);
         if (loadingState) loadingState.innerHTML = `<p style="color:red">ERROR DE NÚCLEO. REINTENTANDO...</p>`;
         setTimeout(cargarContenido, 3000);
     }
+}
+
+// Helper: Extrae el badge del mapa de usuarios cargado
+function getVerificadoBadge(nombreUsuario) {
+    const nivel = mapaUsuarios[nombreUsuario] || 0;
+    if (nivel === 0) return '';
+    
+    let colorClass = '';
+    if (nivel === 1) colorClass = 'level-1';
+    else if (nivel === 2) colorClass = 'level-2';
+    else if (nivel === 3) colorClass = 'level-3';
+    
+    return `
+        <span class="verificado-badge ${colorClass}" title="Verificado nivel ${nivel}">
+            <ion-icon name="checkmark-circle"></ion-icon>
+        </span>
+    `;
 }
 
 // 3. RENDERIZADO DE ALTO RENDIMIENTO
@@ -58,6 +85,8 @@ function renderizar(lista) {
             `<video src="${item.image}" class="juego-img" autoplay muted loop playsinline></video>` :
             `<img src="${item.image}" class="juego-img" loading="lazy">`;
         
+        const nivelAutor = mapaUsuarios[item.usuario] || 0;
+
         card.innerHTML = `
             <div class="status-badge ${isOnline ? 'status-online' : 'status-review'}">
                 <ion-icon name="${isOnline ? 'checkmark-circle' : 'alert-circle'}"></ion-icon>
@@ -67,7 +96,11 @@ function renderizar(lista) {
             ${media}
             <div class="card-content">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span class="user-tag" onclick="event.stopPropagation(); visitarPerfil('${item.usuario}')">@${item.usuario || 'Cloud User'}</span>
+                    <span class="user-tag ${nivelAutor > 0 ? 'verificado' : ''}" 
+                          onclick="event.stopPropagation(); visitarPerfil('${item.usuario}')">
+                        @${item.usuario || 'Cloud User'}
+                        ${getVerificadoBadge(item.usuario)}
+                    </span>
                     <span class="category-badge">${item.category || 'Gral'}</span>
                 </div>
                 <h4 class="juego-titulo">${item.title}</h4>
@@ -116,11 +149,6 @@ function renderizar(lista) {
         fragment.appendChild(card);
     });
     output.appendChild(fragment);
-
-    // FORZAR ESCANEO DE CUTY
-    if (typeof cuty_init === 'function') {
-        setTimeout(cuty_init, 400);
-    }
 }
 
 // 4. FUNCIONES DE PERFIL Y NAVEGACIÓN
@@ -132,8 +160,10 @@ function visitarPerfil(user) {
 
 document.getElementById("btn-mi-perfil").onclick = () => {
     const u = localStorage.getItem("user_admin");
-    if (u) { localStorage.setItem("ver_perfil_de", u);
-        window.location.href = "https://roucedevstudio.github.io/PerfilApp/"; }
+    if (u) {
+        localStorage.setItem("ver_perfil_de", u);
+        window.location.href = "https://roucedevstudio.github.io/PerfilApp/";
+    }
     else { window.location.href = "https://roucedevstudio.github.io/LoginApp/"; }
 };
 
@@ -146,7 +176,7 @@ buscador.oninput = (e) => {
     renderizar(filtrados);
 };
 
-// 6. FUNCIONES SOCIALES
+// 6. FUNCIONES SOCIALES (Sincronizadas con rutas del Server)
 async function share(id) {
     const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
     await navigator.clipboard.writeText(url);
@@ -175,65 +205,61 @@ async function report(id) {
 
 async function cargarComm(id) {
     const box = document.getElementById(`list-${id}`);
+    if (!box) return;
+    
     try {
         const res = await fetch(`${API_URL}/comentarios/${id}`);
         const data = await res.json();
+        
         box.innerHTML = data.map(c => `
             <div class="comm-item" style="margin-bottom:8px; border-left:2px solid var(--primary); padding-left:8px;">
-                <b style="color:var(--primary); font-size:0.7rem;" onclick="visitarPerfil('${c.usuario}')">@${c.usuario}</b>
-                <p style="font-size:0.75rem; color:#ddd; margin:0;">${c.texto}</p>
-            </div>`).join('') || '<p style="font-size:0.7rem; color:#555;">Sin opiniones aún.</p>';
-    } catch (e) { box.innerHTML = "Error al cargar."; }
+                <b style="color:var(--primary); font-size:0.7rem;" 
+                   onclick="visitarPerfil('${c.usuario}')">
+                    @${c.usuario}
+                    ${getVerificadoBadge(c.usuario)}
+                </b>
+                <p style="font-size:0.75rem; color:#ddd; margin:0;">${c.texto || 'Sin texto'}</p>
+            </div>
+        `).join('') || '<p style="font-size:0.7rem; color:#555;">Sin opiniones aún.</p>';
+    } catch (e) {
+        box.innerHTML = '<p style="color: #ff4343; font-size:0.8rem;">Error al cargar opiniones</p>';
+    }
 }
 
 async function postComm(id) {
     const user = localStorage.getItem("user_admin");
     const input = document.getElementById(`input-${id}`);
-    if (!user) return alert("Inicia sesión.");
-    if (!input.value.trim()) return;
+    if (!user) return alert("Inicia sesión para comentar.");
+    if (!input || !input.value.trim()) return;
     
-    await fetch(`${API_URL}/comentarios`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario: user, texto: input.value, itemId: id })
-    });
-    input.value = "";
-    cargarComm(id);
+    try {
+        const res = await fetch(`${API_URL}/comentarios`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario: user, texto: input.value.trim(), itemId: id })
+        });
+        if (res.ok) {
+            input.value = "";
+            cargarComm(id);
+        }
+    } catch (e) { console.error(e); }
 }
 
-document.addEventListener("DOMContentLoaded", cargarContenido);
-
-
-// 7. SISTEMA DE PUENTE Y MONETIZACIÓN (ADAPTADO A RENDERIZADO DINÁMICO)
+// 7. SISTEMA DE MONETIZACIÓN (PUENTE)
 document.addEventListener('click', function(e) {
-    // Buscamos si el clic fue en un enlace (etiqueta <a>)
     const anchor = e.target.closest('a');
-    
     if (anchor && anchor.href) {
         const urlDestino = anchor.href;
-
-        // EXCLUSIÓN 1: Correo legal mr.m0onster@protonmail.com
-        if (urlDestino.includes('mailto:mr.m0onster@protonmail.com')) {
-            return; // No interrumpir contacto legal
-        }
-
-        // EXCLUSIÓN 2: Dominios internos y de desarrollo
-        const dominiosSeguros = [
-            'roucedevstudio.github.io',
-            'backendapp-037y.onrender.com', // Tu API
-            window.location.hostname
-        ];
-
+        if (urlDestino.includes('mailto:mr.m0onster@protonmail.com')) return;
+        
+        const dominiosSeguros = ['roucedevstudio.github.io', 'backendapp-037y.onrender.com', window.location.hostname];
         const esSeguro = dominiosSeguros.some(dominio => urlDestino.includes(dominio));
-
-        // REDIRECCIÓN AL PUENTE: Solo si es un link externo (como Mediafire, Mega, etc.)
+        
         if (!esSeguro) {
-            e.preventDefault(); 
-            e.stopPropagation(); // Evita conflictos con el onclick de la card
-            
-            // Redirigir a tu puente en la raíz del repositorio
-            const puenteUrl = './puente.html?dest=' + encodeURIComponent(urlDestino);
-            window.location.href = puenteUrl;
+            e.preventDefault();
+            window.location.href = './puente.html?dest=' + encodeURIComponent(urlDestino);
         }
     }
-}, true); // El parámetro 'true' es vital: captura el evento antes que otros scripts
+}, true);
+
+document.addEventListener("DOMContentLoaded", cargarContenido);

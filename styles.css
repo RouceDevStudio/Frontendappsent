@@ -408,3 +408,23 @@ header {
 }
 
 .footer-legal { text-align: center; padding: 40px 20px; color: #666; font-size: 0.75rem; }
+
+/* Agregar al final de tu CSS */
+.verificado-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+.verificado-badge.level-1 { color: #8ab4f8; } /* azul claro */
+.verificado-badge.level-2 { color: #1e88e5; } /* azul fuerte */
+.verificado-badge.level-3 { color: #ffb300; } /* dorado */
+
+.verificado-badge ion-icon {
+    font-size: 1.1em;
+}
+
+.user-tag.verificado {
+    font-weight: 600;
+}
