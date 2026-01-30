@@ -306,9 +306,9 @@
             </div>
         </div>
         <div style="display:flex; gap:10px; flex-direction: column;">
-            <button id="btn-seguir" class="btn-seguir">
+            <button id="btn-seguir" class="btn-seguir" disabled>
                 <ion-icon name="person-add"></ion-icon>
-                Seguir
+                Cargando...
             </button>
             <button class="btn-volver" onclick="window.location.href='./biblioteca.html'">
                 <ion-icon name="arrow-back"></ion-icon>
@@ -339,7 +339,7 @@
     <script>
         const API_URL = "https://backendapp-037y.onrender.com";
         const urlParams = new URLSearchParams(window.location.search);
-        const usuarioViendo = urlParams.get('user');
+        const usuarioViendo = urlParams.get('u'); // ✅ CORREGIDO: usar 'u' en vez de 'user'
         const usuarioActual = localStorage.getItem("user_admin");
 
         console.log("=== PERFIL PÚBLICO INICIADO ===");
@@ -362,131 +362,174 @@
             `;
         }
 
-        // Cargar información del usuario
+        // Cargar perfil del usuario
         async function cargarPerfilUsuario() {
             if (!usuarioViendo) {
-                alert("❌ Usuario no especificado");
-                window.location.href = "./biblioteca.html";
+                document.querySelector('.container').innerHTML = `
+                    <div class="empty-msg">
+                        <ion-icon name="alert-circle" style="font-size:3rem; color:var(--danger);"></ion-icon>
+                        <h3>Usuario no encontrado</h3>
+                        <p>No se especificó un usuario válido.</p>
+                        <button onclick="window.location.href='./biblioteca.html'" style="
+                            margin-top: 20px;
+                            background: var(--primary);
+                            color: #000;
+                            border: none;
+                            padding: 12px 30px;
+                            border-radius: 8px;
+                            font-weight: bold;
+                            cursor: pointer;
+                        ">
+                            Volver a Biblioteca
+                        </button>
+                    </div>
+                `;
                 return;
             }
 
             try {
-                console.log("📡 Cargando datos del usuario...");
+                console.log("📡 Cargando datos del usuario:", usuarioViendo);
                 
                 // Obtener datos del usuario
                 const resUsers = await fetch(`${API_URL}/auth/users`);
                 const usuarios = await resUsers.json();
-                const usuarioData = usuarios.find(u => u.usuario === usuarioViendo);
+                const userData = usuarios.find(u => u.usuario === usuarioViendo);
 
-                if (!usuarioData) {
-                    alert("❌ Usuario no encontrado");
-                    window.location.href = "./biblioteca.html";
-                    return;
+                if (!userData) {
+                    throw new Error("Usuario no encontrado");
                 }
 
-                console.log("✅ Datos del usuario cargados:", usuarioData);
+                console.log("✅ Datos del usuario:", userData);
 
-                // Mostrar información básica
+                // Actualizar UI
                 document.getElementById('user-name-display').textContent = `@${usuarioViendo}`;
-                document.getElementById('user-bio').textContent = usuarioData.bio || 'Sin biografía';
                 
-                // Mostrar badge de verificación
-                const nivel = usuarioData.verificadoNivel || 0;
-                document.getElementById('verificado-badge').innerHTML = getVerificadoBadge(nivel);
-
-                // Mostrar avatar si existe
-                if (usuarioData.avatar && usuarioData.avatar.trim() !== '') {
-                    document.getElementById('avatar-img').src = usuarioData.avatar;
-                    document.getElementById('avatar-img').style.display = 'block';
-                    document.getElementById('avatar-icon').style.display = 'none';
+                // Badge de verificación
+                const nivel = userData.verificadoNivel || 0;
+                if (nivel > 0) {
+                    document.getElementById('verificado-badge').innerHTML = getVerificadoBadge(nivel);
                 }
 
-                // Cargar publicaciones del usuario
-                await cargarPublicacionesUsuario();
+                // Avatar
+                const avatarUrl = userData.avatar || localStorage.getItem(`avatar_${usuarioViendo}`);
+                const avatarImg = document.getElementById('avatar-img');
+                const avatarIcon = document.getElementById('avatar-icon');
+                
+                if (avatarUrl) {
+                    avatarImg.src = avatarUrl;
+                    avatarImg.style.display = 'block';
+                    avatarIcon.style.display = 'none';
+                } else {
+                    avatarIcon.textContent = usuarioViendo.charAt(0).toUpperCase();
+                }
 
-                // Verificar si ya sigue al usuario
+                // Biografía
+                const bio = userData.bio || localStorage.getItem(`bio_${usuarioViendo}`) || 'Sin biografía';
+                document.getElementById('user-bio').textContent = bio;
+
+                // Cargar publicaciones
+                await cargarPublicaciones();
+
+                // Verificar seguimiento
                 await verificarSeguimiento();
 
-            } catch (e) {
-                console.error("❌ Error cargando perfil:", e);
-                alert("❌ Error al cargar el perfil");
+            } catch (error) {
+                console.error("❌ Error cargando perfil:", error);
+                document.querySelector('.container').innerHTML = `
+                    <div class="empty-msg">
+                        <ion-icon name="alert-circle" style="font-size:3rem; color:var(--danger);"></ion-icon>
+                        <h3>Error al cargar perfil</h3>
+                        <p>${error.message}</p>
+                        <button onclick="location.reload()" style="
+                            margin-top: 20px;
+                            background: var(--primary);
+                            color: #000;
+                            border: none;
+                            padding: 12px 30px;
+                            border-radius: 8px;
+                            font-weight: bold;
+                            cursor: pointer;
+                        ">
+                            Reintentar
+                        </button>
+                    </div>
+                `;
             }
         }
 
         // Cargar publicaciones del usuario
-        async function cargarPublicacionesUsuario() {
-            const container = document.getElementById('user-items');
-            
+        async function cargarPublicaciones() {
             try {
-                console.log("📡 Cargando publicaciones...");
-                
                 const res = await fetch(`${API_URL}/items`);
-                const data = await res.json();
-                const publicaciones = data.filter(item => 
-                    item.usuario === usuarioViendo && item.status === 'aprobado'
+                const items = await res.json();
+                
+                const itemsUsuario = items.filter(i => 
+                    i.usuario === usuarioViendo && i.status === 'aprobado'
                 );
 
-                console.log(`✅ ${publicaciones.length} publicaciones encontradas`);
+                console.log(`📦 Publicaciones encontradas: ${itemsUsuario.length}`);
 
-                document.getElementById('stat-uploads').textContent = publicaciones.length;
+                // Actualizar contador
+                document.getElementById('stat-uploads').textContent = itemsUsuario.length;
 
-                if (publicaciones.length === 0) {
-                    container.innerHTML = '<p class="empty-msg">Este usuario aún no tiene publicaciones.</p>';
+                const container = document.getElementById('user-items');
+
+                if (itemsUsuario.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-msg">
+                            <ion-icon name="cloud-offline" style="font-size:3rem;"></ion-icon>
+                            <p>Este usuario aún no ha publicado nada.</p>
+                        </div>
+                    `;
                     return;
                 }
 
                 container.innerHTML = '';
-                publicaciones.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'item-card';
-                    div.innerHTML = `
-                        <img src="${item.image || 'https://via.placeholder.com/250x150?text=Sin+Imagen'}" 
-                             alt="${item.title}"
-                             onerror="this.src='https://via.placeholder.com/250x150?text=Sin+Imagen'">
+
+                itemsUsuario.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'item-card';
+                    card.onclick = () => {
+                        window.location.href = `./biblioteca.html?id=${item._id}`;
+                    };
+
+                    card.innerHTML = `
+                        <img src="${item.image}" alt="${item.title}">
                         <div class="item-info">
-                            <div class="item-title">${item.title || 'Sin título'}</div>
+                            <div class="item-title">${item.title}</div>
                             <div class="item-category">${item.category || 'General'}</div>
                         </div>
                     `;
-                    
-                    // ✅ SISTEMA DE PUENTE IMPLEMENTADO
-                    div.onclick = () => {
-                        console.log("🔗 Click en publicación:", item.title);
-                        const urlDestino = item.link;
-                        
-                        // Dominios seguros que no necesitan pasar por el puente
-                        const dominiosSeguros = [
-                            'roucedevstudio.github.io', 
-                            'backendapp-037y.onrender.com', 
-                            window.location.hostname
-                        ];
-                        
-                        const esSeguro = dominiosSeguros.some(dominio => urlDestino.includes(dominio));
-                        
-                        if (!esSeguro) {
-                            // ✅ Redirigir a página puente con el destino codificado
-                            console.log("🚀 Redirigiendo a puente con destino:", urlDestino);
-                            window.location.href = './puente.html?dest=' + encodeURIComponent(urlDestino);
-                        } else {
-                            // Dominio seguro, abrir directamente
-                            console.log("✅ Dominio seguro, abriendo directamente");
-                            window.open(urlDestino, '_blank');
-                        }
-                    };
-                    
-                    container.appendChild(div);
+
+                    container.appendChild(card);
                 });
 
-            } catch (e) {
-                console.error("❌ Error cargando publicaciones:", e);
-                container.innerHTML = '<p class="empty-msg">❌ Error al cargar publicaciones</p>';
+            } catch (error) {
+                console.error("Error cargando publicaciones:", error);
+                document.getElementById('user-items').innerHTML = `
+                    <div class="empty-msg">
+                        <p style="color:var(--danger);">Error al cargar publicaciones</p>
+                    </div>
+                `;
             }
         }
 
-        // Verificar si ya sigue al usuario
+        // Verificar si el usuario actual sigue al usuario que está viendo
         async function verificarSeguimiento() {
             const btnSeguir = document.getElementById('btn-seguir');
-            
+
+            // Si es el propio perfil
+            if (usuarioActual === usuarioViendo) {
+                btnSeguir.innerHTML = `
+                    <ion-icon name="person-circle"></ion-icon>
+                    Tu perfil
+                `;
+                btnSeguir.disabled = true;
+                btnSeguir.style.opacity = '0.5';
+                return;
+            }
+
+            // Si no está logueado
             if (!usuarioActual) {
                 console.log("⚠️ Usuario no logueado");
                 btnSeguir.innerHTML = `
@@ -496,6 +539,7 @@
                 btnSeguir.onclick = () => {
                     window.location.href = './index.html';
                 };
+                btnSeguir.disabled = false;
                 return;
             }
 
@@ -511,13 +555,12 @@
                     console.warn("⚠️ Endpoint /usuarios/siguiendo no encontrado en el backend");
                     btnSeguir.innerHTML = `
                         <ion-icon name="person-add"></ion-icon>
-                        Seguir (Próximamente)
+                        Seguir
                     `;
                     btnSeguir.className = 'btn-seguir';
-                    btnSeguir.onclick = () => {
-                        alert("ℹ️ Sistema de seguimiento en desarrollo.\n\nContacta al administrador para activar esta función.");
-                    };
-                    btnSeguir.title = "Sistema de seguimiento en desarrollo";
+                    btnSeguir.onclick = seguirUsuario;
+                    btnSeguir.disabled = false;
+                    btnSeguir.title = "Sistema de seguimiento disponible";
                     return;
                 }
                 
@@ -561,7 +604,7 @@
             }
         }
 
-        // ✅ Seguir usuario (CON LOGS DE DEPURACIÓN)
+        // ✅ Seguir usuario (VERSIÓN CORREGIDA)
         async function seguirUsuario() {
             console.log("=== FUNCIÓN SEGUIR USUARIO ===");
             console.log("🔵 Botón SEGUIR clickeado");
@@ -576,6 +619,7 @@
 
             // Prevenir múltiples clicks
             const btnSeguir = document.getElementById('btn-seguir');
+            const originalContent = btnSeguir.innerHTML;
             btnSeguir.disabled = true;
             btnSeguir.innerHTML = `
                 <ion-icon name="hourglass-outline"></ion-icon>
@@ -602,45 +646,33 @@
                 console.log("📥 Respuesta recibida");
                 console.log("Status:", res.status);
                 console.log("Status Text:", res.statusText);
-                
-                const data = await res.json();
-                console.log("📋 Datos de respuesta:", data);
 
                 if (res.ok) {
                     console.log("✅ ÉXITO - Usuario seguido correctamente");
                     alert(`✅ Ahora sigues a @${usuarioViendo}`);
                     verificarSeguimiento();
                 } else {
-                    console.warn("⚠️ Respuesta no OK");
+                    const data = await res.json();
+                    console.warn("⚠️ Respuesta no OK:", data);
                     
-                    // Si el endpoint no existe (404)
                     if (res.status === 404) {
                         console.error("❌ Endpoint /usuarios/seguir NO EXISTE en el backend");
-                        alert(`ℹ️ Sistema de seguimiento en desarrollo.\n\nEsta función estará disponible próximamente cuando el administrador active el endpoint en el backend.\n\nError: Endpoint /usuarios/seguir no encontrado (404)`);
-                        btnSeguir.disabled = false;
-                        btnSeguir.innerHTML = `
-                            <ion-icon name="person-add"></ion-icon>
-                            Seguir (Próximamente)
-                        `;
+                        alert(`ℹ️ Sistema de seguimiento en desarrollo.\n\nError: Endpoint no encontrado (404)`);
                     } else {
-                        console.error("❌ Error del servidor:", data);
                         alert(data.message || `Error ${res.status}: ${res.statusText}`);
-                        btnSeguir.disabled = false;
-                        verificarSeguimiento();
                     }
+                    
+                    btnSeguir.disabled = false;
+                    btnSeguir.innerHTML = originalContent;
                 }
             } catch (e) {
                 console.error("❌ EXCEPCIÓN CAPTURADA:", e);
                 console.error("Tipo de error:", e.name);
                 console.error("Mensaje:", e.message);
-                console.error("Stack:", e.stack);
                 
-                alert(`❌ Error de conexión\n\n${e.message}\n\nNota: Verifica que el endpoint /usuarios/seguir esté activo en el backend.`);
+                alert(`❌ Error de conexión\n\n${e.message}`);
                 btnSeguir.disabled = false;
-                btnSeguir.innerHTML = `
-                    <ion-icon name="person-add"></ion-icon>
-                    Seguir
-                `;
+                btnSeguir.innerHTML = originalContent;
             }
         }
 
@@ -648,45 +680,46 @@
         async function dejarDeSeguir() {
             console.log("=== FUNCIÓN DEJAR DE SEGUIR ===");
             
-            if (confirm(`¿Dejar de seguir a @${usuarioViendo}?`)) {
-                const btnSeguir = document.getElementById('btn-seguir');
-                btnSeguir.disabled = true;
-                btnSeguir.innerHTML = `
-                    <ion-icon name="hourglass-outline"></ion-icon>
-                    Procesando...
-                `;
+            if (!confirm(`¿Dejar de seguir a @${usuarioViendo}?`)) return;
+            
+            const btnSeguir = document.getElementById('btn-seguir');
+            const originalContent = btnSeguir.innerHTML;
+            btnSeguir.disabled = true;
+            btnSeguir.innerHTML = `
+                <ion-icon name="hourglass-outline"></ion-icon>
+                Procesando...
+            `;
+            
+            try {
+                console.log("📤 Enviando petición DELETE...");
                 
-                try {
-                    console.log("📤 Enviando petición DELETE...");
-                    
-                    const res = await fetch(`${API_URL}/usuarios/dejar-seguir`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            seguidor: usuarioActual, 
-                            siguiendo: usuarioViendo 
-                        })
-                    });
+                const res = await fetch(`${API_URL}/usuarios/dejar-seguir`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        seguidor: usuarioActual, 
+                        siguiendo: usuarioViendo 
+                    })
+                });
 
-                    console.log("📥 Respuesta:", res.status);
+                console.log("📥 Respuesta:", res.status);
 
-                    if (res.ok) {
-                        console.log("✅ Dejó de seguir correctamente");
-                        alert(`💔 Dejaste de seguir a @${usuarioViendo}`);
-                        verificarSeguimiento();
-                    } else {
-                        const data = await res.json();
-                        console.error("❌ Error:", data);
-                        alert(data.message || "Error al dejar de seguir");
-                        btnSeguir.disabled = false;
-                        verificarSeguimiento();
-                    }
-                } catch (e) {
-                    console.error("❌ Error al dejar de seguir:", e);
-                    alert("❌ Error de conexión");
-                    btnSeguir.disabled = false;
+                if (res.ok) {
+                    console.log("✅ Dejó de seguir correctamente");
+                    alert(`💔 Dejaste de seguir a @${usuarioViendo}`);
                     verificarSeguimiento();
+                } else {
+                    const data = await res.json();
+                    console.error("❌ Error:", data);
+                    alert(data.message || "Error al dejar de seguir");
+                    btnSeguir.disabled = false;
+                    btnSeguir.innerHTML = originalContent;
                 }
+            } catch (e) {
+                console.error("❌ Error al dejar de seguir:", e);
+                alert("❌ Error de conexión");
+                btnSeguir.disabled = false;
+                btnSeguir.innerHTML = originalContent;
             }
         }
 

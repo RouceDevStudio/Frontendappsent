@@ -131,12 +131,14 @@ function renderizar(lista) {
                 </div>
             </div>`;
         
-        card.onclick = (e) => {
-            // No expandir si se clickeó en botones o inputs
+        // ✅ EVENTO DE CLICK DIRECTO EN LA CARD (SIN DELEGACIÓN)
+        card.addEventListener('click', function(e) {
+            // No expandir si se clickeó en elementos interactivos
             if (e.target.closest('.user-tag') || 
                 e.target.closest('.action-btn') || 
                 e.target.closest('.input-comment') || 
                 e.target.closest('.btn-post-comment') ||
+                e.target.closest('.close-btn') ||
                 e.target.closest('a')) {
                 return;
             }
@@ -147,103 +149,70 @@ function renderizar(lista) {
                 document.body.style.overflow = "hidden";
                 cargarComm(item._id);
             }
-        };
+        });
         
-        card.querySelector(".close-btn").onclick = (e) => {
+        // ✅ BOTÓN CERRAR CON EVENTO DIRECTO
+        const closeBtn = card.querySelector(".close-btn");
+        closeBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             card.classList.remove("expandida");
             overlay.style.display = "none";
             document.body.style.overflow = "auto";
-        };
+        });
+        
+        // ✅ EVENTO CLICK EN NOMBRE DE USUARIO
+        const userTag = card.querySelector('.user-tag');
+        userTag.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const usuario = userTag.dataset.usuario;
+            visitarPerfil(usuario);
+        });
+        
+        // ✅ EVENTOS DE BOTONES SOCIALES
+        const btnFav = card.querySelector('.btn-fav');
+        btnFav.addEventListener('click', function(e) {
+            e.stopPropagation();
+            fav(item._id);
+        });
+        
+        const btnShare = card.querySelector('.btn-share');
+        btnShare.addEventListener('click', function(e) {
+            e.stopPropagation();
+            share(item._id);
+        });
+        
+        const btnReport = card.querySelector('.btn-report');
+        btnReport.addEventListener('click', function(e) {
+            e.stopPropagation();
+            report(item._id);
+        });
+        
+        // ✅ EVENTO DEL BOTÓN DE COMENTARIOS
+        const btnPostComment = card.querySelector('.btn-post-comment');
+        btnPostComment.addEventListener('click', function(e) {
+            e.stopPropagation();
+            postComm(item._id);
+        });
         
         fragment.appendChild(card);
     });
+    
     output.appendChild(fragment);
-    
-    // ✅ DELEGACIÓN DE EVENTOS (Mejor práctica)
-    attachEventDelegation();
 }
 
-// ✅ FUNCIÓN DE DELEGACIÓN DE EVENTOS (Evita múltiples listeners)
-function attachEventDelegation() {
-    // Eliminar listeners previos si existen
-    const newOutput = output.cloneNode(true);
-    output.parentNode.replaceChild(newOutput, output);
-    
-    // Re-asignar la referencia
-    const outputElement = document.getElementById("output");
-    
-    outputElement.addEventListener('click', (e) => {
-        // Click en nombre de usuario
-        if (e.target.closest('.user-tag')) {
-            e.stopPropagation();
-            const usuario = e.target.closest('.user-tag').dataset.usuario;
-            visitarPerfil(usuario);
-        }
-        
-        // Click en botón favoritos
-        if (e.target.closest('.btn-fav')) {
-            e.stopPropagation();
-            const id = e.target.closest('.btn-fav').dataset.id;
-            fav(id);
-        }
-        
-        // Click en botón compartir
-        if (e.target.closest('.btn-share')) {
-            e.stopPropagation();
-            const id = e.target.closest('.btn-share').dataset.id;
-            share(id);
-        }
-        
-        // Click en botón reportar
-        if (e.target.closest('.btn-report')) {
-            e.stopPropagation();
-            const id = e.target.closest('.btn-report').dataset.id;
-            report(id);
-        }
-        
-        // Click en botón enviar comentario
-        if (e.target.closest('.btn-post-comment')) {
-            e.stopPropagation();
-            const id = e.target.closest('.btn-post-comment').dataset.id;
-            postComm(id);
-        }
-    });
-    
-    // Click en inputs de comentarios
-    outputElement.addEventListener('click', (e) => {
-        if (e.target.closest('.input-comment')) {
-            e.stopPropagation();
-        }
-    });
+// 4. FUNCIÓN VISITAR PERFIL
+function visitarPerfil(usuario) {
+    if (!usuario) return;
+    window.location.href = `./perfil-publico.html?u=${encodeURIComponent(usuario)}`;
 }
 
-// 4. ✅ FUNCIONES DE PERFIL Y NAVEGACIÓN (CORREGIDAS COMPLETAMENTE)
-function visitarPerfil(user) {
-    if (!user || user === 'Cloud User') return;
-    
-    const usuarioActual = localStorage.getItem("user_admin");
-    
-    if (user === usuarioActual) {
-        // Si es el usuario logueado, ir a su perfil
-        window.location.href = "./perfil.html";
-    } else {
-        // ✅ NUEVO: Redirigir a perfil público con parámetro
-        window.location.href = `./perfil-publico.html?user=${encodeURIComponent(user)}`;
-    }
-}
-
-// ✅ NUEVO: Función para seguir a un usuario
+// ✅ FUNCIÓN PARA SEGUIR USUARIO
 async function seguirUsuario(usuarioASeguir) {
     const usuarioActual = localStorage.getItem("user_admin");
     
     if (!usuarioActual) {
-        alert("⚠️ Debes iniciar sesión para seguir usuarios.");
-        return;
-    }
-    
-    if (usuarioActual === usuarioASeguir) {
-        alert("❌ No puedes seguirte a ti mismo.");
+        alert("⚠️ Inicia sesión para seguir usuarios.");
+        window.location.href = './index.html';
         return;
     }
     
@@ -306,6 +275,7 @@ async function dejarDeSeguir(usuarioADejarDeSeguir) {
 // Hacer funciones globales
 window.seguirUsuario = seguirUsuario;
 window.dejarDeSeguir = dejarDeSeguir;
+window.visitarPerfil = visitarPerfil;
 
 // ✅ CORREGIDO: Botón Mi Perfil redirige a perfil.html local
 const btnMiPerfil = document.getElementById("btn-mi-perfil");
@@ -320,15 +290,15 @@ if (btnMiPerfil) {
     };
 }
 
-// 5. BUSCADOR
+// 5. BUSCADOR - ✅ CORREGIDO
 if (buscador) {
-    buscador.oninput = (e) => {
+    buscador.addEventListener('input', function(e) {
         const term = e.target.value.toLowerCase().trim();
         const filtrados = todosLosItems.filter(i =>
             (i.title + (i.usuario || "") + (i.category || "")).toLowerCase().includes(term)
         );
         renderizar(filtrados);
-    };
+    });
 }
 
 // 6. FUNCIONES SOCIALES (Sincronizadas con rutas del Server)
