@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Metadata Index</title>
+    <link rel="preconnect" href="https://unpkg.com">
+    <style>
+        :root {
+            --primary: #5EFF43;
+            --bg: #0a0a0a;
+            --card: #161616;
+            --text-dim: #666;
+            --danger: #ff4343;
+            --warning: #ffcc00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            color: white;
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        .header-profile {
+            background: var(--card);
+            padding: 20px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #00ff88);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #000;
+            border: 3px solid var(--primary);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(94, 255, 67, 0.5);
+        }
+
+        .avatar-edit-hint {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            background: var(--primary);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: #000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .avatar:hover .avatar-edit-hint {
+            opacity: 1;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 2px solid var(--danger);
+            color: var(--danger);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-logout:hover {
+            background: var(--danger);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .user-details h2 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #user-logged-display {
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        #check-verificado {
+            display: none;
+            font-size: 1.3rem;
+        }
+
+        /* Estilos de verificación */
+        .check-verify {
+            color: var(--primary);
+        }
+
+        .r-bronce {
+            color: #cd7f32;
+        }
+
+        .r-oro {
+            color: #ffd700;
+        }
+
+        .r-elite {
+            color: #00ffff;
+            filter: drop-shadow(0 0 5px #00ffff);
+        }
+
+        .user-details p {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .btn-volver {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-volver:hover {
+            background: var(--primary);
+            color: #000;
+            transform: translateY(-2px);
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        /* SECCIÓN DE SUBIDA */
+        .upload-section {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #222;
+            margin-bottom: 30px;
+        }
+
+        .upload-section h3 {
+            color: var(--primary);
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            background: #000;
+            border: 1px solid #333;
+            padding: 12px;
+            border-radius: 8px;
+            color: white;
+            outline: none;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 8px rgba(94, 255, 67, 0.2);
+        }
+
+        .form-full {
+            grid-column: 1 / -1;
+        }
+
+        /* PREVIEW */
+        .preview-card {
+            background: #1e1e1e;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #222;
+            transition: transform 0.3s;
+        }
+
+        .preview-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        #prev-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #000;
+        }
+
+        .preview-content {
+            padding: 15px;
+        }
+
+        #prev-tag {
+            display: inline-block;
+            background: var(--primary);
+            color: #000;
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        #prev-title {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        /* BOTÓN SUBIR */
+        #subirBack {
+            width: 100%;
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 900;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-transform: uppercase;
+        }
+
+        #subirBack:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(94, 255, 67, 0.3);
+            filter: brightness(1.1);
+        }
+
+        #subirBack:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        /* SECCIÓN HISTORIAL */
+        .history-section {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #222;
+            margin-bottom: 30px;
+        }
+
+        .history-section h3 {
+            color: var(--primary);
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* SECCIÓN BÓVEDA */
+        .vault-section {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #222;
+        }
+
+        .vault-section h3 {
+            color: #ff1493;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #vaultContent {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .vault-item {
+            background: #1e1e1e;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #333;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .vault-item:hover {
+            border-color: #ff1493;
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(255, 20, 147, 0.3);
+        }
+
+        .vault-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .vault-item-info {
+            padding: 12px;
+        }
+
+        .vault-item-title {
+            color: white;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .vault-item-user {
+            color: var(--primary);
+            font-size: 0.75rem;
+        }
+
+        .vault-item-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .vault-item-actions button {
+            flex: 1;
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 6px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.3s;
+        }
+
+        .vault-item-actions button:hover {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .vault-item-actions button.delete {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .vault-item-actions button.delete:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        #showContent {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .log-item {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .log-item:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .btn-delete-log {
+            background: var(--danger);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .btn-delete-log:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 10px rgba(255, 67, 67, 0.3);
+        }
+
+        .empty-msg, .error-msg {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        .error-msg {
+            color: var(--danger);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-profile {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .user-info {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header-profile">
+        <div class="user-info">
+            <div class="avatar" id="avatar-display" onclick="document.getElementById('modal-avatar').style.display='flex'">
+                <ion-icon name="person" id="avatar-icon"></ion-icon>
+                <img id="avatar-img" style="display:none; width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="Avatar">
+                <div class="avatar-edit-hint">
+                    <ion-icon name="camera"></ion-icon>
+                </div>
+            </div>
+            <div class="user-details">
+                <h2>
+                    <span id="user-logged-display">@Usuario</span>
+                    <span id="check-verificado" class="check-verify">
+                        <ion-icon name="checkmark-circle"></ion-icon>
+                    </span>
+                </h2>
+                <p id="user-bio">Gestor de Archivos en la Nube</p>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-volver" onclick="window.location.href='./biblioteca.html'">
+                <ion-icon name="arrow-back"></ion-icon>
+                Volver a la Biblioteca
+            </button>
+            <button class="btn-logout" onclick="cerrarSesion()">
+                <ion-icon name="log-out-outline"></ion-icon>
+                Cerrar Sesión
+            </button>
+        </div>
+    </header>
+
+    <!-- CONTAINER PRINCIPAL -->
+    <div class="container">
+        <!-- SECCIÓN SUBIR ARCHIVO -->
+        <div class="upload-section">
+            <h3>
+                <ion-icon name="cloud-upload"></ion-icon>
+                Subir Nuevo Archivo
+            </h3>
+            
+            <div class="form-grid">
+                <!-- Columna Izquierda: Formulario -->
+                <div>
+                    <div class="form-group">
+                        <label for="addTitle">
+                            <ion-icon name="text"></ion-icon> Título
+                        </label>
+                        <input type="text" id="addTitle" placeholder="Nombre del archivo">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="addDescription">
+                            <ion-icon name="document-text"></ion-icon> Descripción
+                        </label>
+                        <textarea id="addDescription" placeholder="Describe tu archivo"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="addLink">
+                            <ion-icon name="link"></ion-icon> Enlace de Descarga
+                        </label>
+                        <input type="url" id="addLink" placeholder="https://mediafire.com/...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="addImage">
+                            <ion-icon name="image"></ion-icon> URL de Imagen
+                        </label>
+                        <input type="url" id="addImage" placeholder="https://ejemplo.com/imagen.jpg">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="addCategory">
+                            <ion-icon name="pricetag"></ion-icon> Categoría
+                        </label>
+                        <select id="addCategory">
+                            <option value="Juegos">Juegos</option>
+                            <option value="Apps">Apps</option>
+                            <option value="Software">Software</option>
+                            <option value="Películas">Películas</option>
+                            <option value="Música">Música</option>
+                            <option value="Libros">Libros</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Preview -->
+                <div>
+                    <div class="form-group">
+                        <label>
+                            <ion-icon name="eye"></ion-icon> Vista Previa
+                        </label>
+                        <div class="preview-card">
+                            <img id="prev-img" src="https://via.placeholder.com/300x150?text=Esperando+Imagen" alt="Preview">
+                            <div class="preview-content">
+                                <span id="prev-tag">CATEGORÍA</span>
+                                <h4 id="prev-title">Título del Proyecto</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group form-full" style="margin-top: 20px;">
+                <button id="subirBack">
+                    <ion-icon name="rocket-outline"></ion-icon>
+                    PUBLICAR EN LA NUBE
+                </button>
+            </div>
+        </div>
+
+        <!-- SECCIÓN HISTORIAL -->
+        <div class="history-section">
+            <h3>
+                <ion-icon name="time"></ion-icon>
+                Mis Archivos Subidos
+            </h3>
+            <div id="showContent">
+                <p class="empty-msg">Cargando historial...</p>
+            </div>
+        </div>
+
+        <!-- SECCIÓN BÓVEDA (FAVORITOS) -->
+        <div class="vault-section">
+            <h3>
+                <ion-icon name="heart"></ion-icon>
+                Mi Bóveda (Favoritos)
+            </h3>
+            <div id="vaultContent">
+                <p class="empty-msg">Cargando favoritos...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CAMBIAR AVATAR -->
+    <div id="modal-avatar" style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    ">
+        <div style="
+            background: var(--card);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid var(--primary);
+            max-width: 500px;
+            width: 100%;
+        ">
+            <h2 style="color: var(--primary); margin-bottom: 20px; text-align: center;">
+                <ion-icon name="camera" style="vertical-align: middle;"></ion-icon>
+                Cambiar Foto de Perfil
+            </h2>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="color: var(--primary); font-size: 0.8rem; font-weight: bold; display: block; margin-bottom: 8px;">
+                    URL DE LA IMAGEN
+                </label>
+                <input 
+                    type="url" 
+                    id="input-avatar-url" 
+                    placeholder="https://ejemplo.com/mi-foto.jpg"
+                    style="
+                        width: 100%;
+                        padding: 12px;
+                        background: #000;
+                        border: 1px solid #333;
+                        border-radius: 8px;
+                        color: white;
+                        outline: none;
+                    "
+                >
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="color: var(--primary); font-size: 0.8rem; font-weight: bold; display: block; margin-bottom: 8px;">
+                    BIOGRAFÍA (Opcional)
+                </label>
+                <textarea 
+                    id="input-bio" 
+                    placeholder="Escribe algo sobre ti..."
+                    maxlength="200"
+                    style="
+                        width: 100%;
+                        padding: 12px;
+                        background: #000;
+                        border: 1px solid #333;
+                        border-radius: 8px;
+                        color: white;
+                        outline: none;
+                        resize: vertical;
+                        min-height: 80px;
+                    "
+                ></textarea>
+            </div>
+
+            <div style="margin-bottom: 20px; text-align: center;">
+                <div style="
+                    width: 120px;
+                    height: 120px;
+                    border-radius: 50%;
+                    border: 3px solid var(--primary);
+                    margin: 0 auto;
+                    overflow: hidden;
+                    background: #000;
+                ">
+                    <img 
+                        id="preview-avatar" 
+                        src="https://via.placeholder.com/120?text=Vista+Previa" 
+                        style="width: 100%; height: 100%; object-fit: cover;"
+                        alt="Preview"
+                    >
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="guardarAvatar()" style="
+                    flex: 1;
+                    background: var(--primary);
+                    color: #000;
+                    border: none;
+                    padding: 12px;
+                    border-radius: 8px;
+                    font-weight: bold;
+                    cursor: pointer;
+                ">
+                    💾 GUARDAR
+                </button>
+                <button onclick="document.getElementById('modal-avatar').style.display='none'" style="
+                    flex: 1;
+                    background: transparent;
+                    color: var(--text-dim);
+                    border: 2px solid var(--text-dim);
+                    padding: 12px;
+                    border-radius: 8px;
+                    font-weight: bold;
+                    cursor: pointer;
+                ">
+                    ❌ CANCELAR
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IONICONS -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+    <!-- SCRIPT PRINCIPAL -->
+    <script src="./main.js"></script>
+</body>
+</html>
