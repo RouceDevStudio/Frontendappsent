@@ -97,7 +97,8 @@ function renderizar(lista) {
             <div class="card-content">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <span class="user-tag ${nivelAutor > 0 ? 'verificado' : ''}" 
-                          onclick="event.stopPropagation(); visitarPerfil('${item.usuario}')">
+                          data-usuario="${item.usuario}"
+                          style="cursor: pointer;">
                         @${item.usuario || 'Cloud User'}
                         ${getVerificadoBadge(item.usuario)}
                     </span>
@@ -105,9 +106,9 @@ function renderizar(lista) {
                 </div>
                 <h4 class="juego-titulo">${item.title}</h4>
                 <div class="social-actions">
-                    <button class="action-btn" onclick="event.stopPropagation(); fav('${item._id}')"><ion-icon name="heart-sharp"></ion-icon></button>
-                    <button class="action-btn" onclick="event.stopPropagation(); share('${item._id}')"><ion-icon name="share-social-sharp"></ion-icon></button>
-                    <button class="action-btn" onclick="event.stopPropagation(); report('${item._id}')"><ion-icon name="flag-sharp"></ion-icon></button>
+                    <button class="action-btn btn-fav" data-id="${item._id}"><ion-icon name="heart-sharp"></ion-icon></button>
+                    <button class="action-btn btn-share" data-id="${item._id}"><ion-icon name="share-social-sharp"></ion-icon></button>
+                    <button class="action-btn btn-report" data-id="${item._id}"><ion-icon name="flag-sharp"></ion-icon></button>
                 </div>
                 <p class="cloud-note">${item.description || 'Sin descripción.'}</p>
                 
@@ -124,13 +125,22 @@ function renderizar(lista) {
                     <h5 style="color:var(--primary); font-size:0.7rem; margin-bottom:10px;">OPINIONES</h5>
                     <div class="comentarios-list" id="list-${item._id}">Cargando...</div>
                     <div class="add-comment" style="display:flex; gap:5px; margin-top:10px;">
-                        <input type="text" id="input-${item._id}" placeholder="Escribe..." onclick="event.stopPropagation()">
-                        <button onclick="event.stopPropagation(); postComm('${item._id}')">OK</button>
+                        <input type="text" id="input-${item._id}" class="input-comment" data-id="${item._id}" placeholder="Escribe...">
+                        <button class="btn-post-comment" data-id="${item._id}">OK</button>
                     </div>
                 </div>
             </div>`;
         
-        card.onclick = () => {
+        card.onclick = (e) => {
+            // No expandir si se clickeó en botones o inputs
+            if (e.target.closest('.user-tag') || 
+                e.target.closest('.action-btn') || 
+                e.target.closest('.input-comment') || 
+                e.target.closest('.btn-post-comment') ||
+                e.target.closest('a')) {
+                return;
+            }
+            
             if (!card.classList.contains("expandida")) {
                 card.classList.add("expandida");
                 overlay.style.display = "block";
@@ -149,47 +159,194 @@ function renderizar(lista) {
         fragment.appendChild(card);
     });
     output.appendChild(fragment);
+    
+    // ✅ DELEGACIÓN DE EVENTOS (Mejor práctica)
+    attachEventDelegation();
 }
 
-// 4. FUNCIONES DE PERFIL Y NAVEGACIÓN (CORREGIDAS)
+// ✅ FUNCIÓN DE DELEGACIÓN DE EVENTOS (Evita múltiples listeners)
+function attachEventDelegation() {
+    // Eliminar listeners previos si existen
+    const newOutput = output.cloneNode(true);
+    output.parentNode.replaceChild(newOutput, output);
+    
+    // Re-asignar la referencia
+    const outputElement = document.getElementById("output");
+    
+    outputElement.addEventListener('click', (e) => {
+        // Click en nombre de usuario
+        if (e.target.closest('.user-tag')) {
+            e.stopPropagation();
+            const usuario = e.target.closest('.user-tag').dataset.usuario;
+            visitarPerfil(usuario);
+        }
+        
+        // Click en botón favoritos
+        if (e.target.closest('.btn-fav')) {
+            e.stopPropagation();
+            const id = e.target.closest('.btn-fav').dataset.id;
+            fav(id);
+        }
+        
+        // Click en botón compartir
+        if (e.target.closest('.btn-share')) {
+            e.stopPropagation();
+            const id = e.target.closest('.btn-share').dataset.id;
+            share(id);
+        }
+        
+        // Click en botón reportar
+        if (e.target.closest('.btn-report')) {
+            e.stopPropagation();
+            const id = e.target.closest('.btn-report').dataset.id;
+            report(id);
+        }
+        
+        // Click en botón enviar comentario
+        if (e.target.closest('.btn-post-comment')) {
+            e.stopPropagation();
+            const id = e.target.closest('.btn-post-comment').dataset.id;
+            postComm(id);
+        }
+    });
+    
+    // Click en inputs de comentarios
+    outputElement.addEventListener('click', (e) => {
+        if (e.target.closest('.input-comment')) {
+            e.stopPropagation();
+        }
+    });
+}
+
+// 4. ✅ FUNCIONES DE PERFIL Y NAVEGACIÓN (CORREGIDAS COMPLETAMENTE)
 function visitarPerfil(user) {
     if (!user || user === 'Cloud User') return;
     
-    // ✅ CORREGIDO: Verificar si es el usuario actual
     const usuarioActual = localStorage.getItem("user_admin");
+    
     if (user === usuarioActual) {
         // Si es el usuario logueado, ir a su perfil
         window.location.href = "./perfil.html";
     } else {
-        // Si es otro usuario, mostrar mensaje (o crear página de perfil público)
-        alert(`📋 Perfil de @${user}\n\nEsta función estará disponible próximamente.`);
+        // ✅ NUEVO: Redirigir a perfil público con parámetro
+        window.location.href = `./perfil-publico.html?user=${encodeURIComponent(user)}`;
     }
 }
 
-// ✅ CORREGIDO: Botón Mi Perfil redirige a perfil.html local
-document.getElementById("btn-mi-perfil").onclick = () => {
-    const u = localStorage.getItem("user_admin");
-    if (u) {
-        window.location.href = "./perfil.html";
-    } else {
-        window.location.href = "./index.html";
+// ✅ NUEVO: Función para seguir a un usuario
+async function seguirUsuario(usuarioASeguir) {
+    const usuarioActual = localStorage.getItem("user_admin");
+    
+    if (!usuarioActual) {
+        alert("⚠️ Debes iniciar sesión para seguir usuarios.");
+        return;
     }
-};
+    
+    if (usuarioActual === usuarioASeguir) {
+        alert("❌ No puedes seguirte a ti mismo.");
+        return;
+    }
+    
+    try {
+        const res = await fetch(`${API_URL}/usuarios/seguir`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                seguidor: usuarioActual, 
+                siguiendo: usuarioASeguir 
+            })
+        });
+        
+        if (res.ok) {
+            alert(`✅ Ahora sigues a @${usuarioASeguir}`);
+            // Recargar si estamos en perfil público
+            if (window.location.pathname.includes('perfil-publico')) {
+                location.reload();
+            }
+        } else {
+            const data = await res.json();
+            alert(data.message || "ℹ️ Ya sigues a este usuario.");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("❌ Error al seguir usuario.");
+    }
+}
+
+// ✅ NUEVO: Función para dejar de seguir
+async function dejarDeSeguir(usuarioADejarDeSeguir) {
+    const usuarioActual = localStorage.getItem("user_admin");
+    
+    if (!usuarioActual) return;
+    
+    if (confirm(`¿Dejar de seguir a @${usuarioADejarDeSeguir}?`)) {
+        try {
+            const res = await fetch(`${API_URL}/usuarios/dejar-seguir`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    seguidor: usuarioActual, 
+                    siguiendo: usuarioADejarDeSeguir 
+                })
+            });
+            
+            if (res.ok) {
+                alert(`💔 Dejaste de seguir a @${usuarioADejarDeSeguir}`);
+                if (window.location.pathname.includes('perfil-publico')) {
+                    location.reload();
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            alert("❌ Error al dejar de seguir.");
+        }
+    }
+}
+
+// Hacer funciones globales
+window.seguirUsuario = seguirUsuario;
+window.dejarDeSeguir = dejarDeSeguir;
+
+// ✅ CORREGIDO: Botón Mi Perfil redirige a perfil.html local
+const btnMiPerfil = document.getElementById("btn-mi-perfil");
+if (btnMiPerfil) {
+    btnMiPerfil.onclick = () => {
+        const u = localStorage.getItem("user_admin");
+        if (u) {
+            window.location.href = "./perfil.html";
+        } else {
+            window.location.href = "./index.html";
+        }
+    };
+}
 
 // 5. BUSCADOR
-buscador.oninput = (e) => {
-    const term = e.target.value.toLowerCase().trim();
-    const filtrados = todosLosItems.filter(i =>
-        (i.title + (i.usuario || "") + (i.category || "")).toLowerCase().includes(term)
-    );
-    renderizar(filtrados);
-};
+if (buscador) {
+    buscador.oninput = (e) => {
+        const term = e.target.value.toLowerCase().trim();
+        const filtrados = todosLosItems.filter(i =>
+            (i.title + (i.usuario || "") + (i.category || "")).toLowerCase().includes(term)
+        );
+        renderizar(filtrados);
+    };
+}
 
 // 6. FUNCIONES SOCIALES (Sincronizadas con rutas del Server)
 async function share(id) {
     const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
-    await navigator.clipboard.writeText(url);
-    alert("✅ Enlace copiado al portapapeles.");
+    try {
+        await navigator.clipboard.writeText(url);
+        alert("✅ Enlace copiado al portapapeles.");
+    } catch (e) {
+        // Fallback para navegadores que no soportan clipboard
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        alert("✅ Enlace copiado al portapapeles.");
+    }
 }
 
 async function fav(id) {
@@ -201,7 +358,13 @@ async function fav(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ usuario: user, itemId: id })
         });
-        alert(res.ok ? "💾 Guardado en Bóveda." : "ℹ️ Ya está en tu Bóveda.");
+        
+        if (res.ok) {
+            alert("💾 Guardado en Bóveda.");
+        } else {
+            const data = await res.json();
+            alert(data.message || "ℹ️ Ya está en tu Bóveda.");
+        }
     } catch (e) { 
         console.error(e);
         alert("❌ Error al guardar en favoritos.");
@@ -230,14 +393,22 @@ async function cargarComm(id) {
         
         box.innerHTML = data.map(c => `
             <div class="comm-item" style="margin-bottom:8px; border-left:2px solid var(--primary); padding-left:8px;">
-                <b style="color:var(--primary); font-size:0.7rem;" 
-                   onclick="visitarPerfil('${c.usuario}')">
+                <b style="color:var(--primary); font-size:0.7rem; cursor:pointer;" 
+                   class="user-tag-comment" data-usuario="${c.usuario}">
                     @${c.usuario}
                     ${getVerificadoBadge(c.usuario)}
                 </b>
                 <p style="font-size:0.75rem; color:#ddd; margin:0;">${c.texto || 'Sin texto'}</p>
             </div>
         `).join('') || '<p style="font-size:0.7rem; color:#555;">Sin opiniones aún.</p>';
+        
+        // Agregar listeners a nombres de usuarios en comentarios
+        box.querySelectorAll('.user-tag-comment').forEach(tag => {
+            tag.addEventListener('click', (e) => {
+                e.stopPropagation();
+                visitarPerfil(tag.dataset.usuario);
+            });
+        });
     } catch (e) {
         box.innerHTML = '<p style="color: #ff4343; font-size:0.8rem;">Error al cargar opiniones</p>';
     }
@@ -285,10 +456,12 @@ document.addEventListener('click', function(e) {
 }, true);
 
 // 8. CERRAR OVERLAY AL HACER CLICK FUERA
-overlay.onclick = () => {
-    document.querySelector('.juego-card.expandida')?.classList.remove('expandida');
-    overlay.style.display = 'none';
-    document.body.style.overflow = 'auto';
-};
+if (overlay) {
+    overlay.onclick = () => {
+        document.querySelector('.juego-card.expandida')?.classList.remove('expandida');
+        overlay.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    };
+}
 
 document.addEventListener("DOMContentLoaded", cargarContenido);

@@ -52,15 +52,15 @@ function analizarEnlaceSeguro(url) {
 // 1. LÓGICA DE VISTA PREVIA (OPTIMIZADA)
 // ==========================================
 function actualizarPreview() {
-    els.prevTitle.textContent = els.addTitle.value || "Título del Proyecto";
-    els.prevTag.textContent = (els.addCategory.value || "Categoría").toUpperCase();
-    els.prevImg.src = els.addImage.value || "https://via.placeholder.com/300x150?text=Esperando+Imagen";
+    if (els.prevTitle) els.prevTitle.textContent = els.addTitle.value || "Título del Proyecto";
+    if (els.prevTag) els.prevTag.textContent = (els.addCategory.value || "Categoría").toUpperCase();
+    if (els.prevImg) els.prevImg.src = els.addImage.value || "https://via.placeholder.com/300x150?text=Esperando+Imagen";
     
     // Validación visual del link en tiempo real (Borde dinámico)
-    if (els.addLink.value.trim() !== "") {
+    if (els.addLink && els.addLink.value.trim() !== "") {
         const res = analizarEnlaceSeguro(els.addLink.value.trim());
         els.addLink.style.borderColor = res.ok ? "#5EFF43" : "#ff4444";
-    } else {
+    } else if (els.addLink) {
         els.addLink.style.borderColor = "";
     }
 }
@@ -173,7 +173,10 @@ async function cargarEstadoActual() {
         els.showContent.innerHTML = "";
         els.showContent.appendChild(fragment);
     } catch (e) {
-        console.error("Error sincronizando historial");
+        console.error("Error sincronizando historial", e);
+        if (els.showContent) {
+            els.showContent.innerHTML = `<p class="error-msg">❌ Error al cargar historial</p>`;
+        }
     }
 }
 
@@ -183,11 +186,16 @@ async function cargarEstadoActual() {
 async function eliminarArchivo(id) {
     if (!confirm("¿Eliminar este archivo de la nube?")) return;
     try {
-        // ✅ CORREGIDO: Sintaxis de template string arreglada
         const res = await fetch(`${API_URL}/items/${id}`, { method: 'DELETE' });
-        if (res.ok) cargarEstadoActual();
+        if (res.ok) {
+            alert("✅ Archivo eliminado correctamente.");
+            cargarEstadoActual();
+        } else {
+            alert("❌ Error al eliminar el archivo.");
+        }
     } catch (error) {
-        alert("Error de conexión al eliminar.");
+        console.error("Error al eliminar:", error);
+        alert("❌ Error de conexión al eliminar.");
     }
 }
 
@@ -207,55 +215,42 @@ async function subirJuego() {
         return alert(verificacionLink.msg);
     }
     
-    // FILTRO DE PALABRAS PROHIBIDAS
-    const prohibidas = ["crack", "full", "gratis", "pirata", "free"];
-    const contieneProhibida = prohibidas.some(palabra =>
-        tituloFormateado.toLowerCase().includes(palabra) ||
-        descripcionFormateada.toLowerCase().includes(palabra)
-    );
-    
-    if (contieneProhibida) {
-        return alert("❌ ERROR DE LINEAMIENTOS: No uses palabras como Crack, Full o Gratis. Usa términos técnicos como Mod, Port o Archive.");
+    if (!tituloFormateado || !linkDescarga) {
+        return alert("⚠️ Completa al menos Título y Enlace.");
     }
     
-    const datos = {
+    const body = {
         title: tituloFormateado,
         description: descripcionFormateada,
         link: linkDescarga,
         image: els.addImage.value.trim(),
         category: els.addCategory.value,
-        categoria: els.addCategory.value,
-        usuario: usuarioLogueado.trim(),
+        usuario: usuarioLogueado,
         status: "pendiente"
     };
     
-    if (!datos.title || !datos.link || !datos.image) {
-        return alert("Completa Título, Link e Imagen.");
-    }
-    
-    els.subirBack.disabled = true;
-    els.subirBack.innerHTML = "⏳ VALIDANDO...";
-    
     try {
-        const response = await fetch(`${API_URL}/items/add`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datos)
+        const res = await fetch(`${API_URL}/items/add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
         });
         
-        if (response.ok) {
-            alert("✅ Aporte enviado. Será revisado según los términos de metadatos.");
-            [els.addTitle, els.addDescription, els.addLink, els.addImage].forEach(el => el.value = "");
+        if (res.ok) {
+            alert("✅ Archivo publicado. Esperando aprobación.");
+            els.addTitle.value = "";
+            els.addDescription.value = "";
+            els.addLink.value = "";
+            els.addImage.value = "";
             actualizarPreview();
             cargarEstadoActual();
         } else {
-            alert("Error al subir.");
+            const errorData = await res.json();
+            alert(`❌ Error: ${errorData.message || 'No se pudo publicar'}`);
         }
     } catch (error) {
-        alert("Error de conexión.");
-    } finally {
-        els.subirBack.disabled = false;
-        els.subirBack.innerHTML = `<ion-icon name="rocket-outline"></ion-icon> PUBLICAR EN LA NUBE`;
+        console.error("Error subiendo archivo:", error);
+        alert("❌ Error de conexión. Intenta de nuevo.");
     }
 }
 
@@ -296,8 +291,6 @@ async function guardarAvatar() {
     }
 
     try {
-        // Como no hay endpoint específico, vamos a usar el endpoint de actualización de usuario
-        // Si tu backend no tiene este endpoint, necesitarás agregarlo
         const res = await fetch(`${API_URL}/auth/profile`, {
             method: 'PUT',
             headers: { 
@@ -325,7 +318,6 @@ async function guardarAvatar() {
             alert("✅ Perfil actualizado correctamente.");
             
         } else {
-            // Si el endpoint no existe, guardamos localmente y mostramos advertencia
             console.warn("Endpoint /auth/profile no disponible, guardando localmente");
             
             if (avatarUrl) {
@@ -347,7 +339,6 @@ async function guardarAvatar() {
         console.error("Error guardando avatar:", error);
         alert("❌ Error de conexión. Guardando localmente...");
         
-        // Guardar localmente como fallback
         if (avatarUrl) {
             els.avatarImg.src = avatarUrl;
             els.avatarImg.style.display = 'block';
@@ -363,23 +354,58 @@ async function guardarAvatar() {
     }
 }
 
-// Función para cargar favoritos (Bóveda)
+// ✅ FUNCIÓN MEJORADA: cargar favoritos (Bóveda) con mejor manejo de errores
 async function cargarBoveda() {
-    if (!els.vaultContent) return;
+    if (!els.vaultContent) {
+        console.warn("Elemento vaultContent no encontrado");
+        return;
+    }
+    
     if (!usuarioLogueado) {
         els.vaultContent.innerHTML = `<p class="error-msg">⚠️ INICIA SESIÓN</p>`;
         return;
     }
 
-    try {
-        const res = await fetch(`${API_URL}/favoritos/${usuarioLogueado}`);
-        const data = await res.json();
+    // Mostrar estado de carga
+    els.vaultContent.innerHTML = `
+        <p class="empty-msg" style="grid-column: 1/-1; text-align: center;">
+            <ion-icon name="hourglass-outline" style="font-size: 2rem; display: block; margin: 0 auto 10px;"></ion-icon>
+            Cargando favoritos...
+        </p>
+    `;
 
-        if (!data.favoritos || data.favoritos.length === 0) {
+    try {
+        console.log(`Cargando favoritos para: ${usuarioLogueado}`);
+        const res = await fetch(`${API_URL}/favoritos/${usuarioLogueado}`);
+        
+        if (!res.ok) {
+            throw new Error(`Error HTTP: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        console.log("Datos de favoritos recibidos:", data);
+
+        // ✅ VERIFICACIÓN MEJORADA: Manejo de diferentes formatos de respuesta
+        let favoritos = [];
+        
+        if (Array.isArray(data)) {
+            // Si la respuesta es directamente un array
+            favoritos = data;
+        } else if (data.favoritos && Array.isArray(data.favoritos)) {
+            // Si está dentro de un objeto con propiedad favoritos
+            favoritos = data.favoritos;
+        } else if (data.items && Array.isArray(data.items)) {
+            // Posible formato alternativo
+            favoritos = data.items;
+        }
+
+        if (favoritos.length === 0) {
             els.vaultContent.innerHTML = `
                 <p class="empty-msg" style="grid-column: 1/-1; text-align: center; padding: 40px;">
                     💔 Tu bóveda está vacía.<br>
-                    <small style="color: var(--text-dim);">Agrega favoritos desde la biblioteca.</small>
+                    <small style="color: var(--text-dim); margin-top: 10px; display: block;">
+                        Agrega favoritos desde la biblioteca haciendo clic en el ❤️
+                    </small>
                 </p>
             `;
             return;
@@ -388,20 +414,53 @@ async function cargarBoveda() {
         els.vaultContent.innerHTML = '';
         const fragment = document.createDocumentFragment();
 
-        data.favoritos.forEach(item => {
+        favoritos.forEach(item => {
+            if (!item) return; // Saltar items nulos
+            
             const div = document.createElement("div");
             div.className = "vault-item";
 
+            // ✅ Escapar datos para prevenir XSS
+            const safeTitle = (item.title || 'Sin título').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const safeUsuario = (item.usuario || 'Anónimo').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const safeImage = item.image || 'https://via.placeholder.com/200x150?text=Sin+Imagen';
+            const safeLink = item.link || '#';
+            const itemId = item._id || item.id || '';
+
             div.innerHTML = `
-                <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/200x150?text=Sin+Imagen'">
+                <img src="${safeImage}" alt="${safeTitle}" onerror="this.src='https://via.placeholder.com/200x150?text=Sin+Imagen'">
                 <div class="vault-item-info">
-                    <div class="vault-item-title">${item.title}</div>
-                    <div class="vault-item-user">@${item.usuario}</div>
+                    <div class="vault-item-title">${safeTitle}</div>
+                    <div class="vault-item-user">@${safeUsuario}</div>
                     <div class="vault-item-actions">
-                        <button onclick="window.open('${item.link}', '_blank')">
+                        <button onclick="window.open('${safeLink}', '_blank')" style="
+                            background: var(--primary);
+                            color: #000;
+                            border: none;
+                            padding: 8px 15px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            font-weight: bold;
+                            font-size: 0.8rem;
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;
+                        ">
                             <ion-icon name="cloud-download"></ion-icon> Ver
                         </button>
-                        <button class="delete" onclick="eliminarDeBoveda('${item._id}')">
+                        <button class="delete" onclick="eliminarDeBoveda('${itemId}')" style="
+                            background: var(--danger);
+                            color: white;
+                            border: none;
+                            padding: 8px 15px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            font-weight: bold;
+                            font-size: 0.8rem;
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;
+                        ">
                             <ion-icon name="trash"></ion-icon> Quitar
                         </button>
                     </div>
@@ -412,10 +471,30 @@ async function cargarBoveda() {
         });
 
         els.vaultContent.appendChild(fragment);
+        console.log(`✅ Se cargaron ${favoritos.length} favoritos correctamente`);
 
     } catch (e) {
         console.error("Error cargando bóveda:", e);
-        els.vaultContent.innerHTML = `<p class="error-msg" style="grid-column: 1/-1;">❌ Error al cargar favoritos</p>`;
+        els.vaultContent.innerHTML = `
+            <p class="error-msg" style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                ❌ Error al cargar favoritos<br>
+                <small style="color: var(--text-dim); margin-top: 10px; display: block;">
+                    ${e.message || 'Error desconocido'}
+                </small>
+                <button onclick="cargarBoveda()" style="
+                    margin-top: 20px;
+                    background: var(--primary);
+                    color: #000;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-weight: bold;
+                ">
+                    🔄 Reintentar
+                </button>
+            </p>
+        `;
     }
 }
 
@@ -436,7 +515,8 @@ async function eliminarDeBoveda(itemId) {
             alert("💔 Eliminado de tu bóveda.");
             cargarBoveda(); // Recargar la lista
         } else {
-            alert("❌ Error al eliminar de favoritos.");
+            const errorData = await res.json();
+            alert(`❌ Error: ${errorData.message || 'No se pudo eliminar de favoritos'}`);
         }
     } catch (error) {
         console.error("Error eliminando de bóveda:", error);
@@ -457,10 +537,17 @@ function cerrarSesion() {
 window.guardarAvatar = guardarAvatar;
 window.eliminarDeBoveda = eliminarDeBoveda;
 window.cerrarSesion = cerrarSesion;
+window.cargarBoveda = cargarBoveda; // ✅ Exportar para poder llamarla manualmente
 
+// ✅ INICIALIZACIÓN MEJORADA
 document.addEventListener("DOMContentLoaded", () => {
+    console.log("🚀 Inicializando perfil...");
+    console.log("Usuario logueado:", usuarioLogueado);
+    
     cargarEstadoActual();
     cargarBoveda(); // ← Cargar favoritos
     actualizarPreview();
     mostrarUsuarioVerificado(); // ← Carga el nombre + verificado + avatar + bio al cargar la página
+    
+    console.log("✅ Perfil inicializado");
 });
