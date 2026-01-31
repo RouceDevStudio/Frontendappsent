@@ -54,38 +54,27 @@
             La responsabilidad legal recae en el usuario que indexó el link.
         </div>
     </div>
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const destino = urlParams.get('dest');
-    let countdown = 15;
+    
 
-    const interval = setInterval(() => {
-        countdown--;
-        document.getElementById('timer').innerText = `Preparando enlace en ${countdown}...`;
-        if (countdown <= 0) {
-            clearInterval(interval);
-            document.getElementById('timer').style.display = 'none';
-            const b = document.getElementById('btn');
-            b.style.display = 'block';
-            
-            b.onclick = () => { 
-                if(destino) {
-                    // Decodificamos la URL
-                    const urlFinal = decodeURIComponent(destino);
-                    
-                    // 'window.open' con '_blank' intenta abrir una nueva pestaña o ventana externa
-                    window.open(urlFinal, '_blank');
-                    
-                    // Opcional: Mantener la página puente informativa o cerrarla
-                    document.getElementById('timer').style.display = 'block';
-                    document.getElementById('timer').innerText = "Abriendo en ventana externa...";
-                } else {
-                    alert("Error: No se encontró el destino.");
-                }
-            };
-        }
-    }, 1000);
-</script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const destino = urlParams.get('dest');
+        let countdown = 15;
 
+        const interval = setInterval(() => {
+            countdown--;
+            document.getElementById('timer').innerText = `Preparando enlace en ${countdown}...`;
+            if (countdown <= 0) {
+                clearInterval(interval);
+                document.getElementById('timer').style.display = 'none';
+                const b = document.getElementById('btn');
+                b.style.display = 'block';
+                b.onclick = () => { 
+                    if(destino) window.location.href = decodeURIComponent(destino);
+                    else alert("Error: No se encontró el destino.");
+                };
+            }
+        }, 1000);
+    </script>
 </body>
 </html>

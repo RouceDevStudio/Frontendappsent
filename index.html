@@ -166,9 +166,11 @@
 
     <script>
         const API_URL = "https://backendapp-037y.onrender.com";
+        // ✅ CORREGIDO: Redirección a biblioteca.html local
         const REDIRECT_URL = "./biblioteca.html";
         let isLoginMode = true;
 
+        // Cache de selectores
         const els = {
             title: document.getElementById("form-title"),
             btn: document.getElementById("btnAction"),
@@ -180,16 +182,14 @@
             pass: document.getElementById("pass")
         };
 
-        // Si ya hay sesión activa, ir directo a biblioteca
         window.onload = () => {
-            if (localStorage.getItem("user_admin") && localStorage.getItem("upgames_token")) {
-                window.location.replace(REDIRECT_URL);
-            }
+            if (localStorage.getItem("user_admin")) window.location.replace(REDIRECT_URL);
         };
 
         els.toggle.onclick = (e) => {
             e.preventDefault();
             isLoginMode = !isLoginMode;
+            
             els.title.innerText = isLoginMode ? "Metadata Index" : "Nuevo Registro";
             els.btn.innerText = isLoginMode ? "ACCEDER AL ÍNDICE" : "REGISTRAR PERFIL";
             els.text.innerText = isLoginMode ? "¿No tienes acceso?" : "¿Ya eres miembro?";
@@ -220,15 +220,7 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    // ✅ CORREGIDO: Guardar el nombre de usuario (string) correctamente
-                    localStorage.setItem("user_admin", data.usuario.usuario);
-                    // ✅ CORREGIDO: Guardar el JWT token para autenticación
-                    localStorage.setItem("upgames_token", data.token);
-                    // Guardar refresh token para renovación
-                    if (data.refreshToken) {
-                        localStorage.setItem("upgames_refresh_token", data.refreshToken);
-                    }
-
+                    localStorage.setItem("user_admin", data.usuario);
                     showMsg("✅ ACCESO CONCEDIDO", "#5EFF43");
                     setTimeout(() => window.location.replace(REDIRECT_URL), 500);
                 } else {
