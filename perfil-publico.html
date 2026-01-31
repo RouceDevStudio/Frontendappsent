@@ -302,6 +302,9 @@
                         <span class="stat-number" id="stat-followers">0</span>
                         <span class="stat-label">Seguidores</span>
                     </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="stat-following">0</span>
+                        <span class="stat-label">Siguiendo</span>
                     </div>
                 </div>
             </div>
@@ -338,24 +341,14 @@
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 
     <script>
-    <script>
         const API_URL = "https://backendapp-037y.onrender.com";
         const urlParams = new URLSearchParams(window.location.search);
-        const usuarioViendo = urlParams.get('u');
-        
-        // ✅ CORREGIDO: Leer token y usuario de localStorage con logs de depuración
-        const token = localStorage.getItem("token");
+        const usuarioViendo = urlParams.get('u'); // ✅ CORREGIDO: usar 'u' en vez de 'user'
         const usuarioActual = localStorage.getItem("user_admin");
 
         console.log("=== PERFIL PÚBLICO INICIADO ===");
         console.log("Usuario viendo:", usuarioViendo);
-        console.log("Usuario actual logueado:", usuarioActual);
-        console.log("Token presente:", !!token);
-        if (token) {
-            console.log("Token (primeros 30 chars):", token.substring(0, 30) + "...");
-        } else {
-            console.warn("⚠️ NO HAY TOKEN EN LOCALSTORAGE");
-        }
+        console.log("Usuario actual:", usuarioActual);
 
         // Función para obtener badge de verificación
         function getVerificadoBadge(nivel) {
@@ -410,58 +403,48 @@
                     throw new Error("Usuario no encontrado");
                 }
 
-                console.log("✅ Datos del usuario encontrados:", userData);
+                console.log("✅ Datos del usuario:", userData);
 
-                // Actualizar UI con datos del usuario
-                document.getElementById('user-name-display').textContent = `@${userData.usuario}`;
+                // Actualizar UI
+                document.getElementById('user-name-display').textContent = `@${usuarioViendo}`;
                 
-                // Mostrar badge de verificación
-                const badgeHTML = getVerificadoBadge(userData.verificadoNivel);
-                document.getElementById('verificado-badge').innerHTML = badgeHTML;
-
-                // Intentar obtener perfil completo (con avatar y bio)
-                try {
-                    const resPerfil = await fetch(`${API_URL}/usuario/${usuarioViendo}`);
-                    if (resPerfil.ok) {
-                        const perfilData = await resPerfil.json();
-                        console.log("📋 Perfil completo obtenido:", perfilData);
-                        
-                        // Actualizar avatar
-                        const avatarImg = document.getElementById('avatar-img');
-                        const avatarIcon = document.getElementById('avatar-icon');
-                        
-                        if (perfilData.avatar) {
-                            avatarImg.src = perfilData.avatar;
-                            avatarImg.style.display = 'block';
-                            avatarIcon.style.display = 'none';
-                        }
-                        
-                        // Actualizar bio
-                        if (perfilData.bio) {
-                            document.getElementById('user-bio').textContent = perfilData.bio;
-                        } else {
-                            document.getElementById('user-bio').textContent = 'Indexador de metadatos';
-                        }
-                    }
-                } catch (e) {
-                    console.warn("⚠️ No se pudo obtener perfil completo:", e);
-                    document.getElementById('user-bio').textContent = 'Indexador de metadatos';
+                // Badge de verificación
+                const nivel = userData.verificadoNivel || 0;
+                if (nivel > 0) {
+                    document.getElementById('verificado-badge').innerHTML = getVerificadoBadge(nivel);
                 }
+
+                // Avatar
+                const avatarUrl = userData.avatar || localStorage.getItem(`avatar_${usuarioViendo}`);
+                const avatarImg = document.getElementById('avatar-img');
+                const avatarIcon = document.getElementById('avatar-icon');
+                
+                if (avatarUrl) {
+                    avatarImg.src = avatarUrl;
+                    avatarImg.style.display = 'block';
+                    avatarIcon.style.display = 'none';
+                } else {
+                    avatarIcon.textContent = usuarioViendo.charAt(0).toUpperCase();
+                }
+
+                // Biografía
+                const bio = userData.bio || localStorage.getItem(`bio_${usuarioViendo}`) || 'Sin biografía';
+                document.getElementById('user-bio').textContent = bio;
 
                 // Cargar publicaciones
                 await cargarPublicaciones();
-                
-                // Verificar seguimiento (solo si el usuario está logueado)
+
+                // Verificar seguimiento
                 await verificarSeguimiento();
 
             } catch (error) {
                 console.error("❌ Error cargando perfil:", error);
                 document.querySelector('.container').innerHTML = `
                     <div class="empty-msg">
-                        <ion-icon name="sad" style="font-size:3rem; color:var(--danger);"></ion-icon>
+                        <ion-icon name="alert-circle" style="font-size:3rem; color:var(--danger);"></ion-icon>
                         <h3>Error al cargar perfil</h3>
                         <p>${error.message}</p>
-                        <button onclick="window.location.href='./biblioteca.html'" style="
+                        <button onclick="location.reload()" style="
                             margin-top: 20px;
                             background: var(--primary);
                             color: #000;
@@ -471,17 +454,16 @@
                             font-weight: bold;
                             cursor: pointer;
                         ">
-                            Volver a Biblioteca
+                            Reintentar
                         </button>
                     </div>
                 `;
             }
         }
 
+        // Cargar publicaciones del usuario
         async function cargarPublicaciones() {
             try {
-                console.log("📦 Cargando publicaciones del usuario:", usuarioViendo);
-                
                 const res = await fetch(`${API_URL}/items`);
                 const items = await res.json();
                 
@@ -539,15 +521,9 @@
         // Verificar si el usuario actual sigue al usuario que está viendo
         async function verificarSeguimiento() {
             const btnSeguir = document.getElementById('btn-seguir');
-            
-            console.log("🔍 Verificando estado de seguimiento...");
-            console.log("Usuario actual:", usuarioActual);
-            console.log("Usuario viendo:", usuarioViendo);
-            console.log("Token disponible:", !!token);
-            
+
             // Si es el propio perfil
             if (usuarioActual === usuarioViendo) {
-                console.log("👤 Es el propio perfil del usuario");
                 btnSeguir.innerHTML = `
                     <ion-icon name="person-circle"></ion-icon>
                     Tu perfil
@@ -556,10 +532,10 @@
                 btnSeguir.style.opacity = '0.5';
                 return;
             }
-            
+
             // Si no está logueado
-            if (!usuarioActual || !token) {
-                console.log("⚠️ Usuario no logueado - mostrando botón para iniciar sesión");
+            if (!usuarioActual) {
+                console.log("⚠️ Usuario no logueado");
                 btnSeguir.innerHTML = `
                     <ion-icon name="log-in"></ion-icon>
                     Inicia sesión para seguir
@@ -570,16 +546,17 @@
                 btnSeguir.disabled = false;
                 return;
             }
-            
+
             try {
-                console.log("🔍 Consultando endpoint de seguimiento...");
+                console.log("🔍 Verificando seguimiento...");
                 console.log("Endpoint:", `${API_URL}/usuarios/siguiendo/${usuarioActual}`);
                 
                 const res = await fetch(`${API_URL}/usuarios/siguiendo/${usuarioActual}`);
                 console.log("📥 Status de verificación:", res.status);
                 
-                if (!res.ok) {
-                    console.warn("⚠️ Error en endpoint de verificación, status:", res.status);
+                // Si el endpoint no existe (404), mostrar botón básico
+                if (res.status === 404) {
+                    console.warn("⚠️ Endpoint /usuarios/siguiendo no encontrado en el backend");
                     btnSeguir.innerHTML = `
                         <ion-icon name="person-add"></ion-icon>
                         Seguir
@@ -587,11 +564,12 @@
                     btnSeguir.className = 'btn-seguir';
                     btnSeguir.onclick = seguirUsuario;
                     btnSeguir.disabled = false;
+                    btnSeguir.title = "Sistema de seguimiento disponible";
                     return;
                 }
                 
                 const data = await res.json();
-                console.log("📋 Datos de seguimiento recibidos:", data);
+                console.log("📋 Datos de seguimiento:", data);
                 
                 const estaSiguiendo = data.siguiendo && data.siguiendo.includes(usuarioViendo);
                 console.log("✅ ¿Está siguiendo?", estaSiguiendo);
@@ -613,12 +591,13 @@
                     btnSeguir.className = 'btn-seguir';
                     btnSeguir.onclick = seguirUsuario;
                 }
-                
+
                 // Cargar estadísticas de seguidores
-                await cargarEstadisticas();
-                
+                cargarEstadisticas();
+
             } catch (e) {
                 console.error("❌ Error verificando seguimiento:", e);
+                // Mostrar botón básico en caso de error
                 btnSeguir.innerHTML = `
                     <ion-icon name="person-add"></ion-icon>
                     Seguir
@@ -629,128 +608,147 @@
             }
         }
 
-        // ✅ FUNCIÓN PARA SEGUIR A UN USUARIO CON TOKEN
+        // ✅ Seguir usuario (VERSIÓN CORREGIDA)
         async function seguirUsuario() {
-            // ✅ Verificar que el token exista
-            if (!token || !usuarioActual) {
-                console.error("❌ No hay token o usuario en localStorage");
-                alert("⚠️ Error: Debes iniciar sesión nuevamente.");
+            console.log("=== FUNCIÓN SEGUIR USUARIO ===");
+            console.log("🔵 Botón SEGUIR clickeado");
+            console.log("Usuario actual:", usuarioActual);
+            console.log("Usuario a seguir:", usuarioViendo);
+            
+            if (!usuarioActual) {
+                alert("⚠️ Debes iniciar sesión para seguir usuarios.");
                 window.location.href = './index.html';
                 return;
             }
 
-            const btn = document.getElementById('btn-seguir');
-            btn.disabled = true;
-            btn.innerHTML = `<ion-icon name="reload"></ion-icon> Procesando...`;
+            // Prevenir múltiples clicks
+            const btnSeguir = document.getElementById('btn-seguir');
+            const originalContent = btnSeguir.innerHTML;
+            btnSeguir.disabled = true;
+            btnSeguir.innerHTML = `
+                <ion-icon name="hourglass-outline"></ion-icon>
+                Procesando...
+            `;
 
             try {
-                console.log("📤 Enviando solicitud de seguir:");
-                console.log("Seguidor:", usuarioActual);
-                console.log("Siguiendo:", usuarioViendo);
-                console.log("Token (primeros 30 chars):", token.substring(0, 30) + "...");
-
+                console.log("📤 Enviando petición POST...");
+                console.log("URL:", `${API_URL}/usuarios/seguir`);
+                console.log("Body:", JSON.stringify({ 
+                    seguidor: usuarioActual, 
+                    siguiendo: usuarioViendo 
+                }));
+                
                 const res = await fetch(`${API_URL}/usuarios/seguir`, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` // ✅ Usar el token guardado
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         seguidor: usuarioActual, 
                         siguiendo: usuarioViendo 
                     })
                 });
 
-                console.log("📥 Status de respuesta:", res.status);
-                
-                const data = await res.json();
-                console.log("📥 Respuesta completa:", data);
+                console.log("📥 Respuesta recibida");
+                console.log("Status:", res.status);
+                console.log("Status Text:", res.statusText);
 
-                if (res.ok && data.success) {
-                    console.log("✅ Ahora sigues a", usuarioViendo);
-                    await verificarSeguimiento();
-                    await cargarEstadisticas();
+                if (res.ok) {
+                    console.log("✅ ÉXITO - Usuario seguido correctamente");
+                    alert(`✅ Ahora sigues a @${usuarioViendo}`);
+                    verificarSeguimiento();
                 } else {
-                    console.error("❌ Error en la respuesta:", data);
-                    alert(data.message || data.error || "Error al seguir");
-                    btn.disabled = false;
+                    const data = await res.json();
+                    console.warn("⚠️ Respuesta no OK:", data);
+                    
+                    if (res.status === 404) {
+                        console.error("❌ Endpoint /usuarios/seguir NO EXISTE en el backend");
+                        alert(`ℹ️ Sistema de seguimiento en desarrollo.\n\nError: Endpoint no encontrado (404)`);
+                    } else {
+                        alert(data.message || `Error ${res.status}: ${res.statusText}`);
+                    }
+                    
+                    btnSeguir.disabled = false;
+                    btnSeguir.innerHTML = originalContent;
                 }
             } catch (e) {
-                console.error("❌ Error de red:", e);
-                alert("❌ Error de conexión");
-                btn.disabled = false;
+                console.error("❌ EXCEPCIÓN CAPTURADA:", e);
+                console.error("Tipo de error:", e.name);
+                console.error("Mensaje:", e.message);
+                
+                alert(`❌ Error de conexión\n\n${e.message}`);
+                btnSeguir.disabled = false;
+                btnSeguir.innerHTML = originalContent;
             }
         }
 
+        // Dejar de seguir
         async function dejarDeSeguir() {
-            // ✅ Verificar que el token exista
-            if (!token || !usuarioActual) {
-                console.error("❌ No hay token o usuario en localStorage");
-                alert("⚠️ Error: Debes iniciar sesión nuevamente.");
-                window.location.href = './index.html';
-                return;
-            }
-
-            const btn = document.getElementById('btn-seguir');
-            btn.disabled = true;
-            btn.innerHTML = `<ion-icon name="reload"></ion-icon> Procesando...`;
-
+            console.log("=== FUNCIÓN DEJAR DE SEGUIR ===");
+            
+            if (!confirm(`¿Dejar de seguir a @${usuarioViendo}?`)) return;
+            
+            const btnSeguir = document.getElementById('btn-seguir');
+            const originalContent = btnSeguir.innerHTML;
+            btnSeguir.disabled = true;
+            btnSeguir.innerHTML = `
+                <ion-icon name="hourglass-outline"></ion-icon>
+                Procesando...
+            `;
+            
             try {
-                console.log("📤 Enviando solicitud de dejar de seguir:");
-                console.log("Seguidor:", usuarioActual);
-                console.log("Siguiendo:", usuarioViendo);
-
+                console.log("📤 Enviando petición DELETE...");
+                
                 const res = await fetch(`${API_URL}/usuarios/dejar-seguir`, {
                     method: 'DELETE',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` // ✅ Usar el token guardado
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         seguidor: usuarioActual, 
                         siguiendo: usuarioViendo 
                     })
                 });
 
-                const data = await res.json();
-                console.log("📥 Respuesta:", data);
+                console.log("📥 Respuesta:", res.status);
 
-                if (res.ok && data.success) {
-                    console.log("✅ Dejaste de seguir a", usuarioViendo);
-                    await verificarSeguimiento();
-                    await cargarEstadisticas();
+                if (res.ok) {
+                    console.log("✅ Dejó de seguir correctamente");
+                    alert(`💔 Dejaste de seguir a @${usuarioViendo}`);
+                    verificarSeguimiento();
                 } else {
-                    alert(data.message || data.error || "Error al dejar de seguir");
-                    btn.disabled = false;
+                    const data = await res.json();
+                    console.error("❌ Error:", data);
+                    alert(data.message || "Error al dejar de seguir");
+                    btnSeguir.disabled = false;
+                    btnSeguir.innerHTML = originalContent;
                 }
             } catch (e) {
-                console.error("❌ Error:", e);
+                console.error("❌ Error al dejar de seguir:", e);
                 alert("❌ Error de conexión");
-                btn.disabled = false;
+                btnSeguir.disabled = false;
+                btnSeguir.innerHTML = originalContent;
             }
         }
 
-        // ✅ CORREGIDO: Cargar estadísticas de seguidores
+        // Cargar estadísticas (seguidores/siguiendo)
         async function cargarEstadisticas() {
             try {
-                // ✅ CORREGIDO: endpoint correcto "/usuarios/stats-seguimiento/"
+                // Intentar obtener estadísticas del backend
                 const res = await fetch(`${API_URL}/usuarios/stats-seguimiento/${usuarioViendo}`);
                 
-                if (!res.ok) {
-                    console.warn("⚠️ No se pudieron cargar las estadísticas");
-                    return;
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.stats) {
+                        document.getElementById('stat-followers').textContent = data.stats.seguidores || '0';
+                        document.getElementById('stat-following').textContent = data.stats.siguiendo || '0';
+                        return;
+                    }
                 }
-
-                const data = await res.json();
-                console.log("📊 Estadísticas:", data);
                 
-                if (data.success && data.stats) {
-                    // ✅ CORREGIDO: usar "data.stats.seguidores"
-                    document.getElementById('stat-followers').textContent = data.stats.seguidores || 0;
-                }
-            } catch (e) {
-                console.error("❌ Error cargando estadísticas:", e);
+                // Si no hay endpoint, mostrar 0
                 document.getElementById('stat-followers').textContent = '0';
+                document.getElementById('stat-following').textContent = '0';
+            } catch (e) {
+                console.error("Error cargando estadísticas:", e);
+                document.getElementById('stat-followers').textContent = '0';
+                document.getElementById('stat-following').textContent = '0';
             }
         }
 
