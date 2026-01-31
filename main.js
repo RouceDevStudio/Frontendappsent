@@ -101,227 +101,286 @@ async function mostrarUsuarioVerificado() {
             
             els.checkVerificado.className = clase;
             els.checkVerificado.innerHTML = `<ion-icon name="${icon}"></ion-icon>`;
-            els.checkVerificado.title = `Verificado Nivel ${nivel}`;
         }
-        
-        // Cargar Avatar
-        const avatarUrl = usuarioData.avatar || localStorage.getItem(`avatar_${usuarioLogueado}`);
-        if (avatarUrl && els.avatarImg) {
-            els.avatarImg.src = avatarUrl;
+
+        // Mostrar avatar si existe
+        if (usuarioData.avatar && usuarioData.avatar.trim() !== '') {
+            els.avatarImg.src = usuarioData.avatar;
             els.avatarImg.style.display = 'block';
-            if (els.avatarIcon) els.avatarIcon.style.display = 'none';
-        } else {
-            if (els.avatarImg) els.avatarImg.style.display = 'none';
-            if (els.avatarIcon) {
-                els.avatarIcon.style.display = 'flex';
-                els.avatarIcon.textContent = usuarioLogueado.charAt(0).toUpperCase();
-            }
+            els.avatarIcon.style.display = 'none';
+            
+            // Pre-llenar modal con datos actuales
+            if (els.inputAvatarUrl) els.inputAvatarUrl.value = usuarioData.avatar;
+            if (els.previewAvatar) els.previewAvatar.src = usuarioData.avatar;
         }
-        
-        // Cargar Biografía
-        const bio = usuarioData.bio || localStorage.getItem(`bio_${usuarioLogueado}`);
-        if (bio && els.userBio) {
-            els.userBio.textContent = bio;
-            els.userBio.style.display = 'block';
+
+        // Mostrar bio si existe
+        if (usuarioData.bio && usuarioData.bio.trim() !== '') {
+            els.userBio.textContent = usuarioData.bio;
+            if (els.inputBio) els.inputBio.value = usuarioData.bio;
         }
-        
+
     } catch (e) {
-        console.error("Error cargando datos de usuario:", e);
+        console.error("Error cargando datos del usuario", e);
     }
 }
 
 // ==========================================
-// 2. SUBIR METADATOS AL BACKEND (MEJOR VALIDACIÓN)
-// ==========================================
-if (els.subirBack) {
-    els.subirBack.onclick = async () => {
-        if (!usuarioLogueado) return alert("⚠️ SESIÓN EXPIRADA. Recarga e inicia sesión.");
-        
-        const title = els.addTitle.value.trim();
-        const desc = els.addDescription.value.trim();
-        const link = els.addLink.value.trim();
-        const image = els.addImage.value.trim();
-        const category = els.addCategory.value;
-        
-        if (!title || !link || !image) return alert("⚠️ Completa todos los campos obligatorios.");
-        
-        // ✅ VALIDACIÓN DE SEGURIDAD
-        const validacion = analizarEnlaceSeguro(link);
-        if (validacion.ok === false) return alert(validacion.msg);
-        
-        try {
-            const res = await fetch(`${API_URL}/items`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    title, 
-                    description: desc, 
-                    link, 
-                    image, 
-                    category, 
-                    usuario: usuarioLogueado,
-                    reportes: 0,
-                    status: "pendiente"
-                })
-            });
-            
-            if (res.ok) {
-                alert("🚀 TU PROYECTO ESTÁ EN REVISIÓN.\n\nRecibirás notificación cuando esté aprobado.");
-                [els.addTitle, els.addDescription, els.addLink, els.addImage].forEach(el => el.value = "");
-                els.addCategory.value = "general";
-                actualizarPreview();
-                cargarEstadoActual();
-            } else {
-                alert("❌ Error al subir. Revisa tu conexión.");
-            }
-        } catch (e) {
-            console.error(e);
-            alert("❌ ERROR DE CONEXIÓN. Verifica tu internet.");
-        }
-    };
-}
-
-// ==========================================
-// 3. CARGAR HISTORIAL DEL USUARIO
+// 2. CARGAR HISTORIAL (OPTIMIZADO - ORIGINAL)
 // ==========================================
 async function cargarEstadoActual() {
-    if (!els.showContent || !usuarioLogueado) return;
-    
-    els.showContent.innerHTML = '<p class="empty-msg">⏳ Cargando historial...</p>';
+    if (!els.showContent) return;
+    if (!usuarioLogueado) {
+        els.showContent.innerHTML = `<p class="error-msg">⚠️ INICIA SESIÓN</p>`;
+        return;
+    }
     
     try {
         const res = await fetch(`${API_URL}/items`);
         const data = await res.json();
-        const misItems = data.filter(i => i.usuario === usuarioLogueado);
+        const listaBruta = Array.isArray(data) ? data : [];
+        const misAportes = listaBruta.filter(item => item.usuario === usuarioLogueado);
         
-        if (misItems.length === 0) {
-            els.showContent.innerHTML = `
-                <p class="empty-msg" style="grid-column: 1/-1;">
-                    📦 AÚN NO HAS SUBIDO NADA<br>
-                    <small style="color: var(--text-dim);">Usa el formulario de arriba para publicar tu primer proyecto.</small>
-                </p>
-            `;
+        if (misAportes.length === 0) {
+            els.showContent.innerHTML = "<p class='empty-msg'>Aún no tienes archivos.</p>";
             return;
         }
         
-        els.showContent.innerHTML = '';
         const fragment = document.createDocumentFragment();
-        
-        misItems.forEach(item => {
+        misAportes.reverse().forEach(item => {
             const div = document.createElement("div");
-            div.className = "history-item";
-            
-            const statusIcon = item.status === "aprobado" ? "✅" : "⏳";
-            const statusText = item.status === "aprobado" ? "Aprobado" : "En revisión";
-            const statusColor = item.status === "aprobado" ? "var(--primary)" : "var(--warning)";
+            div.className = "log-item";
+            const colorStatus = item.status === 'aprobado' ? '#5EFF43' : '#ffcc00';
             
             div.innerHTML = `
-                <img src="${item.image}" alt="${item.title}">
-                <div class="history-info">
-                    <div class="history-title">${item.title}</div>
-                    <div class="history-category">${item.category || 'General'}</div>
-                    <div class="history-status" style="color: ${statusColor};">
-                        ${statusIcon} ${statusText}
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                    <div>
+                        <div style="color:white; font-size:12px; font-weight:bold;">${item.title || 'Sin nombre'}</div>
+                        <div style="margin-top:4px;">
+                            <span style="font-size:8px; color:${colorStatus}; border:1px solid ${colorStatus}; padding:1px 5px; border-radius:3px; text-transform:uppercase;">
+                                ${item.status || 'pendiente'}
+                            </span>
+                        </div>
                     </div>
-                    ${item.status === "aprobado" ? `
-                        <button onclick="window.location.href='./biblioteca.html?id=${item._id}'" style="
-                            margin-top: 10px;
-                            background: var(--primary);
-                            color: #000;
-                            border: none;
-                            padding: 8px 15px;
-                            border-radius: 5px;
-                            cursor: pointer;
-                            font-weight: bold;
-                            font-size: 0.8rem;
-                        ">
-                            📖 Ver en Biblioteca
-                        </button>
-                    ` : ''}
+                    <button onclick="eliminarArchivo('${item._id}')" class="btn-delete-log">
+                        <ion-icon name="trash-outline"></ion-icon>
+                    </button>
                 </div>
             `;
             fragment.appendChild(div);
         });
         
+        els.showContent.innerHTML = "";
         els.showContent.appendChild(fragment);
-        
     } catch (e) {
-        console.error(e);
-        els.showContent.innerHTML = '<p class="error-msg">❌ Error al cargar historial</p>';
+        console.error("Error sincronizando historial", e);
+        if (els.showContent) {
+            els.showContent.innerHTML = `<p class="error-msg">❌ Error al cargar historial</p>`;
+        }
     }
 }
 
 // ==========================================
-// NUEVO: CAMBIAR AVATAR Y BIO
+// 3. FUNCIÓN ELIMINAR (CORREGIDA - ERROR DE SINTAXIS ARREGLADO)
 // ==========================================
-if (els.avatarDisplay) {
-    els.avatarDisplay.addEventListener('click', () => {
-        const modal = document.getElementById('modal-avatar');
-        if (modal) {
-            modal.style.display = 'flex';
-            
-            // Pre-cargar valores actuales
-            const avatarActual = localStorage.getItem(`avatar_${usuarioLogueado}`) || '';
-            const bioActual = localStorage.getItem(`bio_${usuarioLogueado}`) || '';
-            
-            if (els.inputAvatarUrl) els.inputAvatarUrl.value = avatarActual;
-            if (els.inputBio) els.inputBio.value = bioActual;
-            if (els.previewAvatar) els.previewAvatar.src = avatarActual || 'https://via.placeholder.com/120?text=Vista+Previa';
-        }
-    });
-}
-
-// Preview del avatar en tiempo real
-if (els.inputAvatarUrl && els.previewAvatar) {
-    els.inputAvatarUrl.addEventListener('input', (e) => {
-        const url = e.target.value.trim();
-        if (url) {
-            els.previewAvatar.src = url;
-        } else {
-            els.previewAvatar.src = 'https://via.placeholder.com/120?text=Vista+Previa';
-        }
-    });
-}
-
-async function guardarAvatar() {
-    if (!usuarioLogueado) return;
-    
-    const avatarUrl = els.inputAvatarUrl?.value.trim() || '';
-    const bio = els.inputBio?.value.trim() || '';
+async function eliminarArchivo(id) {
+    if (!confirm("¿Eliminar este archivo de la nube?")) return;
     
     try {
-        // Intentar guardar en el backend
-        const res = await fetch(`${API_URL}/usuarios/actualizar-perfil`, {
+        // ✅ OBTENER TOKEN
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+            alert("⚠️ Sesión expirada. Por favor inicia sesión nuevamente.");
+            window.location.href = './index.html';
+            return;
+        }
+        
+        const res = await fetch(`${API_URL}/items/${id}`, { 
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}` // ✅ ENVIAR TOKEN
+            }
+        });
+        
+        if (res.ok) {
+            alert("✅ Archivo eliminado correctamente.");
+            cargarEstadoActual();
+        } else {
+            const errorData = await res.json();
+            alert(`❌ Error: ${errorData.mensaje || errorData.error || 'Error al eliminar'}`);
+        }
+    } catch (error) {
+        console.error("Error al eliminar:", error);
+        alert("❌ Error de conexión al eliminar.");
+    }
+}
+
+// ==========================================
+// 4. FUNCIÓN PUBLICAR (CON FILTRO DE SEGURIDAD Y ENLACES)
+// ==========================================
+async function subirJuego() {
+    if (!usuarioLogueado) return alert("Debes iniciar sesión.");
+    
+    const tituloFormateado = els.addTitle.value.trim();
+    const descripcionFormateada = els.addDescription.value.trim();
+    const linkDescarga = els.addLink.value.trim();
+    
+    // 🛡️ VALIDACIÓN DE ENLACE ANTES DE SUBIR
+    const verificacionLink = analizarEnlaceSeguro(linkDescarga);
+    if (verificacionLink.ok === false) {
+        return alert(verificacionLink.msg);
+    }
+    
+    if (!tituloFormateado || !linkDescarga) {
+        return alert("⚠️ Completa al menos Título y Enlace.");
+    }
+    
+    const body = {
+        title: tituloFormateado,
+        description: descripcionFormateada,
+        link: linkDescarga,
+        image: els.addImage.value.trim(),
+        category: els.addCategory.value,
+        usuario: usuarioLogueado,
+        status: "pendiente"
+    };
+    
+    try {
+        // ✅ OBTENER TOKEN DE LOCALSTORAGE
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+            alert("⚠️ Sesión expirada. Por favor inicia sesión nuevamente.");
+            window.location.href = './index.html';
+            return;
+        }
+        
+        console.log("📤 Enviando publicación con token...");
+        
+        const res = await fetch(`${API_URL}/items/add`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // ✅ ENVIAR TOKEN
+            },
+            body: JSON.stringify(body)
+        });
+        
+        console.log(`📥 Respuesta: ${res.status} ${res.statusText}`);
+        
+        if (res.ok) {
+            alert("✅ Archivo publicado. Esperando aprobación.");
+            els.addTitle.value = "";
+            els.addDescription.value = "";
+            els.addLink.value = "";
+            els.addImage.value = "";
+            actualizarPreview();
+            cargarEstadoActual();
+        } else {
+            const errorData = await res.json();
+            console.error("Error del servidor:", errorData);
+            alert(`❌ Error: ${errorData.error || errorData.message || 'No se pudo publicar'}`);
+        }
+    } catch (error) {
+        console.error("Error subiendo archivo:", error);
+        alert("❌ Error de conexión. Verifica tu internet e intenta de nuevo.");
+    }
+}
+
+// Inicialización
+if (els.subirBack) els.subirBack.onclick = subirJuego;
+window.eliminarArchivo = eliminarArchivo;
+
+// ==========================================
+// NUEVAS FUNCIONES: AVATAR, BÓVEDA Y CERRAR SESIÓN
+// ==========================================
+
+// Preview del avatar en tiempo real
+if (els.inputAvatarUrl) {
+    els.inputAvatarUrl.oninput = () => {
+        const url = els.inputAvatarUrl.value.trim();
+        if (url && els.previewAvatar) {
+            els.previewAvatar.src = url;
+        }
+    };
+}
+
+// Función para guardar avatar y bio
+async function guardarAvatar() {
+    const avatarUrl = els.inputAvatarUrl.value.trim();
+    const bio = els.inputBio.value.trim();
+
+    if (!avatarUrl && !bio) {
+        return alert("Ingresa al menos la URL del avatar o una biografía.");
+    }
+
+    // Validar que la URL sea válida
+    if (avatarUrl) {
+        try {
+            new URL(avatarUrl);
+        } catch (e) {
+            return alert("❌ La URL del avatar no es válida.");
+        }
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/auth/profile`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ 
-                usuario: usuarioLogueado, 
+                usuario: usuarioLogueado,
                 avatar: avatarUrl,
                 bio: bio
             })
         });
-        
+
         if (res.ok) {
-            alert("✅ Perfil actualizado correctamente");
-            localStorage.setItem(`avatar_${usuarioLogueado}`, avatarUrl);
-            localStorage.setItem(`bio_${usuarioLogueado}`, bio);
-            mostrarUsuarioVerificado(); // Recargar el perfil
+            // Actualizar la vista
+            if (avatarUrl) {
+                els.avatarImg.src = avatarUrl;
+                els.avatarImg.style.display = 'block';
+                els.avatarIcon.style.display = 'none';
+            }
+            if (bio) {
+                els.userBio.textContent = bio;
+            }
+
+            document.getElementById('modal-avatar').style.display = 'none';
+            alert("✅ Perfil actualizado correctamente.");
+            
         } else {
-            // Fallback: guardar solo en localStorage
-            alert("⚠️ Guardado localmente (el backend no está disponible)");
-            localStorage.setItem(`avatar_${usuarioLogueado}`, avatarUrl);
-            localStorage.setItem(`bio_${usuarioLogueado}`, bio);
-            mostrarUsuarioVerificado();
+            console.warn("Endpoint /auth/profile no disponible, guardando localmente");
+            
+            if (avatarUrl) {
+                els.avatarImg.src = avatarUrl;
+                els.avatarImg.style.display = 'block';
+                els.avatarIcon.style.display = 'none';
+                localStorage.setItem(`avatar_${usuarioLogueado}`, avatarUrl);
+            }
+            if (bio) {
+                els.userBio.textContent = bio;
+                localStorage.setItem(`bio_${usuarioLogueado}`, bio);
+            }
+
+            document.getElementById('modal-avatar').style.display = 'none';
+            alert("✅ Perfil actualizado localmente.\n\n⚠️ Nota: Para que se guarde en el servidor, contacta al administrador para activar el endpoint /auth/profile");
         }
+
+    } catch (error) {
+        console.error("Error guardando avatar:", error);
+        alert("❌ Error de conexión. Guardando localmente...");
         
-        document.getElementById('modal-avatar').style.display = 'none';
-    } catch (e) {
-        console.error("Error guardando avatar:", e);
-        // Guardar en localStorage como fallback
         if (avatarUrl) {
+            els.avatarImg.src = avatarUrl;
+            els.avatarImg.style.display = 'block';
+            els.avatarIcon.style.display = 'none';
             localStorage.setItem(`avatar_${usuarioLogueado}`, avatarUrl);
         }
         if (bio) {
+            els.userBio.textContent = bio;
             localStorage.setItem(`bio_${usuarioLogueado}`, bio);
         }
         
@@ -350,7 +409,7 @@ async function cargarBoveda() {
     `;
 
     try {
-        console.log(`🔍 Cargando favoritos para: ${usuarioLogueado}`);
+        console.log(`Cargando favoritos para: ${usuarioLogueado}`);
         const res = await fetch(`${API_URL}/favoritos/${usuarioLogueado}`);
         
         if (!res.ok) {
@@ -358,7 +417,7 @@ async function cargarBoveda() {
         }
         
         const data = await res.json();
-        console.log("📦 Respuesta del servidor:", data);
+        console.log("Datos de favoritos recibidos:", data);
 
         // ✅ VERIFICACIÓN MEJORADA: Manejo de diferentes formatos de respuesta
         let favoritos = [];
@@ -372,12 +431,7 @@ async function cargarBoveda() {
         } else if (data.items && Array.isArray(data.items)) {
             // Posible formato alternativo
             favoritos = data.items;
-        } else if (data.data && Array.isArray(data.data)) {
-            // Otro formato posible
-            favoritos = data.data;
         }
-
-        console.log(`✅ Total de favoritos procesados: ${favoritos.length}`);
 
         if (favoritos.length === 0) {
             els.vaultContent.innerHTML = `
@@ -394,13 +448,8 @@ async function cargarBoveda() {
         els.vaultContent.innerHTML = '';
         const fragment = document.createDocumentFragment();
 
-        favoritos.forEach((item, index) => {
-            if (!item) {
-                console.warn(`⚠️ Item ${index} es nulo o undefined`);
-                return;
-            }
-            
-            console.log(`Procesando favorito ${index + 1}:`, item);
+        favoritos.forEach(item => {
+            if (!item) return; // Saltar items nulos
             
             const div = document.createElement("div");
             div.className = "vault-item";
@@ -410,11 +459,7 @@ async function cargarBoveda() {
             const safeUsuario = (item.usuario || 'Anónimo').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const safeImage = item.image || 'https://via.placeholder.com/200x150?text=Sin+Imagen';
             const safeLink = item.link || '#';
-            const itemId = item._id || item.id || item.itemId || '';
-
-            if (!itemId) {
-                console.error(`❌ Item sin ID válido:`, item);
-            }
+            const itemId = item._id || item.id || '';
 
             div.innerHTML = `
                 <img src="${safeImage}" alt="${safeTitle}" onerror="this.src='https://via.placeholder.com/200x150?text=Sin+Imagen'">
@@ -460,10 +505,10 @@ async function cargarBoveda() {
         });
 
         els.vaultContent.appendChild(fragment);
-        console.log(`✅ Se renderizaron ${favoritos.length} favoritos correctamente`);
+        console.log(`✅ Se cargaron ${favoritos.length} favoritos correctamente`);
 
     } catch (e) {
-        console.error("❌ Error cargando bóveda:", e);
+        console.error("Error cargando bóveda:", e);
         els.vaultContent.innerHTML = `
             <p class="error-msg" style="grid-column: 1/-1; text-align: center; padding: 40px;">
                 ❌ Error al cargar favoritos<br>
@@ -489,20 +534,23 @@ async function cargarBoveda() {
 
 // Función para eliminar de la bóveda
 async function eliminarDeBoveda(itemId) {
-    if (!itemId) {
-        alert("❌ Error: No se puede identificar el favorito a eliminar.");
-        return;
-    }
-    
     if (!confirm("¿Quitar este archivo de tu bóveda?")) return;
 
     try {
-        console.log(`🗑️ Eliminando favorito con ID: ${itemId}`);
+        // ✅ OBTENER TOKEN
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+            alert("⚠️ Sesión expirada. Por favor inicia sesión nuevamente.");
+            window.location.href = './index.html';
+            return;
+        }
         
         const res = await fetch(`${API_URL}/favoritos/delete/${itemId}`, {
             method: 'DELETE',
             headers: { 
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // ✅ ENVIAR TOKEN
             },
             body: JSON.stringify({ usuario: usuarioLogueado })
         });
@@ -512,7 +560,6 @@ async function eliminarDeBoveda(itemId) {
             cargarBoveda(); // Recargar la lista
         } else {
             const errorData = await res.json();
-            console.error("Error del servidor:", errorData);
             alert(`❌ Error: ${errorData.message || 'No se pudo eliminar de favoritos'}`);
         }
     } catch (error) {
@@ -524,7 +571,13 @@ async function eliminarDeBoveda(itemId) {
 // Función para cerrar sesión
 function cerrarSesion() {
     if (confirm("¿Estás seguro de que quieres cerrar sesión?")) {
+        // ✅ ELIMINAR TODOS LOS DATOS DE SESIÓN
         localStorage.removeItem("user_admin");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user_avatar");
+        localStorage.removeItem("user_verified");
+        localStorage.removeItem("user_rol");
+        
         alert("👋 Sesión cerrada correctamente.");
         window.location.href = "./index.html";
     }
