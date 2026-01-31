@@ -49,25 +49,27 @@
         }
 
         .avatar {
-            width: 60px;
-            height: 60px;
+            width: 7rem;
+            height: 7rem;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--primary), #00ff88);
+            filter: drop-shadow(0 5px 10px #CFFFA2);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: bold;
             color: #000;
-            border: 3px solid var(--primary);
+            border: 2.5px solid var(--primary);
             position: relative;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all ease-in-out 0.3s;
         }
 
         .avatar:hover {
             transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(94, 255, 67, 0.5);
+            box-shadow: 0 0 15px rgba(94, 255, 67, 0.68);
+            filter: drop-shadow(0 0 0);
         }
 
         .avatar-edit-hint {
@@ -76,8 +78,8 @@
             right: -2px;
             background: var(--primary);
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 1rem;
+            height: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -112,10 +114,12 @@
         }
 
         .user-details h2 {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             color: var(--primary);
             display: flex;
             align-items: center;
+            text-align: center;
+            justify-content: center;
             gap: 8px;
         }
 
@@ -126,7 +130,8 @@
 
         #check-verificado {
             display: none;
-            font-size: 1.3rem;
+            font-size: 2rem;
+            font-weight: 100;
         }
 
         /* Estilos de verificación */
@@ -135,16 +140,17 @@
         }
 
         .r-bronce {
-            color: #cd7f32;
+            color: #994C00;
         }
 
         .r-oro {
-            color: #ffd700;
+            color: #FFE243;
+            filter: drop-shadow(0 5px 15px #FFE871);
         }
 
         .r-elite {
-            color: #00ffff;
-            filter: drop-shadow(0 0 5px #00ffff);
+            color: #5CEAFF;
+            filter: drop-shadow(0 5px 15px #B6FBFF);
         }
 
         .user-details p {
@@ -157,9 +163,8 @@
             background: transparent;
             border: 2px solid var(--primary);
             color: var(--primary);
-            padding: 10px 20px;
+            padding: 5px 10px;
             border-radius: 8px;
-            cursor: pointer;
             font-weight: bold;
             transition: all 0.3s;
             display: flex;
@@ -327,6 +332,14 @@
             border-radius: 15px;
             border: 1px solid #222;
             margin-bottom: 30px;
+            object-fit: cover;
+        }
+        
+        .history-section img{
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #000;
         }
 
         .history-section h3 {
@@ -344,6 +357,13 @@
             padding: 30px;
             border-radius: 15px;
             border: 1px solid #222;
+        }
+        
+        .vault-section img{
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            background: #343434;
         }
 
         .vault-section h3 {
@@ -371,17 +391,12 @@
         }
 
         .vault-item:hover {
-            border-color: #ff1493;
+            border-color: #FF1414;
             transform: translateY(-5px);
             box-shadow: 0 5px 20px rgba(255, 20, 147, 0.3);
         }
 
-        .vault-item img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-        }
-
+      
         .vault-item-info {
             padding: 12px;
         }
