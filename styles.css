@@ -39,13 +39,13 @@ header {
     padding: 10px 15px 10px 40px; 
     border-radius: 20px; 
     color: var(--primary); 
-    width: 150px;
+    width: 180px;
     outline: none;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #buscador:focus {
-    width: 210px;
+    width: 220px;
     box-shadow: 0 0 10px rgba(94, 255, 67, 0.3);
 }
 
@@ -61,10 +61,9 @@ header {
 .header-right-actions { display: flex; gap: 10px; }
 
 .UpIcon, .ProfileIcon, .reportButton { 
-    width: 45px; 
-    height: 45px; 
+    width: 44px; 
+    height: 44px; 
     border-radius: 50%; 
-    border: none;
     border: 2px solid var(--primary); 
     display: flex; 
     align-items: center; 
@@ -73,7 +72,6 @@ header {
     cursor: pointer; 
     transition: transform var(--transition);
     will-change: transform;
-    padding: 2px;
     /* Optimiza carga de GPU */
 }
 
@@ -82,14 +80,14 @@ header {
 .UpIcon ion-icon, .ProfileIcon ion-icon, .reportButton ion-icon
 { 
     color: var(--primary); 
-    font-size: 1.9rem; 
+    font-size: 1.8rem; 
 }
 
 /* --- GRID DE JUEGOS (UNIFICADO) --- */
 #output { 
     display: grid; 
     grid-template-columns: repeat(2, 1fr); 
-    gap: 11px; 
+    gap: 12px; 
     padding: 15px; 
     max-width: 1200px; 
     margin: 0 auto; 
@@ -139,7 +137,7 @@ header {
 
 .user-tag { 
     color: var(--primary); 
-    font-size: 14px; 
+    font-size: 10px; 
     margin-bottom: 5px; 
     display: flex; 
     align-items: center; 
@@ -147,7 +145,7 @@ header {
 }
 
 .juego-titulo { 
-    font-size: 1rem; 
+    font-size: 0.85rem; 
     font-weight: bold; 
     color: #fff; 
     white-space: nowrap; 
@@ -167,7 +165,7 @@ header {
     background: transparent; 
     border: none; 
     color: var(--primary); 
-    font-size: 1.2rem; 
+    font-size: 1.1rem; 
     cursor: pointer; 
 }
 
@@ -222,7 +220,7 @@ header {
     border: 2px solid #fff;
 }
 
-.expandida .juego-img { height: 190px; }
+.expandida .juego-img { height: 200px; }
 
 .expandida .info-verificacion { 
     display: block; 
@@ -270,32 +268,24 @@ header {
 .expandida .comentarios-section { 
     display: block; 
     border-top: 1px solid #333; 
-    padding-top: 15px;
+    padding-top: 15px; 
 }
 
 .comentarios-list { 
-    max-height: 300px; 
-    overflow-y: auto;
-    margin-bottom: 20px; 
-    padding: 5px;
-    border-radius: 5px;
-    background: #282828D4;
-    border: 1px solid #626262D4;
+    max-height: 120px; 
+    overflow-y: auto; 
+    margin-bottom: 10px; 
 }
 
 .comm-item { 
-    background: #383838; 
+    background: #111; 
     padding: 8px; 
     border-radius: 6px; 
     margin-bottom: 5px; 
     font-size: 0.8rem; 
 }
 
-.add-comment {
-    display: flex; gap: 8px;
-    margin: 5px;
-    
-}
+.add-comment { display: flex; gap: 8px; }
 
 .add-comment input { 
     flex: 1; 
@@ -427,20 +417,14 @@ header {
     vertical-align: middle;
 }
 
-.verificado-badge.level-1 { color: #977500; } /* azul claro */
-.verificado-badge.level-2 { color: #FFEF02; 
-    filter: drop-shadow(#FFF99B);
-} /* azul fuerte */
-.verificado-badge.level-3 { color: #49FFFB; 
-    border-radius: 50%;
-    box-shadow: 0 5px 15px 0#99FFEF;
-} /* dorado */
-
+.verificado-badge.level-1 { color: #8ab4f8; } /* azul claro */
+.verificado-badge.level-2 { color: #1e88e5; } /* azul fuerte */
+.verificado-badge.level-3 { color: #ffb300; } /* dorado */
 
 .verificado-badge ion-icon {
-    font-size: 1rem;
+    font-size: 1.1em;
 }
 
 .user-tag.verificado {
-    font-weight: 500;
+    font-weight: 600;
 }
