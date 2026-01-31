@@ -5,51 +5,40 @@ const overlay = document.getElementById("overlay");
 const loadingState = document.getElementById("loading-state");
 
 let todosLosItems = [];
-let mapaUsuarios = {}; // usuario -> verificadoNivel
-
-// ========== HELPER: Petición autenticada ==========
-function getAuthHeaders() {
-    const token = localStorage.getItem("upgames_token");
-    const headers = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    return headers;
-}
+let mapaUsuarios = {}; // Diccionario para cruzar @usuario con su nivel de verificación
 
 // 1. DESPERTADOR INMEDIATO
 (function despertar() {
-    fetch(`${API_URL}/health`).catch(() => {});
+    fetch(`${API_URL}/items`, { mode: 'no-cors' }).catch(() => {});
 })();
 
-// 2. CARGA DE DATOS
+// 2. CARGA DE DATOS CENTRALIZADA (Cruce de datos local)
 async function cargarContenido() {
+    // Manejo de términos (v2 para coherencia con tu HTML)
+    if (!localStorage.getItem("upgames_terms_accepted")) {
+        // La modal se controla por el script del HTML que ya tienes
+    }
+    
     try {
-        // PASO A: Obtener niveles de verificación (ruta pública)
-        const resUsers = await fetch(`${API_URL}/auth/users-public`);
+        // PASO A: Obtener niveles de verificación de la ruta /auth/users
+        const resUsers = await fetch(`${API_URL}/auth/users`);
         const usuarios = await resUsers.json();
-        // usuarios es un array directamente
-        if (Array.isArray(usuarios)) {
-            usuarios.forEach(u => { mapaUsuarios[u.usuario] = u.verificadoNivel || 0; });
-        }
+        usuarios.forEach(u => {
+            mapaUsuarios[u.usuario] = u.verificadoNivel || 0;
+        });
 
-        // PASO B: Obtener los items aprobados
-        const res = await fetch(`${API_URL}/items?status=aprobado&limit=200`);
+        // PASO B: Obtener los items
+        const res = await fetch(`${API_URL}/items`);
         const data = await res.json();
-
+        
         if (loadingState) loadingState.style.display = "none";
-
-        // ✅ CORREGIDO: El backend devuelve { success, items, pagination }
-        todosLosItems = data.items || [];
+        
+        todosLosItems = data.filter(i => i.status === "aprobado");
         renderizar(todosLosItems);
-
-        // Si hay un ID compartido en la URL, abrir esa card
+        
         const sharedId = new URLSearchParams(window.location.search).get('id');
-        if (sharedId) {
-            setTimeout(() => {
-                const card = document.querySelector(`[data-id="${sharedId}"]`);
-                if (card) card.click();
-            }, 500);
-        }
-
+        if (sharedId) setTimeout(() => document.querySelector(`[data-id="${sharedId}"]`)?.click(), 500);
+        
     } catch (e) {
         console.error("Error de carga:", e);
         if (loadingState) loadingState.innerHTML = `<p style="color:red">ERROR DE NÚCLEO. REINTENTANDO...</p>`;
@@ -57,18 +46,24 @@ async function cargarContenido() {
     }
 }
 
-// Helper: Badge de verificación
+// Helper: Extrae el badge del mapa de usuarios cargado
 function getVerificadoBadge(nombreUsuario) {
     const nivel = mapaUsuarios[nombreUsuario] || 0;
     if (nivel === 0) return '';
+    
     let colorClass = '';
     if (nivel === 1) colorClass = 'level-1';
     else if (nivel === 2) colorClass = 'level-2';
     else if (nivel === 3) colorClass = 'level-3';
-    return `<span class="verificado-badge ${colorClass}" title="Verificado nivel ${nivel}"><ion-icon name="checkmark-circle"></ion-icon></span>`;
+    
+    return `
+        <span class="verificado-badge ${colorClass}" title="Verificado nivel ${nivel}">
+            <ion-icon name="checkmark-circle"></ion-icon>
+        </span>
+    `;
 }
 
-// 3. RENDERIZADO
+// 3. RENDERIZADO DE ALTO RENDIMIENTO
 function renderizar(lista) {
     output.innerHTML = lista.length ? "" : `
         <div class="no-results">
@@ -77,19 +72,19 @@ function renderizar(lista) {
             <p>No hay coincidencias en la nube.</p>
             <a href="./perfil.html" class="btn-subir-vacio">SUBIR AHORA</a>
         </div>`;
-
+    
     const fragment = document.createDocumentFragment();
-
+    
     lista.forEach(item => {
         const card = document.createElement("div");
         card.className = "juego-card";
         card.setAttribute("data-id", item._id);
-
+        
         const isOnline = (item.reportes || 0) < 3;
-        const media = /\.(mp4|webm|mov)$/i.test(item.image)
-            ? `<video src="${item.image}" class="juego-img" autoplay muted loop playsinline></video>`
-            : `<img src="${item.image}" class="juego-img" loading="lazy">`;
-
+        const media = /\.(mp4|webm|mov)$/i.test(item.image) ?
+            `<video src="${item.image}" class="juego-img" autoplay muted loop playsinline></video>` :
+            `<img src="${item.image}" class="juego-img" loading="lazy">`;
+        
         const nivelAutor = mapaUsuarios[item.usuario] || 0;
 
         card.innerHTML = `
@@ -116,16 +111,16 @@ function renderizar(lista) {
                     <button class="action-btn btn-report" data-id="${item._id}"><ion-icon name="flag-sharp"></ion-icon></button>
                 </div>
                 <p class="cloud-note">${item.description || 'Sin descripción.'}</p>
-
+                
                 <div class="boton-descargar-full" style="position:relative; cursor:pointer;">
-                    <a href="${item.link}" target="_blank"
+                    <a href="${item.link}" target="_blank" 
                        style="position:absolute; top:0; left:0; width:100%; height:100%; text-decoration:none; color:inherit; display:flex; align-items:center; justify-content:center;"
                        onclick="event.stopPropagation();">
                        ACCEDER A LA NUBE
                     </a>
                     <span style="visibility:hidden">ACCEDER A LA NUBE</span>
                 </div>
-
+                
                 <div class="comentarios-section">
                     <h5 style="color:var(--primary); font-size:0.7rem; margin-bottom:10px;">OPINIONES</h5>
                     <div class="comentarios-list" id="list-${item._id}">Cargando...</div>
@@ -135,16 +130,19 @@ function renderizar(lista) {
                     </div>
                 </div>
             </div>`;
-
-        // Click en card → expandir
+        
+        // ✅ EVENTO DE CLICK DIRECTO EN LA CARD (SIN DELEGACIÓN)
         card.addEventListener('click', function(e) {
-            if (e.target.closest('.user-tag') ||
-                e.target.closest('.action-btn') ||
-                e.target.closest('.input-comment') ||
+            // No expandir si se clickeó en elementos interactivos
+            if (e.target.closest('.user-tag') || 
+                e.target.closest('.action-btn') || 
+                e.target.closest('.input-comment') || 
                 e.target.closest('.btn-post-comment') ||
                 e.target.closest('.close-btn') ||
-                e.target.closest('a')) return;
-
+                e.target.closest('a')) {
+                return;
+            }
+            
             if (!card.classList.contains("expandida")) {
                 card.classList.add("expandida");
                 overlay.style.display = "block";
@@ -152,97 +150,147 @@ function renderizar(lista) {
                 cargarComm(item._id);
             }
         });
-
-        // Botón cerrar
-        card.querySelector(".close-btn").addEventListener('click', function(e) {
+        
+        // ✅ BOTÓN CERRAR CON EVENTO DIRECTO
+        const closeBtn = card.querySelector(".close-btn");
+        closeBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             card.classList.remove("expandida");
             overlay.style.display = "none";
             document.body.style.overflow = "auto";
         });
-
-        // Click en @usuario → visitar perfil
-        card.querySelector('.user-tag').addEventListener('click', function(e) {
+        
+        // ✅ EVENTO CLICK EN NOMBRE DE USUARIO
+        const userTag = card.querySelector('.user-tag');
+        userTag.addEventListener('click', function(e) {
             e.stopPropagation();
-            visitarPerfil(this.dataset.usuario);
+            const usuario = userTag.dataset.usuario;
+            visitarPerfil(usuario);
         });
-
-        // Botones sociales
-        card.querySelector('.btn-fav').addEventListener('click', function(e) { e.stopPropagation(); fav(item._id); });
-        card.querySelector('.btn-share').addEventListener('click', function(e) { e.stopPropagation(); share(item._id); });
-        card.querySelector('.btn-report').addEventListener('click', function(e) { e.stopPropagation(); report(item._id); });
-        card.querySelector('.btn-post-comment').addEventListener('click', function(e) { e.stopPropagation(); postComm(item._id); });
-
+        
+        // ✅ EVENTOS DE BOTONES SOCIALES
+        const btnFav = card.querySelector('.btn-fav');
+        btnFav.addEventListener('click', function(e) {
+            e.stopPropagation();
+            fav(item._id);
+        });
+        
+        const btnShare = card.querySelector('.btn-share');
+        btnShare.addEventListener('click', function(e) {
+            e.stopPropagation();
+            share(item._id);
+        });
+        
+        const btnReport = card.querySelector('.btn-report');
+        btnReport.addEventListener('click', function(e) {
+            e.stopPropagation();
+            report(item._id);
+        });
+        
+        // ✅ EVENTO DEL BOTÓN DE COMENTARIOS
+        const btnPostComment = card.querySelector('.btn-post-comment');
+        btnPostComment.addEventListener('click', function(e) {
+            e.stopPropagation();
+            postComm(item._id);
+        });
+        
         fragment.appendChild(card);
     });
-
+    
     output.appendChild(fragment);
 }
 
-// 4. VISITAR PERFIL
+// 4. FUNCIÓN VISITAR PERFIL
 function visitarPerfil(usuario) {
     if (!usuario) return;
     window.location.href = `./perfil-publico.html?u=${encodeURIComponent(usuario)}`;
 }
 
-// 5. SEGUIR USUARIO
+// ✅ FUNCIÓN PARA SEGUIR USUARIO
 async function seguirUsuario(usuarioASeguir) {
     const usuarioActual = localStorage.getItem("user_admin");
-    if (!usuarioActual) { alert("⚠️ Inicia sesión para seguir usuarios."); window.location.href = './index.html'; return; }
-
+    
+    if (!usuarioActual) {
+        alert("⚠️ Inicia sesión para seguir usuarios.");
+        window.location.href = './index.html';
+        return;
+    }
+    
     try {
         const res = await fetch(`${API_URL}/usuarios/seguir`, {
             method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ siguiendo: usuarioASeguir })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                seguidor: usuarioActual, 
+                siguiendo: usuarioASeguir 
+            })
         });
-
+        
         if (res.ok) {
             alert(`✅ Ahora sigues a @${usuarioASeguir}`);
-            if (window.location.pathname.includes('perfil-publico')) location.reload();
+            // Recargar si estamos en perfil público
+            if (window.location.pathname.includes('perfil-publico')) {
+                location.reload();
+            }
         } else {
             const data = await res.json();
             alert(data.message || "ℹ️ Ya sigues a este usuario.");
         }
-    } catch (e) { console.error(e); alert("❌ Error al seguir usuario."); }
+    } catch (e) {
+        console.error(e);
+        alert("❌ Error al seguir usuario.");
+    }
 }
 
-// 6. DEJAR DE SEGUIR
-async function dejarDeSeguir(usuarioADejar) {
+// ✅ NUEVO: Función para dejar de seguir
+async function dejarDeSeguir(usuarioADejarDeSeguir) {
     const usuarioActual = localStorage.getItem("user_admin");
+    
     if (!usuarioActual) return;
-    if (!confirm(`¿Dejar de seguir a @${usuarioADejar}?`)) return;
-
-    try {
-        const res = await fetch(`${API_URL}/usuarios/dejar-seguir`, {
-            method: 'DELETE',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ siguiendo: usuarioADejar })
-        });
-
-        if (res.ok) {
-            alert(`💔 Dejaste de seguir a @${usuarioADejar}`);
-            if (window.location.pathname.includes('perfil-publico')) location.reload();
+    
+    if (confirm(`¿Dejar de seguir a @${usuarioADejarDeSeguir}?`)) {
+        try {
+            const res = await fetch(`${API_URL}/usuarios/dejar-seguir`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    seguidor: usuarioActual, 
+                    siguiendo: usuarioADejarDeSeguir 
+                })
+            });
+            
+            if (res.ok) {
+                alert(`💔 Dejaste de seguir a @${usuarioADejarDeSeguir}`);
+                if (window.location.pathname.includes('perfil-publico')) {
+                    location.reload();
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            alert("❌ Error al dejar de seguir.");
         }
-    } catch (e) { console.error(e); alert("❌ Error al dejar de seguir."); }
+    }
 }
 
-// Exportar globalmente
+// Hacer funciones globales
 window.seguirUsuario = seguirUsuario;
 window.dejarDeSeguir = dejarDeSeguir;
 window.visitarPerfil = visitarPerfil;
-window.getAuthHeaders = getAuthHeaders;
 
-// Botón Mi Perfil
+// ✅ CORREGIDO: Botón Mi Perfil redirige a perfil.html local
 const btnMiPerfil = document.getElementById("btn-mi-perfil");
 if (btnMiPerfil) {
     btnMiPerfil.onclick = () => {
         const u = localStorage.getItem("user_admin");
-        window.location.href = u ? "./perfil.html" : "./index.html";
+        if (u) {
+            window.location.href = "./perfil.html";
+        } else {
+            window.location.href = "./index.html";
+        }
     };
 }
 
-// 7. BUSCADOR
+// 5. BUSCADOR - ✅ CORREGIDO
 if (buscador) {
     buscador.addEventListener('input', function(e) {
         const term = e.target.value.toLowerCase().trim();
@@ -253,20 +301,20 @@ if (buscador) {
     });
 }
 
-// 8. FUNCIONES SOCIALES
-
+// 6. FUNCIONES SOCIALES (Sincronizadas con rutas del Server)
 async function share(id) {
     const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
     try {
         await navigator.clipboard.writeText(url);
         alert("✅ Enlace copiado al portapapeles.");
     } catch (e) {
-        const ta = document.createElement('textarea');
-        ta.value = url;
-        document.body.appendChild(ta);
-        ta.select();
+        // Fallback para navegadores que no soportan clipboard
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        document.body.appendChild(textarea);
+        textarea.select();
         document.execCommand('copy');
-        document.body.removeChild(ta);
+        document.body.removeChild(textarea);
         alert("✅ Enlace copiado al portapapeles.");
     }
 }
@@ -277,37 +325,43 @@ async function fav(id) {
     try {
         const res = await fetch(`${API_URL}/favoritos/add`, {
             method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ itemId: id })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario: user, itemId: id })
         });
-        if (res.ok) alert("💾 Guardado en Bóveda.");
-        else { const data = await res.json(); alert(data.mensaje || "ℹ️ Ya está en tu Bóveda."); }
-    } catch (e) { console.error(e); alert("❌ Error al guardar en favoritos."); }
+        
+        if (res.ok) {
+            alert("💾 Guardado en Bóveda.");
+        } else {
+            const data = await res.json();
+            alert(data.message || "ℹ️ Ya está en tu Bóveda.");
+        }
+    } catch (e) { 
+        console.error(e);
+        alert("❌ Error al guardar en favoritos.");
+    }
 }
 
 async function report(id) {
-    if (!confirm("⚠️ ¿Reportar error en este enlace?")) return;
-    try {
-        const res = await fetch(`${API_URL}/items/report/${id}`, {
-            method: 'PUT',
-            headers: getAuthHeaders()
-        });
-        if (res.ok) alert("✅ Reporte enviado. Gracias por tu colaboración.");
-        else alert("❌ Error al enviar reporte.");
-    } catch (e) { console.error(e); alert("❌ Error al enviar reporte."); }
+    if (confirm("⚠️ ¿Reportar error en este enlace?")) {
+        try {
+            await fetch(`${API_URL}/items/report/${id}`, { method: 'PUT' });
+            alert("✅ Reporte enviado. Gracias por tu colaboración.");
+        } catch (e) {
+            console.error(e);
+            alert("❌ Error al enviar reporte.");
+        }
+    }
 }
 
-// 9. COMENTARIOS
 async function cargarComm(id) {
     const box = document.getElementById(`list-${id}`);
     if (!box) return;
+    
     try {
         const res = await fetch(`${API_URL}/comentarios/${id}`);
         const data = await res.json();
-        // ✅ CORREGIDO: El backend devuelve { success, comentarios: [...] }
-        const comentarios = data.comentarios || [];
-
-        box.innerHTML = comentarios.map(c => `
+        
+        box.innerHTML = data.map(c => `
             <div class="comm-item" style="margin-bottom:8px; border-left:2px solid var(--primary); padding-left:8px;">
                 <b style="color:var(--primary); font-size:0.7rem; cursor:pointer;" 
                    class="user-tag-comment" data-usuario="${c.usuario}">
@@ -317,10 +371,13 @@ async function cargarComm(id) {
                 <p style="font-size:0.75rem; color:#ddd; margin:0;">${c.texto || 'Sin texto'}</p>
             </div>
         `).join('') || '<p style="font-size:0.7rem; color:#555;">Sin opiniones aún.</p>';
-
-        // Listeners en nombres de usuarios en comentarios
+        
+        // Agregar listeners a nombres de usuarios en comentarios
         box.querySelectorAll('.user-tag-comment').forEach(tag => {
-            tag.addEventListener('click', (e) => { e.stopPropagation(); visitarPerfil(tag.dataset.usuario); });
+            tag.addEventListener('click', (e) => {
+                e.stopPropagation();
+                visitarPerfil(tag.dataset.usuario);
+            });
         });
     } catch (e) {
         box.innerHTML = '<p style="color: #ff4343; font-size:0.8rem;">Error al cargar opiniones</p>';
@@ -332,26 +389,35 @@ async function postComm(id) {
     const input = document.getElementById(`input-${id}`);
     if (!user) return alert("⚠️ Inicia sesión para comentar.");
     if (!input || !input.value.trim()) return;
-
+    
     try {
         const res = await fetch(`${API_URL}/comentarios`, {
             method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ texto: input.value.trim(), itemId: id })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario: user, texto: input.value.trim(), itemId: id })
         });
-        if (res.ok) { input.value = ""; cargarComm(id); }
-        else alert("❌ Error al publicar comentario.");
-    } catch (e) { console.error(e); alert("❌ Error de conexión."); }
+        if (res.ok) {
+            input.value = "";
+            cargarComm(id);
+        } else {
+            alert("❌ Error al publicar comentario.");
+        }
+    } catch (e) { 
+        console.error(e);
+        alert("❌ Error de conexión.");
+    }
 }
 
-// 10. SISTEMA DE MONETIZACIÓN (PUENTE)
+// 7. SISTEMA DE MONETIZACIÓN (PUENTE) - Mantenido igual
 document.addEventListener('click', function(e) {
     const anchor = e.target.closest('a');
     if (anchor && anchor.href) {
         const urlDestino = anchor.href;
-        if (urlDestino.includes('mailto:')) return;
+        if (urlDestino.includes('mailto:mr.m0onster@protonmail.com')) return;
+        
         const dominiosSeguros = ['roucedevstudio.github.io', 'backendapp-037y.onrender.com', window.location.hostname];
-        const esSeguro = dominiosSeguros.some(d => urlDestino.includes(d));
+        const esSeguro = dominiosSeguros.some(dominio => urlDestino.includes(dominio));
+        
         if (!esSeguro) {
             e.preventDefault();
             window.location.href = './puente.html?dest=' + encodeURIComponent(urlDestino);
@@ -359,7 +425,7 @@ document.addEventListener('click', function(e) {
     }
 }, true);
 
-// 11. CERRAR OVERLAY AL HACER CLICK FUERA
+// 8. CERRAR OVERLAY AL HACER CLICK FUERA
 if (overlay) {
     overlay.onclick = () => {
         document.querySelector('.juego-card.expandida')?.classList.remove('expandida');
@@ -367,11 +433,5 @@ if (overlay) {
         document.body.style.overflow = 'auto';
     };
 }
-
-// Función para mostrar info (botón ⓘ en header)
-function mostrarInfo() {
-    alert("📋 Metadata Index\n\nUna librería digital neutral que conecta usuarios con enlaces a contenido digital.\n\nNo almacenamos archivos, solo metadatos (enlaces).");
-}
-window.mostrarInfo = mostrarInfo;
 
 document.addEventListener("DOMContentLoaded", cargarContenido);
