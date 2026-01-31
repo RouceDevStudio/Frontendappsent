@@ -220,6 +220,8 @@
                 const data = await res.json();
 
                 if (data.success) {
+                    localStorage.setItem("token", data.token);
+                    localStorage.setItem("RefreshToken", data.refreshToken);
                     localStorage.setItem("user_admin", data.usuario);
                     showMsg("✅ ACCESO CONCEDIDO", "#5EFF43");
                     setTimeout(() => window.location.replace(REDIRECT_URL), 500);
