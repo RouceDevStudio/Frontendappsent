@@ -1,6 +1,14 @@
 const API_URL = "https://backendapp-037y.onrender.com";
 const usuarioLogueado = localStorage.getItem("user_admin");
 
+// ========== HELPER: Petición autenticada ==========
+function getAuthHeaders() {
+    const token = localStorage.getItem("upgames_token");
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    return headers;
+}
+
 // Cache de Selectores DOM
 const els = {
     showContent: document.getElementById("showContent"),
@@ -26,7 +34,7 @@ const els = {
 };
 
 // ==========================================
-// NUEVA FUNCIÓN: ANALIZADOR DE ENLACES (UPGAMES SHIELD)
+// ANALIZADOR DE ENLACES (UPGAMES SHIELD)
 // ==========================================
 function analizarEnlaceSeguro(url) {
     const permitidos = ['mediafire.com', 'mega.nz', 'drive.google.com', 'mega.co.nz'];
@@ -49,14 +57,13 @@ function analizarEnlaceSeguro(url) {
 }
 
 // ==========================================
-// 1. LÓGICA DE VISTA PREVIA (OPTIMIZADA)
+// 1. LÓGICA DE VISTA PREVIA
 // ==========================================
 function actualizarPreview() {
     if (els.prevTitle) els.prevTitle.textContent = els.addTitle.value || "Título del Proyecto";
     if (els.prevTag) els.prevTag.textContent = (els.addCategory.value || "Categoría").toUpperCase();
     if (els.prevImg) els.prevImg.src = els.addImage.value || "https://via.placeholder.com/300x150?text=Esperando+Imagen";
     
-    // Validación visual del link en tiempo real (Borde dinámico)
     if (els.addLink && els.addLink.value.trim() !== "") {
         const res = analizarEnlaceSeguro(els.addLink.value.trim());
         els.addLink.style.borderColor = res.ok ? "#5EFF43" : "#ff4444";
@@ -65,13 +72,12 @@ function actualizarPreview() {
     }
 }
 
-// Escuchadores eficientes
 [els.addTitle, els.addImage, els.addCategory, els.addLink].forEach(el => {
     el?.addEventListener("input", actualizarPreview);
 });
 
 // ==========================================
-// NUEVO: MOSTRAR NOMBRE + VERIFICADO + AVATAR + BIO DEL USUARIO LOGUEADO
+// 2. MOSTRAR NOMBRE + VERIFICADO + AVATAR + BIO
 // ==========================================
 async function mostrarUsuarioVerificado() {
     if (!usuarioLogueado || !els.userLoggedDisplay || !els.checkVerificado) return;
@@ -79,14 +85,16 @@ async function mostrarUsuarioVerificado() {
     els.userLoggedDisplay.textContent = `@${usuarioLogueado}`;
     
     try {
-        const res = await fetch(`${API_URL}/auth/users`);
+        // ✅ CORREGIDO: usar /auth/users-public (no requiere autenticación)
+        // antes usaba /auth/users que requiere admin → fallaba con 401
+        const res = await fetch(`${API_URL}/auth/users-public`);
         const data = await res.json();
-        const usuarioData = data.find(u => u.usuario === usuarioLogueado);
+        // /auth/users-public devuelve un array directamente
+        const usuarioData = Array.isArray(data) ? data.find(u => u.usuario === usuarioLogueado) : null;
         if (!usuarioData) return;
         
         const nivel = usuarioData.verificadoNivel || 0;
         
-        // Mostrar badge de verificación
         if (nivel > 0) {
             els.checkVerificado.style.display = "inline-flex";
             let icon = "checkmark-circle";
@@ -131,7 +139,7 @@ async function mostrarUsuarioVerificado() {
 }
 
 // ==========================================
-// 2. SUBIR METADATOS AL BACKEND (MEJOR VALIDACIÓN)
+// 3. SUBIR METADATOS AL BACKEND
 // ==========================================
 if (els.subirBack) {
     els.subirBack.onclick = async () => {
@@ -145,44 +153,53 @@ if (els.subirBack) {
         
         if (!title || !link || !image) return alert("⚠️ Completa todos los campos obligatorios.");
         
-        // ✅ VALIDACIÓN DE SEGURIDAD
         const validacion = analizarEnlaceSeguro(link);
         if (validacion.ok === false) return alert(validacion.msg);
         
+        els.subirBack.disabled = true;
+        els.subirBack.textContent = "⏳ Publicando...";
+        
         try {
-            const res = await fetch(`${API_URL}/items`, {
+            // ✅ CORREGIDO: ruta correcta es /items/add (no /items)
+            // ✅ CORREGIDO: se agrega header de autorización con el JWT
+            const res = await fetch(`${API_URL}/items/add`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify({ 
                     title, 
                     description: desc, 
                     link, 
                     image, 
-                    category, 
-                    usuario: usuarioLogueado,
-                    reportes: 0,
-                    status: "pendiente"
+                    category
+                    // ❌ ELIMINADO: usuario, reportes, status → el backend los asigna automáticamente
+                    // el backend extrae req.usuario del JWT y setea status:"pendiente" y reportes:0
                 })
             });
+            
+            els.subirBack.disabled = false;
+            els.subirBack.innerHTML = '<ion-icon name="rocket-outline"></ion-icon> PUBLICAR EN LA NUBE';
             
             if (res.ok) {
                 alert("🚀 TU PROYECTO ESTÁ EN REVISIÓN.\n\nRecibirás notificación cuando esté aprobado.");
                 [els.addTitle, els.addDescription, els.addLink, els.addImage].forEach(el => el.value = "");
-                els.addCategory.value = "general";
+                els.addCategory.value = "Juegos";
                 actualizarPreview();
                 cargarEstadoActual();
             } else {
-                alert("❌ Error al subir. Revisa tu conexión.");
+                const data = await res.json();
+                alert("❌ " + (data.mensaje || data.message || "Error al subir. Revisa tu conexión."));
             }
         } catch (e) {
             console.error(e);
+            els.subirBack.disabled = false;
+            els.subirBack.innerHTML = '<ion-icon name="rocket-outline"></ion-icon> PUBLICAR EN LA NUBE';
             alert("❌ ERROR DE CONEXIÓN. Verifica tu internet.");
         }
     };
 }
 
 // ==========================================
-// 3. CARGAR HISTORIAL DEL USUARIO
+// 4. CARGAR HISTORIAL DEL USUARIO
 // ==========================================
 async function cargarEstadoActual() {
     if (!els.showContent || !usuarioLogueado) return;
@@ -190,9 +207,11 @@ async function cargarEstadoActual() {
     els.showContent.innerHTML = '<p class="empty-msg">⏳ Cargando historial...</p>';
     
     try {
-        const res = await fetch(`${API_URL}/items`);
+        const res = await fetch(`${API_URL}/items?usuario=${usuarioLogueado}&limit=100`);
         const data = await res.json();
-        const misItems = data.filter(i => i.usuario === usuarioLogueado);
+        // ✅ CORREGIDO: el backend devuelve { success, items, pagination }
+        // antes el código hacía data.filter() asumiendo un array directo
+        const misItems = (data.items || []).filter(i => i.usuario === usuarioLogueado);
         
         if (misItems.length === 0) {
             els.showContent.innerHTML = `
@@ -209,36 +228,28 @@ async function cargarEstadoActual() {
         
         misItems.forEach(item => {
             const div = document.createElement("div");
-            div.className = "history-item";
+            div.className = "log-item";
             
             const statusIcon = item.status === "aprobado" ? "✅" : "⏳";
             const statusText = item.status === "aprobado" ? "Aprobado" : "En revisión";
             const statusColor = item.status === "aprobado" ? "var(--primary)" : "var(--warning)";
             
             div.innerHTML = `
-                <img src="${item.image}" alt="${item.title}">
-                <div class="history-info">
-                    <div class="history-title">${item.title}</div>
-                    <div class="history-category">${item.category || 'General'}</div>
-                    <div class="history-status" style="color: ${statusColor};">
-                        ${statusIcon} ${statusText}
-                    </div>
+                <img src="${item.image}" alt="${item.title}" style="width:80px; height:80px; object-fit:cover; border-radius:8px; margin-right:15px; flex-shrink:0;">
+                <div style="flex:1; min-width:0;">
+                    <div style="font-weight:bold; color:white; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.title}</div>
+                    <div style="font-size:0.75rem; color:var(--text-dim);">${item.category || 'General'}</div>
+                    <div style="font-size:0.75rem; color:${statusColor}; margin-top:4px;">${statusIcon} ${statusText}</div>
                     ${item.status === "aprobado" ? `
                         <button onclick="window.location.href='./biblioteca.html?id=${item._id}'" style="
-                            margin-top: 10px;
-                            background: var(--primary);
-                            color: #000;
-                            border: none;
-                            padding: 8px 15px;
-                            border-radius: 5px;
-                            cursor: pointer;
-                            font-weight: bold;
-                            font-size: 0.8rem;
-                        ">
-                            📖 Ver en Biblioteca
-                        </button>
+                            margin-top:8px; background:var(--primary); color:#000; border:none;
+                            padding:6px 12px; border-radius:5px; cursor:pointer; font-weight:bold; font-size:0.75rem;
+                        ">📖 Ver en Biblioteca</button>
                     ` : ''}
                 </div>
+                <button class="btn-delete-log" onclick="eliminarItem('${item._id}')" title="Eliminar">
+                    <ion-icon name="trash"></ion-icon>
+                </button>
             `;
             fragment.appendChild(div);
         });
@@ -251,19 +262,29 @@ async function cargarEstadoActual() {
     }
 }
 
+// Eliminar item propio
+async function eliminarItem(itemId) {
+    if (!confirm("¿Eliminar este item permanentemente?")) return;
+    try {
+        const res = await fetch(`${API_URL}/items/${itemId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        if (res.ok) { alert("✅ Item eliminado."); cargarEstadoActual(); }
+        else alert("❌ Error al eliminar.");
+    } catch(e) { alert("❌ Error de conexión."); }
+}
+
 // ==========================================
-// NUEVO: CAMBIAR AVATAR Y BIO
+// 5. CAMBIAR AVATAR Y BIO
 // ==========================================
 if (els.avatarDisplay) {
     els.avatarDisplay.addEventListener('click', () => {
         const modal = document.getElementById('modal-avatar');
         if (modal) {
             modal.style.display = 'flex';
-            
-            // Pre-cargar valores actuales
             const avatarActual = localStorage.getItem(`avatar_${usuarioLogueado}`) || '';
             const bioActual = localStorage.getItem(`bio_${usuarioLogueado}`) || '';
-            
             if (els.inputAvatarUrl) els.inputAvatarUrl.value = avatarActual;
             if (els.inputBio) els.inputBio.value = bioActual;
             if (els.previewAvatar) els.previewAvatar.src = avatarActual || 'https://via.placeholder.com/120?text=Vista+Previa';
@@ -271,15 +292,10 @@ if (els.avatarDisplay) {
     });
 }
 
-// Preview del avatar en tiempo real
 if (els.inputAvatarUrl && els.previewAvatar) {
     els.inputAvatarUrl.addEventListener('input', (e) => {
         const url = e.target.value.trim();
-        if (url) {
-            els.previewAvatar.src = url;
-        } else {
-            els.previewAvatar.src = 'https://via.placeholder.com/120?text=Vista+Previa';
-        }
+        els.previewAvatar.src = url || 'https://via.placeholder.com/120?text=Vista+Previa';
     });
 }
 
@@ -290,58 +306,46 @@ async function guardarAvatar() {
     const bio = els.inputBio?.value.trim() || '';
     
     try {
-        // Intentar guardar en el backend
+        // ✅ CORREGIDO: se agrega header de autorización
+        // ✅ CORREGIDO: se elimina 'usuario' del body → backend extrae req.usuario del JWT
         const res = await fetch(`${API_URL}/usuarios/actualizar-perfil`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                usuario: usuarioLogueado, 
-                avatar: avatarUrl,
-                bio: bio
-            })
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ avatar: avatarUrl, bio: bio })
         });
+        
+        // Guardar en localStorage como cache
+        localStorage.setItem(`avatar_${usuarioLogueado}`, avatarUrl);
+        localStorage.setItem(`bio_${usuarioLogueado}`, bio);
         
         if (res.ok) {
             alert("✅ Perfil actualizado correctamente");
-            localStorage.setItem(`avatar_${usuarioLogueado}`, avatarUrl);
-            localStorage.setItem(`bio_${usuarioLogueado}`, bio);
-            mostrarUsuarioVerificado(); // Recargar el perfil
         } else {
-            // Fallback: guardar solo en localStorage
-            alert("⚠️ Guardado localmente (el backend no está disponible)");
-            localStorage.setItem(`avatar_${usuarioLogueado}`, avatarUrl);
-            localStorage.setItem(`bio_${usuarioLogueado}`, bio);
-            mostrarUsuarioVerificado();
+            alert("⚠️ Guardado localmente (el backend no respondió correctamente)");
         }
         
+        mostrarUsuarioVerificado();
         document.getElementById('modal-avatar').style.display = 'none';
     } catch (e) {
         console.error("Error guardando avatar:", e);
-        // Guardar en localStorage como fallback
-        if (avatarUrl) {
-            localStorage.setItem(`avatar_${usuarioLogueado}`, avatarUrl);
-        }
-        if (bio) {
-            localStorage.setItem(`bio_${usuarioLogueado}`, bio);
-        }
-        
+        localStorage.setItem(`avatar_${usuarioLogueado}`, avatarUrl);
+        localStorage.setItem(`bio_${usuarioLogueado}`, bio);
+        mostrarUsuarioVerificado();
         document.getElementById('modal-avatar').style.display = 'none';
     }
 }
 
-// ✅ FUNCIÓN MEJORADA: cargar favoritos (Bóveda) con mejor manejo de errores
+// ==========================================
+// 6. CARGAR FAVORITOS (BÓVEDA)
+// ==========================================
 async function cargarBoveda() {
-    if (!els.vaultContent) {
-        console.warn("Elemento vaultContent no encontrado");
-        return;
-    }
+    if (!els.vaultContent) return;
     
     if (!usuarioLogueado) {
         els.vaultContent.innerHTML = `<p class="error-msg">⚠️ INICIA SESIÓN</p>`;
         return;
     }
 
-    // Mostrar estado de carga
     els.vaultContent.innerHTML = `
         <p class="empty-msg" style="grid-column: 1/-1; text-align: center;">
             <ion-icon name="hourglass-outline" style="font-size: 2rem; display: block; margin: 0 auto 10px;"></ion-icon>
@@ -350,34 +354,16 @@ async function cargarBoveda() {
     `;
 
     try {
-        console.log(`🔍 Cargando favoritos para: ${usuarioLogueado}`);
         const res = await fetch(`${API_URL}/favoritos/${usuarioLogueado}`);
         
-        if (!res.ok) {
-            throw new Error(`Error HTTP: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
         
         const data = await res.json();
-        console.log("📦 Respuesta del servidor:", data);
 
-        // ✅ VERIFICACIÓN MEJORADA: Manejo de diferentes formatos de respuesta
-        let favoritos = [];
-        
-        if (Array.isArray(data)) {
-            // Si la respuesta es directamente un array
-            favoritos = data;
-        } else if (data.favoritos && Array.isArray(data.favoritos)) {
-            // Si está dentro de un objeto con propiedad favoritos
-            favoritos = data.favoritos;
-        } else if (data.items && Array.isArray(data.items)) {
-            // Posible formato alternativo
-            favoritos = data.items;
-        } else if (data.data && Array.isArray(data.data)) {
-            // Otro formato posible
-            favoritos = data.data;
-        }
-
-        console.log(`✅ Total de favoritos procesados: ${favoritos.length}`);
+        // ✅ El backend devuelve: { success: true, favoritos: [...], pagination: {...} }
+        // Cada elemento del array es un documento Favorito con campo 'itemId' POPULADO:
+        //   { _id, usuario, itemId: { _id, title, image, link, usuario, ... }, createdAt }
+        const favoritos = data.favoritos || [];
 
         if (favoritos.length === 0) {
             els.vaultContent.innerHTML = `
@@ -394,27 +380,21 @@ async function cargarBoveda() {
         els.vaultContent.innerHTML = '';
         const fragment = document.createDocumentFragment();
 
-        favoritos.forEach((item, index) => {
-            if (!item) {
-                console.warn(`⚠️ Item ${index} es nulo o undefined`);
-                return;
-            }
-            
-            console.log(`Procesando favorito ${index + 1}:`, item);
-            
+        favoritos.forEach((fav) => {
+            if (!fav || !fav.itemId) return; // itemId puede ser null si el item fue eliminado
+
+            // ✅ CORREGIDO: la estructura es fav.itemId.title, fav.itemId.image, etc.
+            // antes el código usaba item.title directamente (como si fuera el item, no el favorito)
+            const item = fav.itemId; // el objeto populado del item
+            const favDocId = fav._id; // ID del documento Favorito (para eliminar)
+
             const div = document.createElement("div");
             div.className = "vault-item";
 
-            // ✅ Escapar datos para prevenir XSS
             const safeTitle = (item.title || 'Sin título').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const safeUsuario = (item.usuario || 'Anónimo').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const safeImage = item.image || 'https://via.placeholder.com/200x150?text=Sin+Imagen';
             const safeLink = item.link || '#';
-            const itemId = item._id || item.id || item.itemId || '';
-
-            if (!itemId) {
-                console.error(`❌ Item sin ID válido:`, item);
-            }
 
             div.innerHTML = `
                 <img src="${safeImage}" alt="${safeTitle}" onerror="this.src='https://via.placeholder.com/200x150?text=Sin+Imagen'">
@@ -423,32 +403,18 @@ async function cargarBoveda() {
                     <div class="vault-item-user">@${safeUsuario}</div>
                     <div class="vault-item-actions">
                         <button onclick="window.open('${safeLink}', '_blank')" style="
-                            background: var(--primary);
-                            color: #000;
-                            border: none;
-                            padding: 8px 15px;
-                            border-radius: 5px;
-                            cursor: pointer;
-                            font-weight: bold;
-                            font-size: 0.8rem;
-                            display: flex;
-                            align-items: center;
-                            gap: 5px;
+                            background: var(--primary); color: #000; border: none;
+                            padding: 8px 15px; border-radius: 5px; cursor: pointer;
+                            font-weight: bold; font-size: 0.8rem;
+                            display: flex; align-items: center; gap: 5px;
                         ">
                             <ion-icon name="cloud-download"></ion-icon> Ver
                         </button>
-                        <button class="delete" onclick="eliminarDeBoveda('${itemId}')" style="
-                            background: var(--danger);
-                            color: white;
-                            border: none;
-                            padding: 8px 15px;
-                            border-radius: 5px;
-                            cursor: pointer;
-                            font-weight: bold;
-                            font-size: 0.8rem;
-                            display: flex;
-                            align-items: center;
-                            gap: 5px;
+                        <button class="delete" onclick="eliminarDeBoveda('${favDocId}')" style="
+                            background: var(--danger); color: white; border: none;
+                            padding: 8px 15px; border-radius: 5px; cursor: pointer;
+                            font-weight: bold; font-size: 0.8rem;
+                            display: flex; align-items: center; gap: 5px;
                         ">
                             <ion-icon name="trash"></ion-icon> Quitar
                         </button>
@@ -460,7 +426,6 @@ async function cargarBoveda() {
         });
 
         els.vaultContent.appendChild(fragment);
-        console.log(`✅ Se renderizaron ${favoritos.length} favoritos correctamente`);
 
     } catch (e) {
         console.error("❌ Error cargando bóveda:", e);
@@ -471,49 +436,36 @@ async function cargarBoveda() {
                     ${e.message || 'Error desconocido'}
                 </small>
                 <button onclick="cargarBoveda()" style="
-                    margin-top: 20px;
-                    background: var(--primary);
-                    color: #000;
-                    border: none;
-                    padding: 10px 20px;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    font-weight: bold;
-                ">
-                    🔄 Reintentar
-                </button>
+                    margin-top: 20px; background: var(--primary); color: #000;
+                    border: none; padding: 10px 20px; border-radius: 5px;
+                    cursor: pointer; font-weight: bold;
+                ">🔄 Reintentar</button>
             </p>
         `;
     }
 }
 
-// Función para eliminar de la bóveda
-async function eliminarDeBoveda(itemId) {
-    if (!itemId) {
-        alert("❌ Error: No se puede identificar el favorito a eliminar.");
-        return;
-    }
-    
+// ==========================================
+// 7. ELIMINAR DE BÓVEDA
+// ==========================================
+async function eliminarDeBoveda(favDocId) {
+    if (!favDocId) { alert("❌ Error: No se puede identificar el favorito."); return; }
     if (!confirm("¿Quitar este archivo de tu bóveda?")) return;
 
     try {
-        console.log(`🗑️ Eliminando favorito con ID: ${itemId}`);
-        
-        const res = await fetch(`${API_URL}/favoritos/delete/${itemId}`, {
+        // ✅ CORREGIDO: se agrega header de autorización
+        // ✅ CORREGIDO: se elimina el body con 'usuario' → backend verifica req.usuario del JWT
+        const res = await fetch(`${API_URL}/favoritos/delete/${favDocId}`, {
             method: 'DELETE',
-            headers: { 
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ usuario: usuarioLogueado })
+            headers: getAuthHeaders()
         });
 
         if (res.ok) {
             alert("💔 Eliminado de tu bóveda.");
-            cargarBoveda(); // Recargar la lista
+            cargarBoveda();
         } else {
             const errorData = await res.json();
-            console.error("Error del servidor:", errorData);
-            alert(`❌ Error: ${errorData.message || 'No se pudo eliminar de favoritos'}`);
+            alert(`❌ Error: ${errorData.mensaje || errorData.message || 'No se pudo eliminar'}`);
         }
     } catch (error) {
         console.error("Error eliminando de bóveda:", error);
@@ -521,10 +473,15 @@ async function eliminarDeBoveda(itemId) {
     }
 }
 
-// Función para cerrar sesión
+// ==========================================
+// 8. CERRAR SESIÓN
+// ==========================================
 function cerrarSesion() {
     if (confirm("¿Estás seguro de que quieres cerrar sesión?")) {
+        // ✅ CORREGIDO: también eliminar el token al cerrar sesión
         localStorage.removeItem("user_admin");
+        localStorage.removeItem("upgames_token");
+        localStorage.removeItem("upgames_refresh_token");
         alert("👋 Sesión cerrada correctamente.");
         window.location.href = "./index.html";
     }
@@ -533,18 +490,21 @@ function cerrarSesion() {
 // Hacer funciones globales
 window.guardarAvatar = guardarAvatar;
 window.eliminarDeBoveda = eliminarDeBoveda;
+window.eliminarItem = eliminarItem;
 window.cerrarSesion = cerrarSesion;
-window.cargarBoveda = cargarBoveda; // ✅ Exportar para poder llamarla manualmente
+window.cargarBoveda = cargarBoveda;
 
-// ✅ INICIALIZACIÓN MEJORADA
+// ==========================================
+// INICIALIZACIÓN
+// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("🚀 Inicializando perfil...");
-    console.log("Usuario logueado:", usuarioLogueado);
-    
+    if (!usuarioLogueado) {
+        // Si no hay usuario logueado, redirigir al login
+        window.location.href = "./index.html";
+        return;
+    }
     cargarEstadoActual();
-    cargarBoveda(); // ← Cargar favoritos
+    cargarBoveda();
     actualizarPreview();
-    mostrarUsuarioVerificado(); // ← Carga el nombre + verificado + avatar + bio al cargar la página
-    
-    console.log("✅ Perfil inicializado");
+    mostrarUsuarioVerificado();
 });
