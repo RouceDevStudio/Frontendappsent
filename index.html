@@ -122,6 +122,400 @@
             min-height: 1.2em;
             transition: color 0.2s;
         }
+
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #000;
+            border: 1px solid var(--danger);
+            border-radius: 8px;
+            font-size: 10px;
+            font-family: monospace;
+            color: var(--danger);
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .debug-info.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-container" class="form-card">
+        <header>
+            <ion-icon id="main-icon" name="database-outline"></ion-icon>
+            <h2 id="form-title">Metadata Index</h2>
+            <p id="form-subtitle" class="subtitle">Librería Digital de Juegos, Apps y Software</p>
+        </header>
+
+        <div id="form-content">
+            <div class="input-group">
+                <label for="user">
+                    <ion-icon name="person-circle-outline"></ion-icon> IDENTIFICADOR DE USUARIO
+                </label>
+                <input id="user" type="text" placeholder="Usuario" autocomplete="username">
+            </div>
+
+            <div class="input-group">
+                <label for="pass">
+                    <ion-icon name="shield-keyhole-outline"></ion-icon> CLAVE DE ACCESO
+                </label>
+                <input id="pass" type="password" placeholder="••••••••" autocomplete="current-password">
+            </div>
+
+            <button id="btnAction">ACCEDER AL ÍNDICE</button>
+
+            <div class="toggle-container">
+                <p>
+                    <span id="switch-text">¿No tienes acceso?</span> 
+                    <a href="#" id="toggle-mode">Crear cuenta nueva</a>
+                </p>
+            </div>
+        </div>
+
+        <p id="msg"></p>
+        <div id="debug-info" class="debug-info"></div>
+    </div>
+
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+    <script>
+        const API_URL = "https://backendapp-037y.onrender.com";
+        const REDIRECT_URL = "./biblioteca.html";
+        let isLoginMode = true;
+
+        // Cache de selectores
+        const els = {
+            title: document.getElementById("form-title"),
+            btn: document.getElementById("btnAction"),
+            toggle: document.getElementById("toggle-mode"),
+            msg: document.getElementById("msg"),
+            text: document.getElementById("switch-text"),
+            icon: document.getElementById("main-icon"),
+            user: document.getElementById("user"),
+            pass: document.getElementById("pass"),
+            debug: document.getElementById("debug-info")
+        };
+
+        function addDebugLog(message, isError = false) {
+            const timestamp = new Date().toLocaleTimeString();
+            els.debug.innerHTML += `[${timestamp}] ${message}<br>`;
+            els.debug.classList.add('show');
+            els.debug.scrollTop = els.debug.scrollHeight;
+            
+            if (isError) {
+                console.error(message);
+            } else {
+                console.log(message);
+            }
+        }
+
+        // ✅ VERIFICAR SI YA HAY UNA SESIÓN ACTIVA
+        window.onload = () => {
+            const token = localStorage.getItem("token");
+            const usuario = localStorage.getItem("user_admin");
+            
+            addDebugLog("🔍 Verificando sesión existente...");
+            addDebugLog(`Token presente: ${!!token}`);
+            addDebugLog(`Usuario presente: ${!!usuario}`);
+            
+            if (token && usuario) {
+                addDebugLog("✅ Sesión válida encontrada, redirigiendo...");
+                window.location.replace(REDIRECT_URL);
+            } else {
+                addDebugLog("⚠️ No hay sesión activa, esperando login...");
+            }
+        };
+
+        els.toggle.onclick = (e) => {
+            e.preventDefault();
+            isLoginMode = !isLoginMode;
+            
+            els.title.innerText = isLoginMode ? "Metadata Index" : "Nuevo Registro";
+            els.btn.innerText = isLoginMode ? "ACCEDER AL ÍNDICE" : "REGISTRAR PERFIL";
+            els.text.innerText = isLoginMode ? "¿No tienes acceso?" : "¿Ya eres miembro?";
+            els.toggle.innerText = isLoginMode ? "Crear cuenta nueva" : "Inicia sesión aquí";
+            els.icon.name = isLoginMode ? "database-outline" : "person-add-outline";
+            els.msg.innerText = "";
+            els.debug.innerHTML = "";
+            els.debug.classList.remove('show');
+        };
+
+        els.btn.onclick = async () => {
+            const usuario = els.user.value.trim();
+            const password = els.pass.value.trim();
+
+            els.debug.innerHTML = "";
+            els.debug.classList.remove('show');
+
+            if (!usuario || !password) {
+                showMsg("⚠️ Ingrese credenciales", "#ff4343");
+                return;
+            }
+
+            setLoading(true);
+            const endpoint = isLoginMode ? "/auth/login" : "/auth/register";
+            const fullURL = `${API_URL}${endpoint}`;
+
+            try {
+                addDebugLog(`📤 ENVIANDO PETICIÓN`);
+                addDebugLog(`Endpoint: ${fullURL}`);
+                addDebugLog(`Método: POST`);
+                addDebugLog(`Usuario: ${usuario}`);
+                addDebugLog(`Password length: ${password.length} chars`);
+                
+                const res = await fetch(fullURL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ usuario, password })
+                });
+
+                addDebugLog(`📥 RESPUESTA RECIBIDA`);
+                addDebugLog(`Status: ${res.status} ${res.statusText}`);
+                addDebugLog(`Content-Type: ${res.headers.get('content-type')}`);
+                
+                const data = await res.json();
+                addDebugLog(`📋 DATOS PARSEADOS (JSON):`);
+                addDebugLog(JSON.stringify(data, null, 2));
+
+                // ✅ VERIFICACIÓN ESTRICTA: DEBE HABER TOKEN
+                if (data.success) {
+                    addDebugLog(`✅ success: true detectado`);
+                    
+                    // VERIFICAR QUE EXISTE EL TOKEN
+                    if (!data.token) {
+                        addDebugLog(`❌ CRITICAL ERROR: No hay campo 'token' en la respuesta`, true);
+                        addDebugLog(`❌ Campos presentes: ${Object.keys(data).join(', ')}`, true);
+                        addDebugLog(`❌ Este es un ERROR DEL BACKEND`, true);
+                        
+                        showMsg("❌ ERROR: Backend no devolvió token JWT", "#ff4343");
+                        setLoading(false);
+                        
+                        // Mostrar información detallada del error
+                        setTimeout(() => {
+                            alert(`ERROR CRÍTICO DEL BACKEND\n\n` +
+                                  `El servidor respondió success:true pero NO envió el token JWT.\n\n` +
+                                  `Esto indica un problema en el backend:\n` +
+                                  `1. Falta la variable JWT_SECRET en el servidor\n` +
+                                  `2. El método generarToken() está fallando\n` +
+                                  `3. Hay un error en el middleware de respuesta\n\n` +
+                                  `Revisa los logs del servidor en Render.`);
+                        }, 500);
+                        
+                        return;
+                    }
+
+                    // VERIFICAR QUE EL TOKEN ES UN STRING VÁLIDO
+                    if (typeof data.token !== 'string' || data.token.length < 10) {
+                        addDebugLog(`❌ CRITICAL ERROR: Token inválido`, true);
+                        addDebugLog(`❌ Tipo de token: ${typeof data.token}`, true);
+                        addDebugLog(`❌ Valor del token: ${data.token}`, true);
+                        
+                        showMsg("❌ ERROR: Token JWT inválido", "#ff4343");
+                        setLoading(false);
+                        return;
+                    }
+
+                    addDebugLog(`✅ TOKEN RECIBIDO CORRECTAMENTE`);
+                    addDebugLog(`Token length: ${data.token.length} chars`);
+                    addDebugLog(`Token preview: ${data.token.substring(0, 30)}...`);
+
+                    // EXTRAER NOMBRE DE USUARIO
+                    let nombreUsuario = null;
+                    
+                    if (data.usuario) {
+                        if (typeof data.usuario === 'string') {
+                            nombreUsuario = data.usuario;
+                            addDebugLog(`✅ Usuario extraído (string): ${nombreUsuario}`);
+                        } else if (typeof data.usuario === 'object' && data.usuario.usuario) {
+                            nombreUsuario = data.usuario.usuario;
+                            addDebugLog(`✅ Usuario extraído (object): ${nombreUsuario}`);
+                        }
+                    }
+                    
+                    if (!nombreUsuario) {
+                        nombreUsuario = usuario;
+                        addDebugLog(`⚠️ Usuario no encontrado en respuesta, usando input: ${nombreUsuario}`);
+                    }
+
+                    // ✅✅✅ GUARDAR TOKEN Y USUARIO EN LOCALSTORAGE ✅✅✅
+                    addDebugLog(`💾 GUARDANDO EN LOCALSTORAGE...`);
+                    
+                    localStorage.setItem("token", data.token);
+                    addDebugLog(`✅ Token guardado`);
+                    
+                    localStorage.setItem("user_admin", nombreUsuario);
+                    addDebugLog(`✅ Usuario guardado: ${nombreUsuario}`);
+                    
+                    // Guardar información adicional
+                    if (data.usuario && typeof data.usuario === 'object') {
+                        if (data.usuario.avatar) {
+                            localStorage.setItem("user_avatar", data.usuario.avatar);
+                            addDebugLog(`✅ Avatar guardado`);
+                        }
+                        if (data.usuario.verificadoNivel !== undefined) {
+                            localStorage.setItem("user_verified", data.usuario.verificadoNivel);
+                            addDebugLog(`✅ Nivel verificación guardado: ${data.usuario.verificadoNivel}`);
+                        }
+                        if (data.usuario.rol) {
+                            localStorage.setItem("user_rol", data.usuario.rol);
+                            addDebugLog(`✅ Rol guardado: ${data.usuario.rol}`);
+                        }
+                    }
+
+                    // VERIFICAR QUE SE GUARDÓ CORRECTAMENTE
+                    const tokenVerificacion = localStorage.getItem("token");
+                    const usuarioVerificacion = localStorage.getItem("user_admin");
+                    
+                    if (tokenVerificacion && usuarioVerificacion) {
+                        addDebugLog(`✅✅✅ VERIFICACIÓN: Datos guardados correctamente`);
+                        addDebugLog(`Token en localStorage: ${tokenVerificacion.substring(0, 30)}...`);
+                        addDebugLog(`Usuario en localStorage: ${usuarioVerificacion}`);
+                        
+                        showMsg("✅ ACCESO CONCEDIDO - Redirigiendo...", "#5EFF43");
+                        
+                        setTimeout(() => {
+                            addDebugLog(`🚀 REDIRIGIENDO A: ${REDIRECT_URL}`);
+                            window.location.replace(REDIRECT_URL);
+                        }, 800);
+                    } else {
+                        addDebugLog(`❌ ERROR: No se pudo guardar en localStorage`, true);
+                        showMsg("❌ Error guardando sesión", "#ff4343");
+                        setLoading(false);
+                    }
+
+                } else {
+                    // Error del servidor o credenciales incorrectas
+                    addDebugLog(`❌ success: false`, true);
+                    addDebugLog(`Mensaje: ${data.mensaje || data.error}`, true);
+                    
+                    showMsg("❌ " + (data.mensaje || data.error || "Error desconocido"), "#ff4343");
+                    setLoading(false);
+                }
+
+            } catch (error) {
+                addDebugLog(`❌ EXCEPCIÓN CAPTURADA`, true);
+                addDebugLog(`Error: ${error.message}`, true);
+                addDebugLog(`Stack: ${error.stack}`, true);
+                
+                showMsg("⚠️ Error de conexión con el servidor", "#ff4343");
+                setLoading(false);
+            }
+        };
+
+        function showMsg(text, color) {
+            els.msg.innerText = text;
+            els.msg.style.color = color;
+        }
+
+        function setLoading(loading) {
+            els.btn.disabled = loading;
+            if (loading) {
+                els.btn.innerText = "CONECTANDO...";
+                showMsg("⏳ Consultando base de datos...", "#5EFF43");
+            } else {
+                els.btn.innerText = isLoginMode ? "ACCEDER AL ÍNDICE" : "REGISTRAR PERFIL";
+            }
+        }
+
+        document.addEventListener("keypress", (e) => {
+            if(e.key === "Enter") els.btn.click();
+        });
+    </script>
+</body>
+</html>
+box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transition: transform var(--transition);
+            box-sizing: border-box;
+        }
+
+        header { text-align: center; margin-bottom: 30px; }
+        
+        #main-icon { color: var(--primary); font-size: 3rem; margin-bottom: 10px; }
+
+        h2 { 
+            color: var(--primary); 
+            font-size: 1.6rem; 
+            letter-spacing: 2px; 
+            margin: 0; 
+            text-transform: uppercase; 
+        }
+
+        .subtitle { color: var(--text-dim); font-size: 0.85rem; margin-top: 10px; }
+
+        .input-group { margin-top: 20px; }
+        .input-group:first-child { margin-top: 0; }
+
+        label {
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: white;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 8px rgba(94, 255, 67, 0.2);
+        }
+
+        #btnAction {
+            width: 100%;
+            margin-top: 25px;
+            padding: 15px;
+            background: var(--primary);
+            color: black;
+            border: none;
+            border-radius: 8px;
+            font-weight: 900;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: var(--transition);
+        }
+
+        #btnAction:hover:not(:disabled) {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(94, 255, 67, 0.3);
+        }
+
+        #btnAction:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .toggle-container { text-align: center; margin-top: 25px; font-size: 0.8rem; color: #555; }
+        
+        #toggle-mode { color: var(--primary); text-decoration: none; font-weight: bold; cursor: pointer; }
+
+        #msg {
+            text-align: center;
+            font-size: 11px;
+            margin-top: 20px;
+            font-weight: bold;
+            min-height: 1.2em;
+            transition: color 0.2s;
+        }
     </style>
 </head>
 <body>
