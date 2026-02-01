@@ -571,9 +571,9 @@ async function eliminarDeBoveda(itemId) {
 // Función para cerrar sesión
 function cerrarSesion() {
     if (confirm("¿Estás seguro de que quieres cerrar sesión?")) {
-        // ✅ ELIMINAR TODOS LOS DATOS DE SESIÓN
         localStorage.removeItem("user_admin");
-        localStorage.removeItem("token");
+        localStorage.removeItem("token");              // ⬅️ NUEVA
+        localStorage.removeItem("RefreshToken");        // ⬅️ NUEVA
         localStorage.removeItem("user_avatar");
         localStorage.removeItem("user_verified");
         localStorage.removeItem("user_rol");
@@ -582,7 +582,6 @@ function cerrarSesion() {
         window.location.href = "./index.html";
     }
 }
-
 // Hacer funciones globales
 window.guardarAvatar = guardarAvatar;
 window.eliminarDeBoveda = eliminarDeBoveda;
