@@ -341,251 +341,253 @@
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 
     <script>
-        const API_URL = "https://backendapp-037y.onrender.com";
-        const urlParams = new URLSearchParams(window.location.search);
-        const usuarioViendo = urlParams.get('u') ? urlParams.get('u').toLowerCase() : null;
-        const usuarioActual = localStorage.getItem("user_admin");
+       // ========== SCRIPT CORREGIDO PARA perfil-publico.html ==========
+// ========== USA RUTAS PÚBLICAS - NO REQUIERE TOKEN PARA VER PERFILES ==========
 
-        // Helper: fetch seguro que fuerza CORS y never va a localhost
-        async function safeGet(url) {
-            console.log("📡 Fetch a:", url);
-            const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
-            const text = await res.text();
-            console.log("📡 Status:", res.status, "| URL final:", res.url || url);
-            let json = null;
-            try { json = JSON.parse(text); } catch(e) { console.warn("⚠️ No es JSON:", text.substring(0,200)); }
-            return json;
+const API_URL = "https://backendapp-037y.onrender.com";
+const urlParams = new URLSearchParams(window.location.search);
+const usuarioViendo = urlParams.get('u') ? urlParams.get('u').toLowerCase().trim() : null;
+const usuarioActual = localStorage.getItem("user_admin");
+
+console.log("🔍 Usuario viendo:", usuarioViendo);
+console.log("👤 Usuario actual:", usuarioActual);
+
+// ✅ FUNCIÓN FETCH MEJORADA CON MANEJO DE ERRORES
+async function fetchAPI(url, options = {}) {
+    console.log("📡 Fetch a:", url);
+    
+    try {
+        const response = await fetch(url, {
+            ...options,
+            mode: 'cors',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+
+        console.log("📡 Status:", response.status);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        console.log("Usuario viendo:", usuarioViendo);
-        console.log("Usuario actual:", usuarioActual);
 
-        // Función para obtener badge de verificación
-        function getVerificadoBadge(nivel) {
-            if (!nivel || nivel === 0) return '';
-            
-            let colorClass = '';
-            if (nivel === 1) colorClass = 'level-1';
-            else if (nivel === 2) colorClass = 'level-2';
-            else if (nivel === 3) colorClass = 'level-3';
-            
-            return `
-                <span class="verificado-badge ${colorClass}" title="Verificado nivel ${nivel}">
-                    <ion-icon name="checkmark-circle"></ion-icon>
-                </span>
+        const data = await response.json();
+        console.log("✅ Respuesta:", data);
+        return data;
+
+    } catch (error) {
+        console.error("❌ Error en fetch:", error);
+        throw error;
+    }
+}
+
+// Función para obtener badge de verificación
+function getVerificadoBadge(nivel) {
+    if (!nivel || nivel === 0) return '';
+    
+    let colorClass = '';
+    if (nivel === 1) colorClass = 'level-1';
+    else if (nivel === 2) colorClass = 'level-2';
+    else if (nivel === 3) colorClass = 'level-3';
+    
+    return `
+        <span class="verificado-badge ${colorClass}" title="Verificado nivel ${nivel}">
+            <ion-icon name="checkmark-circle"></ion-icon>
+        </span>
+    `;
+}
+
+// ✅ CARGAR PERFIL - USA RUTA PÚBLICA
+async function cargarPerfilUsuario() {
+    if (!usuarioViendo) {
+        mostrarError('Usuario no encontrado', 'No se especificó un usuario válido.');
+        return;
+    }
+
+    try {
+        console.log("📡 Cargando perfil de:", usuarioViendo);
+        
+        // Usar la ruta pública que NO requiere autenticación
+        const response = await fetchAPI(`${API_URL}/usuarios/perfil-publico/${usuarioViendo}`);
+        
+        if (!response.success || !response.usuario) {
+            throw new Error("Usuario no encontrado");
+        }
+
+        const user = response.usuario;
+        console.log("✅ Perfil cargado:", user);
+
+        // Actualizar UI
+        document.getElementById('user-name-display').textContent = `@${user.usuario}`;
+        
+        // Badge de verificación
+        if (user.verificadoNivel > 0) {
+            document.getElementById('verificado-badge').innerHTML = getVerificadoBadge(user.verificadoNivel);
+        }
+
+        // Avatar
+        const avatarImg = document.getElementById('avatar-img');
+        const avatarIcon = document.getElementById('avatar-icon');
+        
+        if (user.avatar) {
+            avatarImg.src = user.avatar;
+            avatarImg.style.display = 'block';
+            avatarIcon.style.display = 'none';
+        } else {
+            avatarIcon.textContent = user.usuario.charAt(0).toUpperCase();
+        }
+
+        // Biografía
+        document.getElementById('user-bio').textContent = user.bio || 'Sin biografía';
+
+        // Estadísticas
+        document.getElementById('stat-uploads').textContent = user.publicaciones || 0;
+        document.getElementById('stat-followers').textContent = user.seguidores || 0;
+        document.getElementById('stat-following').textContent = user.siguiendo || 0;
+
+        // Cargar publicaciones
+        await cargarPublicaciones();
+
+        // Verificar seguimiento (solo si hay usuario logueado)
+        if (usuarioActual) {
+            await verificarSeguimiento();
+        } else {
+            configurarBotonSeguir(false);
+        }
+
+    } catch (error) {
+        console.error("❌ Error cargando perfil:", error);
+        mostrarError('Error al cargar perfil', error.message);
+    }
+}
+
+// ✅ CARGAR PUBLICACIONES
+async function cargarPublicaciones() {
+    try {
+        const response = await fetchAPI(`${API_URL}/items`);
+        
+        const allItems = Array.isArray(response) 
+            ? response 
+            : (response.items ? response.items : []);
+        
+        // Filtrar publicaciones del usuario (case-insensitive)
+        const itemsUsuario = allItems.filter(item => 
+            item.usuario.toLowerCase() === usuarioViendo.toLowerCase() && 
+            item.status === 'aprobado'
+        );
+
+        console.log(`📦 Publicaciones de ${usuarioViendo}:`, itemsUsuario.length);
+
+        const container = document.getElementById('user-items');
+
+        if (itemsUsuario.length === 0) {
+            container.innerHTML = `
+                <div class="empty-msg">
+                    <ion-icon name="cloud-offline" style="font-size:3rem;"></ion-icon>
+                    <p>Este usuario aún no ha publicado nada.</p>
+                </div>
             `;
+            return;
         }
 
-        // Cargar perfil del usuario
-        async function cargarPerfilUsuario() {
-            if (!usuarioViendo) {
-                document.querySelector('.container').innerHTML = `
-                    <div class="empty-msg">
-                        <ion-icon name="alert-circle" style="font-size:3rem; color:var(--danger);"></ion-icon>
-                        <h3>Usuario no encontrado</h3>
-                        <p>No se especificó un usuario válido.</p>
-                        <button onclick="window.location.href='./biblioteca.html'" style="
-                            margin-top: 20px;
-                            background: var(--primary);
-                            color: #000;
-                            border: none;
-                            padding: 12px 30px;
-                            border-radius: 8px;
-                            font-weight: bold;
-                            cursor: pointer;
-                        ">
-                            Volver a Biblioteca
-                        </button>
-                    </div>
-                `;
-                return;
-            }
+        container.innerHTML = '';
 
-            try {
-                console.log("📡 Cargando datos del usuario:", usuarioViendo);
-                
-                // Usar /auth/users que sabemos que funciona en Render
-                const rawResponse = await safeGet(`${API_URL}/auth/users`);
-                console.log("🔧 Tipo de respuesta:", typeof rawResponse, "| isArray:", Array.isArray(rawResponse));
-                console.log("🔧 Keys:", rawResponse ? Object.keys(rawResponse) : "null");
-                
-                // Puede ser array directo, o { usuarios: [...] }, o { success, usuarios, pagination }
-                let arr = [];
-                if (Array.isArray(rawResponse)) {
-                    arr = rawResponse;
-                } else if (rawResponse && Array.isArray(rawResponse.usuarios)) {
-                    arr = rawResponse.usuarios;
-                }
-                
-                // Logear todos los nombres de usuario para ver exactamente qué hay
-                console.log("👥 Nombres encontrados:", arr.map(u => u.usuario));
-                
-                const userData = arr.find(u => u.usuario === usuarioViendo) || null;
-                console.log("🎯 Buscando:", JSON.stringify(usuarioViendo), "| Encontrado:", userData);
+        itemsUsuario.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            card.onclick = () => {
+                window.location.href = `./biblioteca.html?id=${item._id}`;
+            };
 
-                if (!userData) {
-                    throw new Error("Usuario no encontrado");
-                }
+            card.innerHTML = `
+                <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/250x150?text=Sin+Imagen'">
+                <div class="item-info">
+                    <div class="item-title">${item.title}</div>
+                    <div class="item-category">${item.category || 'General'}</div>
+                </div>
+            `;
 
-                console.log("✅ Datos del usuario:", userData);
+            container.appendChild(card);
+        });
 
-                // Actualizar UI
-                document.getElementById('user-name-display').textContent = `@${usuarioViendo}`;
-                
-                // Badge de verificación
-                const nivel = userData.verificadoNivel || 0;
-                if (nivel > 0) {
-                    document.getElementById('verificado-badge').innerHTML = getVerificadoBadge(nivel);
-                }
+    } catch (error) {
+        console.error("❌ Error cargando publicaciones:", error);
+        document.getElementById('user-items').innerHTML = `
+            <div class="empty-msg">
+                <p style="color:var(--danger);">Error al cargar publicaciones</p>
+            </div>
+        `;
+    }
+}
 
-                // Avatar
-                const avatarUrl = userData.avatar || localStorage.getItem(`avatar_${usuarioViendo}`);
-                const avatarImg = document.getElementById('avatar-img');
-                const avatarIcon = document.getElementById('avatar-icon');
-                
-                if (avatarUrl) {
-                    avatarImg.src = avatarUrl;
-                    avatarImg.style.display = 'block';
-                    avatarIcon.style.display = 'none';
-                } else {
-                    avatarIcon.textContent = usuarioViendo.charAt(0).toUpperCase();
-                }
-
-                // Biografía
-                const bio = userData.bio || localStorage.getItem(`bio_${usuarioViendo}`) || 'Sin biografía';
-                document.getElementById('user-bio').textContent = bio;
-
-                // Cargar publicaciones
-                await cargarPublicaciones();
-
-                // Verificar seguimiento
-                await verificarSeguimiento();
-
-            } catch (error) {
-                console.error("❌ Error cargando perfil:", error);
-                document.querySelector('.container').innerHTML = `
-                    <div class="empty-msg">
-                        <ion-icon name="alert-circle" style="font-size:3rem; color:var(--danger);"></ion-icon>
-                        <h3>Error al cargar perfil</h3>
-                        <p>${error.message}</p>
-                        <button onclick="location.reload()" style="
-                            margin-top: 20px;
-                            background: var(--primary);
-                            color: #000;
-                            border: none;
-                            padding: 12px 30px;
-                            border-radius: 8px;
-                            font-weight: bold;
-                            cursor: pointer;
-                        ">
-                            Reintentar
-                        </button>
-                    </div>
-                `;
-            }
-        }
-
-        // Cargar publicaciones del usuario
-        async function cargarPublicaciones() {
-            try {
-                const data = await safeGet(`${API_URL}/items`);
-
-                // /items retorna { success: true, items: [...] } o un array directamente
-                const allItems = data 
-                    ? (Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []))
-                    : [];
-                // Filtrar solo los del usuario actual con status aprobado
-                const itemsUsuario = allItems.filter(i => i.usuario === usuarioViendo && i.status === 'aprobado');
-
-                console.log(`📦 Publicaciones encontradas: ${itemsUsuario.length}`);
-
-                // Actualizar contador
-                document.getElementById('stat-uploads').textContent = itemsUsuario.length;
-
-                const container = document.getElementById('user-items');
-
-                if (itemsUsuario.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-msg">
-                            <ion-icon name="cloud-offline" style="font-size:3rem;"></ion-icon>
-                            <p>Este usuario aún no ha publicado nada.</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = '';
-
-                itemsUsuario.forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = 'item-card';
-                    card.onclick = () => {
-                        window.location.href = `./biblioteca.html?id=${item._id}`;
-                    };
-
-                    card.innerHTML = `
-                        <img src="${item.image}" alt="${item.title}">
-                        <div class="item-info">
-                            <div class="item-title">${item.title}</div>
-                            <div class="item-category">${item.category || 'General'}</div>
-                        </div>
-                    `;
-
-                    container.appendChild(card);
-                });
-
-            } catch (error) {
-                console.error("Error cargando publicaciones:", error);
-                document.getElementById('user-items').innerHTML = `
-                    <div class="empty-msg">
-                        <p style="color:var(--danger);">Error al cargar publicaciones</p>
-                    </div>
-                `;
-            }
-        }
-
-        // Verificar si el usuario actual sigue al usuario que está viendo
-        // ✅ VERIFICAR SEGUIMIENTO (Ruta corregida según index.txt)
+// ✅ VERIFICAR SEGUIMIENTO
 async function verificarSeguimiento() {
     const btnSeguir = document.getElementById('btn-seguir');
-    if (usuarioActual === usuarioViendo) {
+    
+    // Si es el mismo usuario
+    if (usuarioActual && usuarioActual.toLowerCase() === usuarioViendo.toLowerCase()) {
         btnSeguir.innerHTML = `<ion-icon name="person-circle"></ion-icon> Tu perfil`;
         btnSeguir.disabled = true;
         btnSeguir.style.opacity = '0.5';
         return;
     }
 
+    // Si no hay usuario logueado
     if (!usuarioActual) {
-        btnSeguir.innerHTML = `<ion-icon name="log-in"></ion-icon> Inicia sesión`;
-        btnSeguir.onclick = () => window.location.href = './index.html';
+        configurarBotonSeguir(false);
         return;
     }
 
     try {
-        // Usar la ruta dedicada para verificar seguimiento
-        const data = await safeGet(`${API_URL}/usuarios/verifica-seguimiento/${usuarioActual}/${usuarioViendo}`);
+        // Usar ruta pública para verificar seguimiento
+        const response = await fetchAPI(
+            `${API_URL}/usuarios/verifica-seguimiento/${usuarioActual}/${usuarioViendo}`
+        );
         
-        const estaSiguiendo = data && data.estaSiguiendo === true;
-        
-        btnSeguir.disabled = false;
-        if (estaSiguiendo) {
-            btnSeguir.innerHTML = `<ion-icon name="checkmark-circle"></ion-icon> Siguiendo`;
-            btnSeguir.className = 'btn-seguir btn-siguiendo';
-            btnSeguir.onclick = dejarDeSeguir;
-        } else {
-            btnSeguir.innerHTML = `<ion-icon name="person-add"></ion-icon> Seguir`;
-            btnSeguir.className = 'btn-seguir';
-            btnSeguir.onclick = seguirUsuario;
-        }
-        cargarEstadisticas();
-    } catch (e) {
-        console.error("Error verificando:", e);
+        configurarBotonSeguir(response.estaSiguiendo || false);
+
+    } catch (error) {
+        console.error("❌ Error verificando seguimiento:", error);
+        configurarBotonSeguir(false);
     }
 }
 
-// ✅ SEGUIR USUARIO (Ruta corregida y Token añadido)
+// ✅ CONFIGURAR BOTÓN DE SEGUIR
+function configurarBotonSeguir(estaSiguiendo) {
+    const btnSeguir = document.getElementById('btn-seguir');
+    
+    if (!usuarioActual) {
+        btnSeguir.innerHTML = `<ion-icon name="log-in"></ion-icon> Inicia sesión para seguir`;
+        btnSeguir.onclick = () => window.location.href = './index.html';
+        btnSeguir.disabled = false;
+        btnSeguir.className = 'btn-seguir';
+        return;
+    }
+
+    btnSeguir.disabled = false;
+    
+    if (estaSiguiendo) {
+        btnSeguir.innerHTML = `<ion-icon name="checkmark-circle"></ion-icon> Siguiendo`;
+        btnSeguir.className = 'btn-seguir btn-siguiendo';
+        btnSeguir.onclick = dejarDeSeguir;
+    } else {
+        btnSeguir.innerHTML = `<ion-icon name="person-add"></ion-icon> Seguir`;
+        btnSeguir.className = 'btn-seguir';
+        btnSeguir.onclick = seguirUsuario;
+    }
+}
+
+// ✅ SEGUIR USUARIO
 async function seguirUsuario() {
-    const token = localStorage.getItem('token'); // Asegúrate que el nombre sea 'token'
-    if (!token) return alert("Debes iniciar sesión");
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+        alert("Debes iniciar sesión para seguir usuarios");
+        window.location.href = './index.html';
+        return;
+    }
 
     const btnSeguir = document.getElementById('btn-seguir');
     const originalContent = btnSeguir.innerHTML;
@@ -593,42 +595,7 @@ async function seguirUsuario() {
     btnSeguir.innerHTML = `<ion-icon name="hourglass-outline"></ion-icon> Procesando...`;
 
     try {
-        // Tu backend usa PUT /auth/follow/:usuario con token
-        const res = await fetch(`${API_URL}/auth/follow/${usuarioViendo}`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // <--- ESTO ES VITAL
-            }
-        });
-
-        if (res.ok) {
-            alert(`✅ Ahora sigues a @${usuarioViendo}`);
-            verificarSeguimiento();
-        } else {
-            const data = await res.json();
-            alert(data.error || "Error al seguir");
-            btnSeguir.disabled = false;
-            btnSeguir.innerHTML = originalContent;
-        }
-    } catch (e) {
-        alert("Error de conexión");
-        btnSeguir.disabled = false;
-    }
-}
-
-// ✅ DEJAR DE SEGUIR (Usa la misma ruta PUT porque el backend es un 'toggle')
-async function dejarDeSeguir() {
-    if (!confirm(`¿Dejar de seguir a @${usuarioViendo}?`)) return;
-    
-    const token = localStorage.getItem('token');
-    const btnSeguir = document.getElementById('btn-seguir');
-    const originalContent = btnSeguir.innerHTML;
-    btnSeguir.disabled = true;
-
-    try {
-        // En tu backend index.txt, la ruta /auth/follow/:usuario quita al seguidor si ya existe
-        const res = await fetch(`${API_URL}/auth/follow/${usuarioViendo}`, {
+        const response = await fetch(`${API_URL}/auth/follow/${usuarioViendo}`, {
             method: 'PUT',
             headers: { 
                 'Content-Type': 'application/json',
@@ -636,41 +603,86 @@ async function dejarDeSeguir() {
             }
         });
 
-        if (res.ok) {
-            alert(`💔 Dejaste de seguir a @${usuarioViendo}`);
-            verificarSeguimiento();
+        const data = await response.json();
+
+        if (response.ok) {
+            alert(`✅ Ahora sigues a @${usuarioViendo}`);
+            await cargarPerfilUsuario(); // Recargar todo
         } else {
-            const data = await res.json();
-            alert(data.error || "Error");
-            btnSeguir.disabled = false;
-            btnSeguir.innerHTML = originalContent;
+            throw new Error(data.error || "Error al seguir");
         }
-    } catch (e) {
-        alert("Error de conexión");
+    } catch (error) {
+        console.error("❌ Error:", error);
+        alert(error.message || "Error de conexión");
         btnSeguir.disabled = false;
+        btnSeguir.innerHTML = originalContent;
     }
 }
 
-// ✅ CARGAR ESTADÍSTICAS (Rutas separadas según index.txt)
-async function cargarEstadisticas() {
+// ✅ DEJAR DE SEGUIR
+async function dejarDeSeguir() {
+    if (!confirm(`¿Dejar de seguir a @${usuarioViendo}?`)) return;
+    
+    const token = localStorage.getItem('token');
+    const btnSeguir = document.getElementById('btn-seguir');
+    const originalContent = btnSeguir.innerHTML;
+    btnSeguir.disabled = true;
+    btnSeguir.innerHTML = `<ion-icon name="hourglass-outline"></ion-icon> Procesando...`;
+
     try {
-        const data = await safeGet(`${API_URL}/usuarios/stats-seguimiento/${usuarioViendo}`);
+        const response = await fetch(`${API_URL}/auth/follow/${usuarioViendo}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
-        if (data && data.stats) {
-            document.getElementById('stat-followers').textContent = data.stats.seguidores || '0';
-            document.getElementById('stat-following').textContent = data.stats.siguiendo || '0';
+        const data = await response.json();
+
+        if (response.ok) {
+            alert(`💔 Dejaste de seguir a @${usuarioViendo}`);
+            await cargarPerfilUsuario(); // Recargar todo
+        } else {
+            throw new Error(data.error || "Error al dejar de seguir");
         }
-    } catch (e) {
-        console.error("Error stats:", e);
+    } catch (error) {
+        console.error("❌ Error:", error);
+        alert(error.message || "Error de conexión");
+        btnSeguir.disabled = false;
+        btnSeguir.innerHTML = originalContent;
     }
 }
 
+// ✅ MOSTRAR ERROR
+function mostrarError(titulo, mensaje) {
+    document.querySelector('.container').innerHTML = `
+        <div class="empty-msg">
+            <ion-icon name="alert-circle" style="font-size:3rem; color:var(--danger);"></ion-icon>
+            <h3>${titulo}</h3>
+            <p>${mensaje}</p>
+            <button onclick="location.reload()" style="
+                margin-top: 20px;
+                background: var(--primary);
+                color: #000;
+                border: none;
+                padding: 12px 30px;
+                border-radius: 8px;
+                font-weight: bold;
+                cursor: pointer;
+            ">
+                Reintentar
+            </button>
+        </div>
+    `;
+}
 
-        // Inicializar
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("🚀 DOM Cargado - Inicializando perfil público");
-            cargarPerfilUsuario();
-        });
+// ✅ INICIALIZAR
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("🚀 Inicializando perfil público...");
+    cargarPerfilUsuario();
+});
+;
     </script>
 </body>
 </html>
