@@ -408,6 +408,29 @@ async function postComm(id) {
     }
 }
 
+function handleMail(event) {
+    event.preventDefault(); // Evita que el visor intente cargar la URL y falle
+    
+    const email = "mr.m0onster@protonmail.com";
+    const subject = "Reporte UpGames";
+    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+
+    // Intentamos abrirlo en una ventana nueva. 
+    // Esto fuerza a Android a preguntar "¿Con qué app quieres abrir esto?" 
+    // en lugar de intentar cargarlo dentro de SPCK.
+    window.open(mailtoUrl, '_system'); 
+    
+    // Fallback: Si después de 1 segundo el usuario sigue aquí, 
+    // es que el visor es muy limitado. Copiamos el email al portapapeles.
+    setTimeout(() => {
+        navigator.clipboard.writeText(email);
+        alert("Copiado al portapapeles: " + email);
+    }, 1000);
+}
+
+
+
+
 // 7. SISTEMA DE MONETIZACIÓN (PUENTE) - Mantenido igual
 document.addEventListener('click', function(e) {
     const anchor = e.target.closest('a');
