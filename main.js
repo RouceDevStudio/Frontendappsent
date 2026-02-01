@@ -29,7 +29,25 @@ const els = {
 // NUEVA FUNCIÓN: ANALIZADOR DE ENLACES (UPGAMES SHIELD)
 // ==========================================
 function analizarEnlaceSeguro(url) {
-    const permitidos = ['mediafire.com', 'mega.nz', 'drive.google.com', 'mega.co.nz'];
+    
+    const permitidos = [
+    'mediafire.com',
+    'mega.nz',
+    'drive.google.com',
+    'mega.co.nz',
+    'gofile.io',
+    'onedrive.live.com',
+    'icloud.com',
+    'proton.me',
+    'pcloud.com',
+    'pixeldrain.com',
+    '1fichier.com',
+    'qiwi.gg',
+    'krakenfiles.com',
+    'dropbox.com'
+];
+
+    
     if (!url) return { ok: null };
     try {
         const urlObj = new URL(url);
