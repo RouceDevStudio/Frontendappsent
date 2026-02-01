@@ -343,10 +343,19 @@
     <script>
         const API_URL = "https://backendapp-037y.onrender.com";
         const urlParams = new URLSearchParams(window.location.search);
-        const usuarioViendo = urlParams.get('u'); // ✅ CORREGIDO: usar 'u' en vez de 'user'
+        const usuarioViendo = urlParams.get('u') ? urlParams.get('u').toLowerCase() : null;
         const usuarioActual = localStorage.getItem("user_admin");
 
-        console.log("=== PERFIL PÚBLICO INICIADO ===");
+        // Helper: fetch seguro que fuerza CORS y never va a localhost
+        async function safeGet(url) {
+            console.log("📡 Fetch a:", url);
+            const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
+            const text = await res.text();
+            console.log("📡 Status:", res.status, "| URL final:", res.url || url);
+            let json = null;
+            try { json = JSON.parse(text); } catch(e) { console.warn("⚠️ No es JSON:", text.substring(0,200)); }
+            return json;
+        }
         console.log("Usuario viendo:", usuarioViendo);
         console.log("Usuario actual:", usuarioActual);
 
@@ -394,18 +403,24 @@
             try {
                 console.log("📡 Cargando datos del usuario:", usuarioViendo);
                 
-                // Obtener datos del usuario directamente por su nombre (ruta que ya existe)
-                const resUser = await fetch(`${API_URL}/auth/perfil/${usuarioViendo}`);
-                const rawText = await resUser.text();
-                console.log("🔍 RAW respuesta backend:", rawText.substring(0, 500));
-                let perfilData = null;
-                try { perfilData = JSON.parse(rawText); } catch(e) { perfilData = null; }
-                console.log("🔍 perfilData parseado:", perfilData);
-
-                // La ruta retorna { success: true, usuario: {...} } o directamente el objeto
-                const userData = perfilData 
-                    ? (perfilData.usuario ? perfilData.usuario : (perfilData.success === undefined ? perfilData : null))
-                    : null;
+                // Usar /auth/users que sabemos que funciona en Render
+                const rawResponse = await safeGet(`${API_URL}/auth/users`);
+                console.log("🔧 Tipo de respuesta:", typeof rawResponse, "| isArray:", Array.isArray(rawResponse));
+                console.log("🔧 Keys:", rawResponse ? Object.keys(rawResponse) : "null");
+                
+                // Puede ser array directo, o { usuarios: [...] }, o { success, usuarios, pagination }
+                let arr = [];
+                if (Array.isArray(rawResponse)) {
+                    arr = rawResponse;
+                } else if (rawResponse && Array.isArray(rawResponse.usuarios)) {
+                    arr = rawResponse.usuarios;
+                }
+                
+                // Logear todos los nombres de usuario para ver exactamente qué hay
+                console.log("👥 Nombres encontrados:", arr.map(u => u.usuario));
+                
+                const userData = arr.find(u => u.usuario === usuarioViendo) || null;
+                console.log("🎯 Buscando:", JSON.stringify(usuarioViendo), "| Encontrado:", userData);
 
                 if (!userData) {
                     throw new Error("Usuario no encontrado");
@@ -472,13 +487,14 @@
         // Cargar publicaciones del usuario
         async function cargarPublicaciones() {
             try {
-                const res = await fetch(`${API_URL}/items/user/${usuarioViendo}?status=aprobado`);
-                const rawText = await res.text();
-                let data = null;
-                try { data = JSON.parse(rawText); } catch(e) { data = null; }
+                const data = await safeGet(`${API_URL}/items`);
 
-                // La ruta retorna { success: true, items: [...] }
-                const itemsUsuario = data && Array.isArray(data.items) ? data.items : [];
+                // /items retorna { success: true, items: [...] } o un array directamente
+                const allItems = data 
+                    ? (Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []))
+                    : [];
+                // Filtrar solo los del usuario actual con status aprobado
+                const itemsUsuario = allItems.filter(i => i.usuario === usuarioViendo && i.status === 'aprobado');
 
                 console.log(`📦 Publicaciones encontradas: ${itemsUsuario.length}`);
 
@@ -545,24 +561,10 @@ async function verificarSeguimiento() {
     }
 
     try {
-        // En tu backend la ruta es GET /auth/:usuario/siguiendo
-        const res = await fetch(`${API_URL}/auth/${usuarioActual}/siguiendo`);
+        // Usar la ruta dedicada para verificar seguimiento
+        const data = await safeGet(`${API_URL}/usuarios/verifica-seguimiento/${usuarioActual}/${usuarioViendo}`);
         
-        // ✅ Verificar que la respuesta tenga contenido válido antes de parsear
-        const text = await res.text();
-        let data = [];
-        if (text) {
-            try {
-                data = JSON.parse(text);
-            } catch (parseErr) {
-                console.warn("⚠️ Respuesta no es JSON válido:", text);
-                data = [];
-            }
-        }
-        
-        // El backend devuelve un array directamente o un objeto con .siguiendo
-        const siguiendoArray = Array.isArray(data) ? data : (data.siguiendo || []);
-        const estaSiguiendo = siguiendoArray.includes(usuarioViendo);
+        const estaSiguiendo = data && data.estaSiguiendo === true;
         
         btnSeguir.disabled = false;
         if (estaSiguiendo) {
@@ -652,18 +654,12 @@ async function dejarDeSeguir() {
 // ✅ CARGAR ESTADÍSTICAS (Rutas separadas según index.txt)
 async function cargarEstadisticas() {
     try {
-        const [resSeguidores, resSiguiendo] = await Promise.all([
-            fetch(`${API_URL}/auth/${usuarioViendo}/seguidores`),
-            fetch(`${API_URL}/auth/${usuarioViendo}/siguiendo`)
-        ]);
+        const data = await safeGet(`${API_URL}/usuarios/stats-seguimiento/${usuarioViendo}`);
 
-        // ✅ Parseo seguro para evitar SyntaxError si el backend no retorna JSON
-        let seguidores = [], siguiendo = [];
-        try { const t = await resSeguidores.text(); seguidores = t ? JSON.parse(t) : []; } catch(e) { seguidores = []; }
-        try { const t = await resSiguiendo.text(); siguiendo = t ? JSON.parse(t) : []; } catch(e) { siguiendo = []; }
-
-        document.getElementById('stat-followers').textContent = (Array.isArray(seguidores) ? seguidores : []).length || '0';
-        document.getElementById('stat-following').textContent = (Array.isArray(siguiendo) ? siguiendo : []).length || '0';
+        if (data && data.stats) {
+            document.getElementById('stat-followers').textContent = data.stats.seguidores || '0';
+            document.getElementById('stat-following').textContent = data.stats.siguiendo || '0';
+        }
     } catch (e) {
         console.error("Error stats:", e);
     }
