@@ -388,28 +388,32 @@ async function guardarAvatar() {
     }
 }
 
-// ✅ FUNCIÓN MEJORADA: cargar favoritos (Bóveda) con mejor manejo de errores
+// ✅ FUNCIÓN MEJORADA: cargar favoritos (Bóveda) con datos completos y mejor manejo de errores
 async function cargarBoveda() {
     if (!els.vaultContent) {
-        console.warn("Elemento vaultContent no encontrado");
+        console.warn("⚠️ Elemento vaultContent no encontrado");
         return;
     }
     
     if (!usuarioLogueado) {
-        els.vaultContent.innerHTML = `<p class="error-msg">⚠️ INICIA SESIÓN</p>`;
+        els.vaultContent.innerHTML = `
+            <p class="error-msg" style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                ⚠️ Inicia sesión para ver tus favoritos
+            </p>
+        `;
         return;
     }
 
     // Mostrar estado de carga
     els.vaultContent.innerHTML = `
-        <p class="empty-msg" style="grid-column: 1/-1; text-align: center;">
-            <ion-icon name="hourglass-outline" style="font-size: 2rem; display: block; margin: 0 auto 10px;"></ion-icon>
+        <p style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-dim);">
+            <ion-icon name="sync-outline" style="font-size: 2rem; animation: spin 1s linear infinite;"></ion-icon><br>
             Cargando favoritos...
         </p>
     `;
 
     try {
-        console.log(`Cargando favoritos para: ${usuarioLogueado}`);
+        console.log(`📂 Cargando favoritos para: ${usuarioLogueado}`);
         const res = await fetch(`${API_URL}/favoritos/${usuarioLogueado}`);
         
         if (!res.ok) {
@@ -417,21 +421,12 @@ async function cargarBoveda() {
         }
         
         const data = await res.json();
-        console.log("Datos de favoritos recibidos:", data);
+        console.log("📊 Datos de favoritos recibidos:", data);
 
-        // ✅ VERIFICACIÓN MEJORADA: Manejo de diferentes formatos de respuesta
-        let favoritos = [];
-        
-        if (Array.isArray(data)) {
-            // Si la respuesta es directamente un array
-            favoritos = data;
-        } else if (data.favoritos && Array.isArray(data.favoritos)) {
-            // Si está dentro de un objeto con propiedad favoritos
-            favoritos = data.favoritos;
-        } else if (data.items && Array.isArray(data.items)) {
-            // Posible formato alternativo
-            favoritos = data.items;
-        }
+        // ✅ El backend ahora devuelve array directo con datos completos
+        let favoritos = Array.isArray(data) ? data : [];
+
+        console.log(`✅ Favoritos procesados: ${favoritos.length}`);
 
         if (favoritos.length === 0) {
             els.vaultContent.innerHTML = `
@@ -445,56 +440,90 @@ async function cargarBoveda() {
             return;
         }
 
+        // ✅ RENDERIZAR FAVORITOS CON INFORMACIÓN COMPLETA
         els.vaultContent.innerHTML = '';
         const fragment = document.createDocumentFragment();
 
         favoritos.forEach(item => {
-            if (!item) return; // Saltar items nulos
+            if (!item) {
+                console.warn("⚠️ Item nulo detectado, saltando...");
+                return;
+            }
             
             const div = document.createElement("div");
             div.className = "vault-item";
 
-            // ✅ Escapar datos para prevenir XSS
+            // ✅ Datos con valores por defecto seguros
             const safeTitle = (item.title || 'Sin título').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const safeUsuario = (item.usuario || 'Anónimo').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const safeDescription = (item.description || 'Sin descripción').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const safeImage = item.image || 'https://via.placeholder.com/200x150?text=Sin+Imagen';
             const safeLink = item.link || '#';
-            const itemId = item._id || item.id || '';
+            const safeCategory = (item.category || 'General').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            // ✅ CRÍTICO: Usar favoritoId para eliminar (ID del documento Favorito)
+            const favoritoId = item.favoritoId || item._id;
 
             div.innerHTML = `
-                <img src="${safeImage}" alt="${safeTitle}" onerror="this.src='https://via.placeholder.com/200x150?text=Sin+Imagen'">
-                <div class="vault-item-info">
-                    <div class="vault-item-title">${safeTitle}</div>
-                    <div class="vault-item-user">@${safeUsuario}</div>
-                    <div class="vault-item-actions">
+                <div class="vault-item-image">
+                    <img src="${safeImage}" alt="${safeTitle}" 
+                         onerror="this.src='https://via.placeholder.com/200x150?text=Sin+Imagen'"
+                         style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px 8px 0 0;">
+                </div>
+                <div class="vault-item-info" style="padding: 15px;">
+                    <div class="vault-item-header" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <div>
+                            <div class="vault-item-title" style="font-weight: bold; color: white; font-size: 0.9rem; margin-bottom: 5px;">
+                                ${safeTitle}
+                            </div>
+                            <div class="vault-item-user" style="color: var(--primary); font-size: 0.75rem;">
+                                @${safeUsuario}
+                            </div>
+                        </div>
+                        <span style="font-size: 0.65rem; color: var(--text-dim); padding: 2px 8px; border: 1px solid var(--text-dim); border-radius: 3px;">
+                            ${safeCategory}
+                        </span>
+                    </div>
+                    
+                    <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 15px; line-height: 1.4;">
+                        ${safeDescription.substring(0, 100)}${safeDescription.length > 100 ? '...' : ''}
+                    </p>
+                    
+                    <div class="vault-item-actions" style="display: flex; gap: 10px;">
                         <button onclick="window.open('${safeLink}', '_blank')" style="
+                            flex: 1;
                             background: var(--primary);
                             color: #000;
                             border: none;
-                            padding: 8px 15px;
+                            padding: 10px;
                             border-radius: 5px;
                             cursor: pointer;
                             font-weight: bold;
                             font-size: 0.8rem;
                             display: flex;
                             align-items: center;
+                            justify-content: center;
                             gap: 5px;
-                        ">
+                            transition: all 0.2s;
+                        " onmouseover="this.style.background='#4EDF33'" onmouseout="this.style.background='var(--primary)'">
                             <ion-icon name="cloud-download"></ion-icon> Ver
                         </button>
-                        <button class="delete" onclick="eliminarDeBoveda('${itemId}')" style="
+                        <button onclick="eliminarDeBoveda('${favoritoId}')" style="
+                            flex: 1;
                             background: var(--danger);
                             color: white;
                             border: none;
-                            padding: 8px 15px;
+                            padding: 10px;
                             border-radius: 5px;
                             cursor: pointer;
                             font-weight: bold;
                             font-size: 0.8rem;
                             display: flex;
                             align-items: center;
+                            justify-content: center;
                             gap: 5px;
-                        ">
+                            transition: all 0.2s;
+                        " onmouseover="this.style.background='#E03030'" onmouseout="this.style.background='var(--danger)'">
                             <ion-icon name="trash"></ion-icon> Quitar
                         </button>
                     </div>
@@ -508,7 +537,7 @@ async function cargarBoveda() {
         console.log(`✅ Se cargaron ${favoritos.length} favoritos correctamente`);
 
     } catch (e) {
-        console.error("Error cargando bóveda:", e);
+        console.error("❌ Error cargando bóveda:", e);
         els.vaultContent.innerHTML = `
             <p class="error-msg" style="grid-column: 1/-1; text-align: center; padding: 40px;">
                 ❌ Error al cargar favoritos<br>
@@ -532,27 +561,18 @@ async function cargarBoveda() {
     }
 }
 
-// Función para eliminar de la bóveda
-async function eliminarDeBoveda(itemId) {
+// ✅ Función para eliminar de la bóveda - MEJORADA
+async function eliminarDeBoveda(favoritoId) {
     if (!confirm("¿Quitar este archivo de tu bóveda?")) return;
 
     try {
-        // ✅ OBTENER TOKEN
-        const token = localStorage.getItem('token');
+        console.log(`🗑️ Eliminando favorito ID: ${favoritoId}`);
         
-        if (!token) {
-            alert("⚠️ Sesión expirada. Por favor inicia sesión nuevamente.");
-            window.location.href = './index.html';
-            return;
-        }
-        
-        const res = await fetch(`${API_URL}/favoritos/delete/${itemId}`, {
+        const res = await fetch(`${API_URL}/favoritos/delete/${favoritoId}`, {
             method: 'DELETE',
             headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // ✅ ENVIAR TOKEN
-            },
-            body: JSON.stringify({ usuario: usuarioLogueado })
+                'Content-Type': 'application/json'
+            }
         });
 
         if (res.ok) {
@@ -560,11 +580,12 @@ async function eliminarDeBoveda(itemId) {
             cargarBoveda(); // Recargar la lista
         } else {
             const errorData = await res.json();
-            alert(`❌ Error: ${errorData.message || 'No se pudo eliminar de favoritos'}`);
+            console.error("Error del servidor:", errorData);
+            alert(`❌ Error: ${errorData.mensaje || errorData.error || 'No se pudo eliminar de favoritos'}`);
         }
     } catch (error) {
-        console.error("Error eliminando de bóveda:", error);
-        alert("❌ Error de conexión.");
+        console.error("❌ Error eliminando de bóveda:", error);
+        alert("❌ Error de conexión al eliminar favorito.");
     }
 }
 
@@ -572,8 +593,8 @@ async function eliminarDeBoveda(itemId) {
 function cerrarSesion() {
     if (confirm("¿Estás seguro de que quieres cerrar sesión?")) {
         localStorage.removeItem("user_admin");
-        localStorage.removeItem("token");              // ⬅️ NUEVA
-        localStorage.removeItem("RefreshToken");        // ⬅️ NUEVA
+        localStorage.removeItem("token"); // ⬅️ NUEVA
+        localStorage.removeItem("RefreshToken"); // ⬅️ NUEVA
         localStorage.removeItem("user_avatar");
         localStorage.removeItem("user_verified");
         localStorage.removeItem("user_rol");
@@ -582,6 +603,7 @@ function cerrarSesion() {
         window.location.href = "./index.html";
     }
 }
+
 // Hacer funciones globales
 window.guardarAvatar = guardarAvatar;
 window.eliminarDeBoveda = eliminarDeBoveda;
