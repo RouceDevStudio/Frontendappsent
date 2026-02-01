@@ -190,6 +190,9 @@ async function cargarEstadoActual() {
         
         els.showContent.innerHTML = "";
         els.showContent.appendChild(fragment);
+        
+        // Actualizar estadísticas después de cargar el historial
+        cargarEstadisticasPerfil();
     } catch (e) {
         console.error("Error sincronizando historial", e);
         if (els.showContent) {
@@ -224,6 +227,7 @@ async function eliminarArchivo(id) {
         if (res.ok) {
             alert("✅ Archivo eliminado correctamente.");
             cargarEstadoActual();
+            cargarEstadisticasPerfil(); // Actualizar estadísticas después de eliminar
         } else {
             const errorData = await res.json();
             alert(`❌ Error: ${errorData.mensaje || errorData.error || 'Error al eliminar'}`);
@@ -235,10 +239,28 @@ async function eliminarArchivo(id) {
 }
 
 // ==========================================
-// 4. FUNCIÓN PUBLICAR (CON FILTRO DE SEGURIDAD Y ENLACES)
+// 4. FUNCIÓN PUBLICAR (CON FILTRO DE SEGURIDAD, ENLACES Y ANTI-SPAM)
 // ==========================================
+
+// Sistema anti-spam: guardar timestamp de última publicación
+const LIMITE_TIEMPO_PUBLICACION = 30000; // 30 segundos en milisegundos
+
 async function subirJuego() {
     if (!usuarioLogueado) return alert("Debes iniciar sesión.");
+    
+    // ✅ SISTEMA ANTI-SPAM: Verificar tiempo desde última publicación
+    const ahora = Date.now();
+    const ultimaPublicacion = localStorage.getItem('ultima_publicacion');
+    
+    if (ultimaPublicacion) {
+        const tiempoTranscurrido = ahora - parseInt(ultimaPublicacion);
+        const tiempoRestante = LIMITE_TIEMPO_PUBLICACION - tiempoTranscurrido;
+        
+        if (tiempoTranscurrido < LIMITE_TIEMPO_PUBLICACION) {
+            const segundosRestantes = Math.ceil(tiempoRestante / 1000);
+            return alert(`⏱️ Anti-spam activado: Espera ${segundosRestantes} segundos antes de publicar nuevamente.`);
+        }
+    }
     
     const tituloFormateado = els.addTitle.value.trim();
     const descripcionFormateada = els.addDescription.value.trim();
@@ -288,6 +310,9 @@ async function subirJuego() {
         console.log(`📥 Respuesta: ${res.status} ${res.statusText}`);
         
         if (res.ok) {
+            // ✅ GUARDAR TIMESTAMP DE PUBLICACIÓN EXITOSA
+            localStorage.setItem('ultima_publicacion', Date.now().toString());
+            
             alert("✅ Archivo publicado. Esperando aprobación.");
             els.addTitle.value = "";
             els.addDescription.value = "";
@@ -295,6 +320,9 @@ async function subirJuego() {
             els.addImage.value = "";
             actualizarPreview();
             cargarEstadoActual();
+            
+            // Actualizar contador de publicaciones
+            cargarEstadisticasPerfil();
         } else {
             const errorData = await res.json();
             console.error("Error del servidor:", errorData);
@@ -646,11 +674,111 @@ function cerrarSesion() {
     }
 }
 
+// ==========================================
+// FUNCIÓN PARA CARGAR ESTADÍSTICAS DEL PERFIL
+// ==========================================
+async function cargarEstadisticasPerfil() {
+    if (!usuarioLogueado) {
+        console.warn("⚠️ No hay usuario logueado para cargar estadísticas");
+        return;
+    }
+    
+    console.log("📊 Cargando estadísticas para:", usuarioLogueado);
+    
+    try {
+        // Cargar estadísticas de seguimiento (seguidores y siguiendo)
+        console.log("🔍 Buscando stats en:", `${API_URL}/usuarios/stats-seguimiento/${usuarioLogueado}`);
+        
+        const statsRes = await fetch(`${API_URL}/usuarios/stats-seguimiento/${usuarioLogueado}`);
+        console.log("📥 Respuesta stats:", statsRes.status, statsRes.statusText);
+        
+        if (statsRes.ok) {
+            const statsData = await statsRes.json();
+            console.log("✅ Datos de stats recibidos:", statsData);
+            
+            if (statsData && statsData.stats) {
+                const seguidores = statsData.stats.seguidores || 0;
+                const siguiendo = statsData.stats.siguiendo || 0;
+                
+                console.log(`👥 Seguidores: ${seguidores}, Siguiendo: ${siguiendo}`);
+                
+                document.getElementById('stat-followers').textContent = seguidores;
+                document.getElementById('stat-following').textContent = siguiendo;
+            } else {
+                console.warn("⚠️ No se encontró statsData.stats en la respuesta");
+                // Intentar cargar desde el objeto de usuario directamente
+                await cargarEstadisticasAlternativo();
+            }
+        } else {
+            console.error("❌ Error en respuesta stats:", statsRes.status);
+            // Intentar método alternativo
+            await cargarEstadisticasAlternativo();
+        }
+        
+        // Cargar número de publicaciones aprobadas
+        const itemsRes = await fetch(`${API_URL}/items`);
+        if (itemsRes.ok) {
+            const itemsData = await itemsRes.json();
+            const allItems = itemsData 
+                ? (Array.isArray(itemsData) ? itemsData : (Array.isArray(itemsData.items) ? itemsData.items : []))
+                : [];
+            
+            // Contar solo publicaciones aprobadas del usuario
+            const publicacionesUsuario = allItems.filter(item => 
+                item.usuario === usuarioLogueado && item.status === 'aprobado'
+            );
+            
+            console.log(`📦 Publicaciones: ${publicacionesUsuario.length}`);
+            document.getElementById('stat-uploads').textContent = publicacionesUsuario.length;
+        }
+        
+    } catch (error) {
+        console.error("❌ Error cargando estadísticas:", error);
+        // Intentar método alternativo
+        await cargarEstadisticasAlternativo();
+    }
+}
+
+// ==========================================
+// MÉTODO ALTERNATIVO PARA CARGAR ESTADÍSTICAS
+// ==========================================
+async function cargarEstadisticasAlternativo() {
+    console.log("🔄 Intentando método alternativo para estadísticas...");
+    
+    try {
+        // Intentar obtener datos del usuario directamente
+        const userRes = await fetch(`${API_URL}/auth/users`);
+        if (userRes.ok) {
+            const users = await userRes.json();
+            const usuario = users.find(u => u.usuario === usuarioLogueado);
+            
+            if (usuario) {
+                console.log("✅ Usuario encontrado:", usuario);
+                
+                // ✅ CORREGIDO: El backend usa 'listaSeguidores' en lugar de 'seguidores'
+                const seguidores = usuario.listaSeguidores ? usuario.listaSeguidores.length : 
+                                 (usuario.seguidores ? usuario.seguidores.length : 0);
+                const siguiendo = usuario.siguiendo ? usuario.siguiendo.length : 0;
+                
+                console.log(`👥 (Alt) Seguidores: ${seguidores}, Siguiendo: ${siguiendo}`);
+                
+                document.getElementById('stat-followers').textContent = seguidores;
+                document.getElementById('stat-following').textContent = siguiendo;
+            } else {
+                console.error("❌ Usuario no encontrado en la lista");
+            }
+        }
+    } catch (error) {
+        console.error("❌ Error en método alternativo:", error);
+    }
+}
+
 // Hacer funciones globales
 window.guardarAvatar = guardarAvatar;
 window.eliminarDeBoveda = eliminarDeBoveda;
 window.cerrarSesion = cerrarSesion;
 window.cargarBoveda = cargarBoveda; // ✅ Exportar para poder llamarla manualmente
+window.cargarEstadisticasPerfil = cargarEstadisticasPerfil; // ✅ Exportar función de estadísticas
 
 // ✅ INICIALIZACIÓN MEJORADA
 document.addEventListener("DOMContentLoaded", () => {
@@ -661,6 +789,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarBoveda(); // ← Cargar favoritos
     actualizarPreview();
     mostrarUsuarioVerificado(); // ← Carga el nombre + verificado + avatar + bio al cargar la página
+    cargarEstadisticasPerfil(); // ← Cargar estadísticas del perfil
     
     console.log("✅ Perfil inicializado");
 });
