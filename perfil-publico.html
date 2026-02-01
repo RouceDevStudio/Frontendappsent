@@ -394,10 +394,18 @@
             try {
                 console.log("📡 Cargando datos del usuario:", usuarioViendo);
                 
-                // Obtener datos del usuario
-                const resUsers = await fetch(`${API_URL}/auth/users`);
-                const usuarios = await resUsers.json();
-                const userData = usuarios.find(u => u.usuario === usuarioViendo);
+                // Obtener datos del usuario directamente por su nombre (ruta que ya existe)
+                const resUser = await fetch(`${API_URL}/auth/perfil/${usuarioViendo}`);
+                const rawText = await resUser.text();
+                console.log("🔍 RAW respuesta backend:", rawText.substring(0, 500));
+                let perfilData = null;
+                try { perfilData = JSON.parse(rawText); } catch(e) { perfilData = null; }
+                console.log("🔍 perfilData parseado:", perfilData);
+
+                // La ruta retorna { success: true, usuario: {...} } o directamente el objeto
+                const userData = perfilData 
+                    ? (perfilData.usuario ? perfilData.usuario : (perfilData.success === undefined ? perfilData : null))
+                    : null;
 
                 if (!userData) {
                     throw new Error("Usuario no encontrado");
@@ -464,12 +472,13 @@
         // Cargar publicaciones del usuario
         async function cargarPublicaciones() {
             try {
-                const res = await fetch(`${API_URL}/items`);
-                const items = await res.json();
-                
-                const itemsUsuario = items.filter(i => 
-                    i.usuario === usuarioViendo && i.status === 'aprobado'
-                );
+                const res = await fetch(`${API_URL}/items/user/${usuarioViendo}?status=aprobado`);
+                const rawText = await res.text();
+                let data = null;
+                try { data = JSON.parse(rawText); } catch(e) { data = null; }
+
+                // La ruta retorna { success: true, items: [...] }
+                const itemsUsuario = data && Array.isArray(data.items) ? data.items : [];
 
                 console.log(`📦 Publicaciones encontradas: ${itemsUsuario.length}`);
 
@@ -519,238 +528,147 @@
         }
 
         // Verificar si el usuario actual sigue al usuario que está viendo
-        async function verificarSeguimiento() {
-            const btnSeguir = document.getElementById('btn-seguir');
+        // ✅ VERIFICAR SEGUIMIENTO (Ruta corregida según index.txt)
+async function verificarSeguimiento() {
+    const btnSeguir = document.getElementById('btn-seguir');
+    if (usuarioActual === usuarioViendo) {
+        btnSeguir.innerHTML = `<ion-icon name="person-circle"></ion-icon> Tu perfil`;
+        btnSeguir.disabled = true;
+        btnSeguir.style.opacity = '0.5';
+        return;
+    }
 
-            // Si es el propio perfil
-            if (usuarioActual === usuarioViendo) {
-                btnSeguir.innerHTML = `
-                    <ion-icon name="person-circle"></ion-icon>
-                    Tu perfil
-                `;
-                btnSeguir.disabled = true;
-                btnSeguir.style.opacity = '0.5';
-                return;
-            }
+    if (!usuarioActual) {
+        btnSeguir.innerHTML = `<ion-icon name="log-in"></ion-icon> Inicia sesión`;
+        btnSeguir.onclick = () => window.location.href = './index.html';
+        return;
+    }
 
-            // Si no está logueado
-            if (!usuarioActual) {
-                console.log("⚠️ Usuario no logueado");
-                btnSeguir.innerHTML = `
-                    <ion-icon name="log-in"></ion-icon>
-                    Inicia sesión para seguir
-                `;
-                btnSeguir.onclick = () => {
-                    window.location.href = './index.html';
-                };
-                btnSeguir.disabled = false;
-                return;
-            }
-
+    try {
+        // En tu backend la ruta es GET /auth/:usuario/siguiendo
+        const res = await fetch(`${API_URL}/auth/${usuarioActual}/siguiendo`);
+        
+        // ✅ Verificar que la respuesta tenga contenido válido antes de parsear
+        const text = await res.text();
+        let data = [];
+        if (text) {
             try {
-                console.log("🔍 Verificando seguimiento...");
-                console.log("Endpoint:", `${API_URL}/usuarios/siguiendo/${usuarioActual}`);
-                
-                const res = await fetch(`${API_URL}/usuarios/siguiendo/${usuarioActual}`);
-                console.log("📥 Status de verificación:", res.status);
-                
-                // Si el endpoint no existe (404), mostrar botón básico
-                if (res.status === 404) {
-                    console.warn("⚠️ Endpoint /usuarios/siguiendo no encontrado en el backend");
-                    btnSeguir.innerHTML = `
-                        <ion-icon name="person-add"></ion-icon>
-                        Seguir
-                    `;
-                    btnSeguir.className = 'btn-seguir';
-                    btnSeguir.onclick = seguirUsuario;
-                    btnSeguir.disabled = false;
-                    btnSeguir.title = "Sistema de seguimiento disponible";
-                    return;
-                }
-                
-                const data = await res.json();
-                console.log("📋 Datos de seguimiento:", data);
-                
-                const estaSiguiendo = data.siguiendo && data.siguiendo.includes(usuarioViendo);
-                console.log("✅ ¿Está siguiendo?", estaSiguiendo);
-                
-                btnSeguir.disabled = false;
-                
-                if (estaSiguiendo) {
-                    btnSeguir.innerHTML = `
-                        <ion-icon name="checkmark-circle"></ion-icon>
-                        Siguiendo
-                    `;
-                    btnSeguir.className = 'btn-seguir btn-siguiendo';
-                    btnSeguir.onclick = dejarDeSeguir;
-                } else {
-                    btnSeguir.innerHTML = `
-                        <ion-icon name="person-add"></ion-icon>
-                        Seguir
-                    `;
-                    btnSeguir.className = 'btn-seguir';
-                    btnSeguir.onclick = seguirUsuario;
-                }
-
-                // Cargar estadísticas de seguidores
-                cargarEstadisticas();
-
-            } catch (e) {
-                console.error("❌ Error verificando seguimiento:", e);
-                // Mostrar botón básico en caso de error
-                btnSeguir.innerHTML = `
-                    <ion-icon name="person-add"></ion-icon>
-                    Seguir
-                `;
-                btnSeguir.className = 'btn-seguir';
-                btnSeguir.onclick = seguirUsuario;
-                btnSeguir.disabled = false;
+                data = JSON.parse(text);
+            } catch (parseErr) {
+                console.warn("⚠️ Respuesta no es JSON válido:", text);
+                data = [];
             }
         }
-
-        // ✅ Seguir usuario (VERSIÓN CORREGIDA)
-        async function seguirUsuario() {
-            console.log("=== FUNCIÓN SEGUIR USUARIO ===");
-            console.log("🔵 Botón SEGUIR clickeado");
-            console.log("Usuario actual:", usuarioActual);
-            console.log("Usuario a seguir:", usuarioViendo);
-            
-            if (!usuarioActual) {
-                alert("⚠️ Debes iniciar sesión para seguir usuarios.");
-                window.location.href = './index.html';
-                return;
-            }
-
-            // Prevenir múltiples clicks
-            const btnSeguir = document.getElementById('btn-seguir');
-            const originalContent = btnSeguir.innerHTML;
-            btnSeguir.disabled = true;
-            btnSeguir.innerHTML = `
-                <ion-icon name="hourglass-outline"></ion-icon>
-                Procesando...
-            `;
-
-            try {
-                console.log("📤 Enviando petición POST...");
-                console.log("URL:", `${API_URL}/usuarios/seguir`);
-                console.log("Body:", JSON.stringify({ 
-                    seguidor: usuarioActual, 
-                    siguiendo: usuarioViendo 
-                }));
-                
-                const res = await fetch(`${API_URL}/usuarios/seguir`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        seguidor: usuarioActual, 
-                        siguiendo: usuarioViendo 
-                    })
-                });
-
-                console.log("📥 Respuesta recibida");
-                console.log("Status:", res.status);
-                console.log("Status Text:", res.statusText);
-
-                if (res.ok) {
-                    console.log("✅ ÉXITO - Usuario seguido correctamente");
-                    alert(`✅ Ahora sigues a @${usuarioViendo}`);
-                    verificarSeguimiento();
-                } else {
-                    const data = await res.json();
-                    console.warn("⚠️ Respuesta no OK:", data);
-                    
-                    if (res.status === 404) {
-                        console.error("❌ Endpoint /usuarios/seguir NO EXISTE en el backend");
-                        alert(`ℹ️ Sistema de seguimiento en desarrollo.\n\nError: Endpoint no encontrado (404)`);
-                    } else {
-                        alert(data.message || `Error ${res.status}: ${res.statusText}`);
-                    }
-                    
-                    btnSeguir.disabled = false;
-                    btnSeguir.innerHTML = originalContent;
-                }
-            } catch (e) {
-                console.error("❌ EXCEPCIÓN CAPTURADA:", e);
-                console.error("Tipo de error:", e.name);
-                console.error("Mensaje:", e.message);
-                
-                alert(`❌ Error de conexión\n\n${e.message}`);
-                btnSeguir.disabled = false;
-                btnSeguir.innerHTML = originalContent;
-            }
+        
+        // El backend devuelve un array directamente o un objeto con .siguiendo
+        const siguiendoArray = Array.isArray(data) ? data : (data.siguiendo || []);
+        const estaSiguiendo = siguiendoArray.includes(usuarioViendo);
+        
+        btnSeguir.disabled = false;
+        if (estaSiguiendo) {
+            btnSeguir.innerHTML = `<ion-icon name="checkmark-circle"></ion-icon> Siguiendo`;
+            btnSeguir.className = 'btn-seguir btn-siguiendo';
+            btnSeguir.onclick = dejarDeSeguir;
+        } else {
+            btnSeguir.innerHTML = `<ion-icon name="person-add"></ion-icon> Seguir`;
+            btnSeguir.className = 'btn-seguir';
+            btnSeguir.onclick = seguirUsuario;
         }
+        cargarEstadisticas();
+    } catch (e) {
+        console.error("Error verificando:", e);
+    }
+}
 
-        // Dejar de seguir
-        async function dejarDeSeguir() {
-            console.log("=== FUNCIÓN DEJAR DE SEGUIR ===");
-            
-            if (!confirm(`¿Dejar de seguir a @${usuarioViendo}?`)) return;
-            
-            const btnSeguir = document.getElementById('btn-seguir');
-            const originalContent = btnSeguir.innerHTML;
-            btnSeguir.disabled = true;
-            btnSeguir.innerHTML = `
-                <ion-icon name="hourglass-outline"></ion-icon>
-                Procesando...
-            `;
-            
-            try {
-                console.log("📤 Enviando petición DELETE...");
-                
-                const res = await fetch(`${API_URL}/usuarios/dejar-seguir`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        seguidor: usuarioActual, 
-                        siguiendo: usuarioViendo 
-                    })
-                });
+// ✅ SEGUIR USUARIO (Ruta corregida y Token añadido)
+async function seguirUsuario() {
+    const token = localStorage.getItem('token'); // Asegúrate que el nombre sea 'token'
+    if (!token) return alert("Debes iniciar sesión");
 
-                console.log("📥 Respuesta:", res.status);
+    const btnSeguir = document.getElementById('btn-seguir');
+    const originalContent = btnSeguir.innerHTML;
+    btnSeguir.disabled = true;
+    btnSeguir.innerHTML = `<ion-icon name="hourglass-outline"></ion-icon> Procesando...`;
 
-                if (res.ok) {
-                    console.log("✅ Dejó de seguir correctamente");
-                    alert(`💔 Dejaste de seguir a @${usuarioViendo}`);
-                    verificarSeguimiento();
-                } else {
-                    const data = await res.json();
-                    console.error("❌ Error:", data);
-                    alert(data.message || "Error al dejar de seguir");
-                    btnSeguir.disabled = false;
-                    btnSeguir.innerHTML = originalContent;
-                }
-            } catch (e) {
-                console.error("❌ Error al dejar de seguir:", e);
-                alert("❌ Error de conexión");
-                btnSeguir.disabled = false;
-                btnSeguir.innerHTML = originalContent;
+    try {
+        // Tu backend usa PUT /auth/follow/:usuario con token
+        const res = await fetch(`${API_URL}/auth/follow/${usuarioViendo}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // <--- ESTO ES VITAL
             }
-        }
+        });
 
-        // Cargar estadísticas (seguidores/siguiendo)
-        async function cargarEstadisticas() {
-            try {
-                // Intentar obtener estadísticas del backend
-                const res = await fetch(`${API_URL}/usuarios/stats-seguimiento/${usuarioViendo}`);
-                
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.success && data.stats) {
-                        document.getElementById('stat-followers').textContent = data.stats.seguidores || '0';
-                        document.getElementById('stat-following').textContent = data.stats.siguiendo || '0';
-                        return;
-                    }
-                }
-                
-                // Si no hay endpoint, mostrar 0
-                document.getElementById('stat-followers').textContent = '0';
-                document.getElementById('stat-following').textContent = '0';
-            } catch (e) {
-                console.error("Error cargando estadísticas:", e);
-                document.getElementById('stat-followers').textContent = '0';
-                document.getElementById('stat-following').textContent = '0';
-            }
+        if (res.ok) {
+            alert(`✅ Ahora sigues a @${usuarioViendo}`);
+            verificarSeguimiento();
+        } else {
+            const data = await res.json();
+            alert(data.error || "Error al seguir");
+            btnSeguir.disabled = false;
+            btnSeguir.innerHTML = originalContent;
         }
+    } catch (e) {
+        alert("Error de conexión");
+        btnSeguir.disabled = false;
+    }
+}
+
+// ✅ DEJAR DE SEGUIR (Usa la misma ruta PUT porque el backend es un 'toggle')
+async function dejarDeSeguir() {
+    if (!confirm(`¿Dejar de seguir a @${usuarioViendo}?`)) return;
+    
+    const token = localStorage.getItem('token');
+    const btnSeguir = document.getElementById('btn-seguir');
+    const originalContent = btnSeguir.innerHTML;
+    btnSeguir.disabled = true;
+
+    try {
+        // En tu backend index.txt, la ruta /auth/follow/:usuario quita al seguidor si ya existe
+        const res = await fetch(`${API_URL}/auth/follow/${usuarioViendo}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (res.ok) {
+            alert(`💔 Dejaste de seguir a @${usuarioViendo}`);
+            verificarSeguimiento();
+        } else {
+            const data = await res.json();
+            alert(data.error || "Error");
+            btnSeguir.disabled = false;
+            btnSeguir.innerHTML = originalContent;
+        }
+    } catch (e) {
+        alert("Error de conexión");
+        btnSeguir.disabled = false;
+    }
+}
+
+// ✅ CARGAR ESTADÍSTICAS (Rutas separadas según index.txt)
+async function cargarEstadisticas() {
+    try {
+        const [resSeguidores, resSiguiendo] = await Promise.all([
+            fetch(`${API_URL}/auth/${usuarioViendo}/seguidores`),
+            fetch(`${API_URL}/auth/${usuarioViendo}/siguiendo`)
+        ]);
+
+        // ✅ Parseo seguro para evitar SyntaxError si el backend no retorna JSON
+        let seguidores = [], siguiendo = [];
+        try { const t = await resSeguidores.text(); seguidores = t ? JSON.parse(t) : []; } catch(e) { seguidores = []; }
+        try { const t = await resSiguiendo.text(); siguiendo = t ? JSON.parse(t) : []; } catch(e) { siguiendo = []; }
+
+        document.getElementById('stat-followers').textContent = (Array.isArray(seguidores) ? seguidores : []).length || '0';
+        document.getElementById('stat-following').textContent = (Array.isArray(siguiendo) ? siguiendo : []).length || '0';
+    } catch (e) {
+        console.error("Error stats:", e);
+    }
+}
+
 
         // Inicializar
         document.addEventListener('DOMContentLoaded', () => {
