@@ -306,7 +306,7 @@ if (els.inputAvatarUrl) {
     };
 }
 
-// Función para guardar avatar y bio
+// ✅ Función para guardar avatar y bio - CORREGIDA CON RUTAS CORRECTAS
 async function guardarAvatar() {
     const avatarUrl = els.inputAvatarUrl.value.trim();
     const bio = els.inputBio.value.trim();
@@ -325,66 +325,90 @@ async function guardarAvatar() {
     }
 
     try {
-        const res = await fetch(`${API_URL}/auth/profile`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ 
-                usuario: usuarioLogueado,
-                avatar: avatarUrl,
-                bio: bio
-            })
-        });
+        let avatarSuccess = false;
+        let bioSuccess = false;
 
-        if (res.ok) {
-            // Actualizar la vista
-            if (avatarUrl) {
-                els.avatarImg.src = avatarUrl;
-                els.avatarImg.style.display = 'block';
-                els.avatarIcon.style.display = 'none';
-            }
-            if (bio) {
-                els.userBio.textContent = bio;
-            }
+        // ✅ Actualizar avatar si se proporcionó
+        if (avatarUrl) {
+            try {
+                const resAvatar = await fetch(`${API_URL}/auth/update-avatar`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        usuario: usuarioLogueado,
+                        nuevaFoto: avatarUrl
+                    })
+                });
 
-            document.getElementById('modal-avatar').style.display = 'none';
-            alert("✅ Perfil actualizado correctamente.");
-            
+                if (resAvatar.ok) {
+                    avatarSuccess = true;
+                    console.log("✅ Avatar actualizado en el servidor");
+                    
+                    // Actualizar la vista
+                    els.avatarImg.src = avatarUrl;
+                    els.avatarImg.style.display = 'block';
+                    els.avatarIcon.style.display = 'none';
+                } else {
+                    const errorData = await resAvatar.json();
+                    console.error("Error actualizando avatar:", errorData);
+                }
+            } catch (error) {
+                console.error("Error en petición de avatar:", error);
+            }
+        }
+
+        // ✅ Actualizar bio si se proporcionó
+        if (bio) {
+            try {
+                const resBio = await fetch(`${API_URL}/auth/update-bio`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        usuario: usuarioLogueado,
+                        bio: bio
+                    })
+                });
+
+                if (resBio.ok) {
+                    bioSuccess = true;
+                    console.log("✅ Bio actualizada en el servidor");
+                    
+                    // Actualizar la vista
+                    els.userBio.textContent = bio;
+                } else {
+                    const errorData = await resBio.json();
+                    console.error("Error actualizando bio:", errorData);
+                }
+            } catch (error) {
+                console.error("Error en petición de bio:", error);
+            }
+        }
+
+        // Cerrar modal
+        const modal = document.getElementById('modal-avatar');
+        if (modal) modal.style.display = 'none';
+
+        // Mostrar resultado
+        if ((avatarUrl && avatarSuccess) || (bio && bioSuccess)) {
+            let mensaje = "✅ Perfil actualizado correctamente";
+            if (avatarUrl && !avatarSuccess) {
+                mensaje += "\n⚠️ No se pudo actualizar el avatar";
+            }
+            if (bio && !bioSuccess) {
+                mensaje += "\n⚠️ No se pudo actualizar la biografía";
+            }
+            alert(mensaje);
         } else {
-            console.warn("Endpoint /auth/profile no disponible, guardando localmente");
-            
-            if (avatarUrl) {
-                els.avatarImg.src = avatarUrl;
-                els.avatarImg.style.display = 'block';
-                els.avatarIcon.style.display = 'none';
-                localStorage.setItem(`avatar_${usuarioLogueado}`, avatarUrl);
-            }
-            if (bio) {
-                els.userBio.textContent = bio;
-                localStorage.setItem(`bio_${usuarioLogueado}`, bio);
-            }
-
-            document.getElementById('modal-avatar').style.display = 'none';
-            alert("✅ Perfil actualizado localmente.\n\n⚠️ Nota: Para que se guarde en el servidor, contacta al administrador para activar el endpoint /auth/profile");
+            alert("❌ No se pudo actualizar el perfil. Verifica tu conexión.");
         }
 
     } catch (error) {
-        console.error("Error guardando avatar:", error);
-        alert("❌ Error de conexión. Guardando localmente...");
-        
-        if (avatarUrl) {
-            els.avatarImg.src = avatarUrl;
-            els.avatarImg.style.display = 'block';
-            els.avatarIcon.style.display = 'none';
-            localStorage.setItem(`avatar_${usuarioLogueado}`, avatarUrl);
-        }
-        if (bio) {
-            els.userBio.textContent = bio;
-            localStorage.setItem(`bio_${usuarioLogueado}`, bio);
-        }
-        
-        document.getElementById('modal-avatar').style.display = 'none';
+        console.error("Error general guardando perfil:", error);
+        alert("❌ Error de conexión al actualizar perfil.");
     }
 }
 
