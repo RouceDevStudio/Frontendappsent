@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfil de Usuario - Metadata Index</title>
+    <title>Perfil de Usuario - UP GAMES</title>
     <link rel="preconnect" href="https://unpkg.com">
     <style>
         :root {
@@ -13,6 +13,9 @@
             --text-dim: #666;
             --danger: #ff4343;
             --warning: #ffcc00;
+            --bronce: #cd7f32;
+            --oro: #ffd700;
+            --elite: #c300ff;
         }
 
         * {
@@ -33,34 +36,42 @@
             background: var(--card);
             padding: 20px;
             border-bottom: 1px solid #383838;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
             position: sticky;
             top: 0;
             z-index: 100;
             backdrop-filter: blur(10px);
         }
 
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
         .user-info {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
         }
 
         .avatar {
-            width: 7rem;
-            height: 7rem;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--primary), #00ff88);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
+            font-size: 3rem;
             font-weight: bold;
             color: #000;
             border: 3px solid var(--primary);
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .avatar img {
@@ -74,21 +85,21 @@
             color: var(--primary);
             display: flex;
             align-items: center;
-            text-align: center;
-            justify-content: center;
             gap: 8px;
+            margin-bottom: 8px;
         }
 
         .user-details p {
             color: var(--text-dim);
-            font-size: 0.9rem;
-            margin-top: 5px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            max-width: 400px;
         }
 
         .stats {
             display: flex;
-            gap: 20px;
-            margin-top: 10px;
+            gap: 25px;
+            margin-top: 15px;
         }
 
         .stat-item {
@@ -99,49 +110,30 @@
 
         .stat-number {
             font-size: 1.5rem;
-            font-weight: bold;
+            font-weight: 900;
             color: var(--primary);
         }
 
         .stat-label {
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             color: var(--text-dim);
             text-transform: uppercase;
-        }
-
-        .btn-volver {
-            background: transparent;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-volver:hover {
-            background: var(--primary);
-            color: #000;
-            transform: translateY(-2px);
+            font-weight: 600;
         }
 
         .btn-seguir {
             background: var(--primary);
-            border: none;
             color: #000;
+            border: none;
             padding: 12px 30px;
             border-radius: 8px;
+            font-weight: 900;
             cursor: pointer;
-            font-weight: bold;
             transition: all 0.3s;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
 
         .btn-seguir:hover:not(:disabled) {
@@ -150,7 +142,7 @@
         }
 
         .btn-seguir:disabled {
-            opacity: 0.6;
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
@@ -160,52 +152,89 @@
             color: var(--primary);
         }
 
+        .btn-volver {
+            background: transparent;
+            border: 2px solid #555;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+        }
+
+        .btn-volver:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-5px);
+        }
+
+        /* BADGES DE VERIFICACIÓN */
+        .verificado-badge {
+            font-size: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .verificado-badge.level-1 {
+            color: var(--bronce);
+        }
+
+        .verificado-badge.level-2 {
+            color: var(--oro);
+        }
+
+        .verificado-badge.level-3 {
+            color: var(--elite);
+        }
+
+        /* CONTAINER */
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 30px 20px;
         }
 
-        .section {
-            background: var(--card);
-            padding: 30px;
-            border-radius: 15px;
-            border: 1px solid #222;
-            margin-bottom: 30px;
-        }
-
-        .section h3 {
+        .section-title {
+            font-size: 1.5rem;
             color: var(--primary);
-            font-size: 1.3rem;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
+        /* GRID DE PUBLICACIONES */
         .items-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 20px;
         }
 
         .item-card {
-            background: #1e1e1e;
+            background: var(--card);
             border-radius: 12px;
             overflow: hidden;
-            transition: transform 0.3s;
+            transition: all 0.3s;
             cursor: pointer;
+            border: 1px solid #222;
         }
 
         .item-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(94, 255, 67, 0.2);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(94, 255, 67, 0.2);
         }
 
         .item-card img {
             width: 100%;
             height: 150px;
             object-fit: cover;
+            background: #000;
         }
 
         .item-info {
@@ -213,60 +242,44 @@
         }
 
         .item-title {
-            font-weight: bold;
-            color: white;
-            font-size: 1rem;
-            margin-bottom: 5px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .item-category {
-            font-size: 0.7rem;
-            color: var(--primary);
+            font-size: 0.75rem;
+            color: var(--text-dim);
             text-transform: uppercase;
+            font-weight: 600;
         }
 
+        /* EMPTY STATE */
         .empty-msg {
             text-align: center;
+            padding: 60px 20px;
             color: var(--text-dim);
-            padding: 40px;
-            font-size: 1.1rem;
         }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
+        .empty-msg ion-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
         }
 
-        .loading ion-icon {
-            font-size: 3rem;
-            color: var(--primary);
-            animation: spin 1s linear infinite;
+        .empty-msg h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Verificación badges */
-        .verificado-badge {
-            display: inline-flex;
-            align-items: center;
-            font-size: 1.8rem;
-        }
-
-        .level-1 { color: #cd7f32; } /* Bronce */
-        .level-2 { color: #FFD700; } /* Oro */
-        .level-3 { 
-            color: #1BE9FF; 
-            filter: drop-shadow(0 0 5px #BEFBFF);
-            border: 2px solid #A5F5FF;
-            border-radius:50%;
-        } /* Elite */
-
+        /* RESPONSIVE */
         @media (max-width: 768px) {
-            .header-profile {
+            .header-content {
                 flex-direction: column;
-                gap: 15px;
+                text-align: center;
             }
 
             .user-info {
@@ -274,415 +287,398 @@
                 text-align: center;
             }
 
+            .user-details h2 {
+                font-size: 1.4rem;
+                justify-content: center;
+            }
+
+            .stats {
+                justify-content: center;
+            }
+
             .items-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
             }
         }
     </style>
 </head>
 <body>
-    <header class="header-profile">
-        <div class="user-info">
-            <div class="avatar" id="avatar-display">
-                <ion-icon name="person" id="avatar-icon"></ion-icon>
-                <img id="avatar-img" style="display:none;" alt="Avatar">
-            </div>
-            <div class="user-details">
-                <h2>
-                    <span id="user-name-display">@Usuario</span>
-                    <span id="verificado-badge"></span>
-                </h2>
-                <p id="user-bio">Cargando...</p>
-                <div class="stats">
-                    <div class="stat-item">
-                        <span class="stat-number" id="stat-uploads">0</span>
-                        <span class="stat-label">Publicaciones</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number" id="stat-followers">0</span>
-                        <span class="stat-label">Seguidores</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number" id="stat-following">0</span>
-                        <span class="stat-label">Siguiendo</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div style="display:flex; gap:10px; flex-direction: column;">
-            <button id="btn-seguir" class="btn-seguir" disabled>
-                <ion-icon name="person-add"></ion-icon>
-                Cargando...
-            </button>
-            <button class="btn-volver" onclick="window.location.href='./biblioteca.html'">
-                <ion-icon name="arrow-back"></ion-icon>
-                Volver
-            </button>
-        </div>
-    </header>
 
-    <div class="container">
-        <div class="section">
-            <h3>
-                <ion-icon name="folder-open"></ion-icon>
-                Publicaciones de este usuario
-            </h3>
-            <div id="user-items" class="items-grid">
-                <div class="loading">
-                    <ion-icon name="hourglass-outline"></ion-icon>
-                    <p>Cargando publicaciones...</p>
+    <div class="header-profile">
+        <div class="header-content">
+            <div class="user-info">
+                <div class="avatar">
+                    <ion-icon name="person" id="avatar-icon" style="font-size: 3rem;"></ion-icon>
+                    <img id="avatar-img" style="display:none;" alt="Avatar">
                 </div>
+                <div class="user-details">
+                    <h2>
+                        <span id="user-name-display">@usuario</span>
+                        <span id="verificado-badge"></span>
+                    </h2>
+                    <p id="user-bio">Cargando biografía...</p>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-number" id="stat-uploads">0</span>
+                            <span class="stat-label">Publicaciones</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="stat-followers">0</span>
+                            <span class="stat-label">Seguidores</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="stat-following">0</span>
+                            <span class="stat-label">Siguiendo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                <button id="btn-seguir" class="btn-seguir">
+                    <ion-icon name="person-add"></ion-icon>
+                    Seguir
+                </button>
+                <a href="./biblioteca.html" class="btn-volver">
+                    <ion-icon name="arrow-back"></ion-icon>
+                    Volver
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- IONICONS -->
+    <div class="container">
+        <h3 class="section-title">
+            <ion-icon name="cloud"></ion-icon>
+            PUBLICACIONES
+        </h3>
+        <div id="user-items" class="items-grid"></div>
+    </div>
+
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 
     <script>
-       // ========== SCRIPT CORREGIDO PARA perfil-publico.html ==========
-// ========== USA RUTAS PÚBLICAS - NO REQUIERE TOKEN PARA VER PERFILES ==========
+        const API_URL = "https://backendapp-037y.onrender.com";
+        const usuarioActual = localStorage.getItem("user_admin");
+        const params = new URLSearchParams(window.location.search);
+        const usuarioViendo = params.get("usuario");
 
-const API_URL = "https://backendapp-037y.onrender.com";
-const urlParams = new URLSearchParams(window.location.search);
-const usuarioViendo = urlParams.get('u') ? urlParams.get('u').toLowerCase().trim() : null;
-const usuarioActual = localStorage.getItem("user_admin");
+        console.log("👤 Usuario actual:", usuarioActual);
+        console.log("👁️ Viendo perfil de:", usuarioViendo);
 
-console.log("🔍 Usuario viendo:", usuarioViendo);
-console.log("👤 Usuario actual:", usuarioActual);
-
-// ✅ FUNCIÓN FETCH MEJORADA CON MANEJO DE ERRORES
-async function fetchAPI(url, options = {}) {
-    console.log("📡 Fetch a:", url);
-    
-    try {
-        const response = await fetch(url, {
-            ...options,
-            mode: 'cors',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
+        // Helper: fetch con manejo de errores
+        async function fetchAPI(url, options = {}) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error("❌ Error en fetch:", error);
+                throw error;
             }
-        });
-
-        console.log("📡 Status:", response.status);
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const data = await response.json();
-        console.log("✅ Respuesta:", data);
-        return data;
-
-    } catch (error) {
-        console.error("❌ Error en fetch:", error);
-        throw error;
-    }
-}
-
-// Función para obtener badge de verificación
-function getVerificadoBadge(nivel) {
-    if (!nivel || nivel === 0) return '';
-    
-    let colorClass = '';
-    if (nivel === 1) colorClass = 'level-1';
-    else if (nivel === 2) colorClass = 'level-2';
-    else if (nivel === 3) colorClass = 'level-3';
-    
-    return `
-        <span class="verificado-badge ${colorClass}" title="Verificado nivel ${nivel}">
-            <ion-icon name="checkmark-circle"></ion-icon>
-        </span>
-    `;
-}
-
-// ✅ CARGAR PERFIL - USA RUTA PÚBLICA
-async function cargarPerfilUsuario() {
-    if (!usuarioViendo) {
-        mostrarError('Usuario no encontrado', 'No se especificó un usuario válido.');
-        return;
-    }
-
-    try {
-        console.log("📡 Cargando perfil de:", usuarioViendo);
-        
-        // Usar la ruta pública que NO requiere autenticación
-        const response = await fetchAPI(`${API_URL}/usuarios/perfil-publico/${usuarioViendo}`);
-        
-        if (!response.success || !response.usuario) {
-            throw new Error("Usuario no encontrado");
+        // Helper: Badge de verificación
+        function getVerificadoBadge(nivel) {
+            if (!nivel || nivel === 0) return '';
+            
+            let levelClass = '';
+            let icon = 'checkmark-circle';
+            
+            if (nivel === 1) levelClass = 'level-1';
+            else if (nivel === 2) levelClass = 'level-2';
+            else if (nivel === 3) {
+                levelClass = 'level-3';
+                icon = 'checkmark-done-circle-sharp';
+            }
+            
+            return `<span class="verificado-badge ${levelClass}"><ion-icon name="${icon}"></ion-icon></span>`;
         }
 
-        const user = response.usuario;
-        console.log("✅ Perfil cargado:", user);
+        // ✅ CARGAR PERFIL
+        async function cargarPerfilUsuario() {
+            if (!usuarioViendo) {
+                mostrarError('Usuario no encontrado', 'No se especificó un usuario válido.');
+                return;
+            }
 
-        // Actualizar UI
-        document.getElementById('user-name-display').textContent = `@${user.usuario}`;
-        
-        // Badge de verificación
-        if (user.verificadoNivel > 0) {
-            document.getElementById('verificado-badge').innerHTML = getVerificadoBadge(user.verificadoNivel);
+            try {
+                console.log("📡 Cargando perfil de:", usuarioViendo);
+                
+                const response = await fetchAPI(`${API_URL}/usuarios/perfil-publico/${usuarioViendo}`);
+                
+                if (!response.success || !response.usuario) {
+                    throw new Error("Usuario no encontrado");
+                }
+
+                const user = response.usuario;
+                console.log("✅ Perfil cargado:", user);
+
+                // Actualizar UI
+                document.getElementById('user-name-display').textContent = `@${user.usuario}`;
+                
+                // Badge de verificación
+                if (user.verificadoNivel > 0) {
+                    document.getElementById('verificado-badge').innerHTML = getVerificadoBadge(user.verificadoNivel);
+                }
+
+                // Avatar
+                const avatarImg = document.getElementById('avatar-img');
+                const avatarIcon = document.getElementById('avatar-icon');
+                
+                if (user.avatar && user.avatar.trim() !== '') {
+                    avatarImg.src = user.avatar;
+                    avatarImg.style.display = 'block';
+                    avatarIcon.style.display = 'none';
+                } else {
+                    avatarIcon.textContent = user.usuario.charAt(0).toUpperCase();
+                    avatarIcon.style.display = 'block';
+                    avatarImg.style.display = 'none';
+                }
+
+                // Biografía
+                document.getElementById('user-bio').textContent = user.bio || 'Sin biografía';
+
+                // Estadísticas
+                document.getElementById('stat-uploads').textContent = user.publicaciones || 0;
+                document.getElementById('stat-followers').textContent = user.seguidores || 0;
+                document.getElementById('stat-following').textContent = user.siguiendo || 0;
+
+                // Cargar publicaciones
+                await cargarPublicaciones();
+
+                // Verificar seguimiento
+                if (usuarioActual) {
+                    await verificarSeguimiento();
+                } else {
+                    configurarBotonSeguir(false);
+                }
+
+            } catch (error) {
+                console.error("❌ Error cargando perfil:", error);
+                mostrarError('Error al cargar perfil', error.message);
+            }
         }
 
-        // Avatar
-        const avatarImg = document.getElementById('avatar-img');
-        const avatarIcon = document.getElementById('avatar-icon');
-        
-        if (user.avatar) {
-            avatarImg.src = user.avatar;
-            avatarImg.style.display = 'block';
-            avatarIcon.style.display = 'none';
-        } else {
-            avatarIcon.textContent = user.usuario.charAt(0).toUpperCase();
+        // ✅ CARGAR PUBLICACIONES
+        async function cargarPublicaciones() {
+            try {
+                const response = await fetchAPI(`${API_URL}/items`);
+                
+                const allItems = Array.isArray(response) ? response : (response.items || []);
+                
+                // Filtrar publicaciones del usuario (case-insensitive)
+                const itemsUsuario = allItems.filter(item => 
+                    item.usuario.toLowerCase() === usuarioViendo.toLowerCase() && 
+                    item.status === 'aprobado'
+                );
+
+                console.log(`📦 Publicaciones de ${usuarioViendo}:`, itemsUsuario.length);
+
+                const container = document.getElementById('user-items');
+
+                if (itemsUsuario.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-msg">
+                            <ion-icon name="cloud-offline"></ion-icon>
+                            <h3>Sin publicaciones</h3>
+                            <p>Este usuario aún no ha publicado nada.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                itemsUsuario.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'item-card';
+                    card.onclick = () => {
+                        window.location.href = `./biblioteca.html?id=${item._id}`;
+                    };
+
+                    card.innerHTML = `
+                        <img src="${item.image || 'https://via.placeholder.com/250x150?text=Sin+Imagen'}" 
+                             alt="${item.title}" 
+                             onerror="this.src='https://via.placeholder.com/250x150?text=Sin+Imagen'">
+                        <div class="item-info">
+                            <div class="item-title">${item.title}</div>
+                            <div class="item-category">${item.category || 'General'}</div>
+                        </div>
+                    `;
+
+                    container.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error("❌ Error cargando publicaciones:", error);
+                document.getElementById('user-items').innerHTML = `
+                    <div class="empty-msg">
+                        <ion-icon name="warning"></ion-icon>
+                        <h3>Error</h3>
+                        <p>No se pudieron cargar las publicaciones</p>
+                    </div>
+                `;
+            }
         }
 
-        // Biografía
-        document.getElementById('user-bio').textContent = user.bio || 'Sin biografía';
+        // ✅ VERIFICAR SEGUIMIENTO
+        async function verificarSeguimiento() {
+            const btnSeguir = document.getElementById('btn-seguir');
+            
+            // Si es el mismo usuario
+            if (usuarioActual && usuarioActual.toLowerCase() === usuarioViendo.toLowerCase()) {
+                btnSeguir.innerHTML = `<ion-icon name="person-circle"></ion-icon> Tu perfil`;
+                btnSeguir.disabled = true;
+                btnSeguir.style.opacity = '0.5';
+                return;
+            }
 
-        // Estadísticas
-        document.getElementById('stat-uploads').textContent = user.publicaciones || 0;
-        document.getElementById('stat-followers').textContent = user.seguidores || 0;
-        document.getElementById('stat-following').textContent = user.siguiendo || 0;
+            // Si no hay usuario logueado
+            if (!usuarioActual) {
+                configurarBotonSeguir(false);
+                return;
+            }
 
-        // Cargar publicaciones
-        await cargarPublicaciones();
+            try {
+                const response = await fetchAPI(
+                    `${API_URL}/usuarios/verifica-seguimiento/${usuarioActual}/${usuarioViendo}`
+                );
+                
+                configurarBotonSeguir(response.estaSiguiendo || false);
 
-        // Verificar seguimiento (solo si hay usuario logueado)
-        if (usuarioActual) {
-            await verificarSeguimiento();
-        } else {
-            configurarBotonSeguir(false);
+            } catch (error) {
+                console.error("❌ Error verificando seguimiento:", error);
+                configurarBotonSeguir(false);
+            }
         }
 
-    } catch (error) {
-        console.error("❌ Error cargando perfil:", error);
-        mostrarError('Error al cargar perfil', error.message);
-    }
-}
+        // ✅ CONFIGURAR BOTÓN DE SEGUIR
+        function configurarBotonSeguir(estaSiguiendo) {
+            const btnSeguir = document.getElementById('btn-seguir');
+            
+            if (!usuarioActual) {
+                btnSeguir.innerHTML = `<ion-icon name="log-in"></ion-icon> Inicia sesión para seguir`;
+                btnSeguir.onclick = () => window.location.href = './puente.html';
+                btnSeguir.disabled = false;
+                btnSeguir.className = 'btn-seguir';
+                return;
+            }
 
-// ✅ CARGAR PUBLICACIONES
-async function cargarPublicaciones() {
-    try {
-        const response = await fetchAPI(`${API_URL}/items`);
-        
-        const allItems = Array.isArray(response) 
-            ? response 
-            : (response.items ? response.items : []);
-        
-        // Filtrar publicaciones del usuario (case-insensitive)
-        const itemsUsuario = allItems.filter(item => 
-            item.usuario.toLowerCase() === usuarioViendo.toLowerCase() && 
-            item.status === 'aprobado'
-        );
+            btnSeguir.disabled = false;
+            
+            if (estaSiguiendo) {
+                btnSeguir.innerHTML = `<ion-icon name="checkmark-circle"></ion-icon> Siguiendo`;
+                btnSeguir.className = 'btn-seguir btn-siguiendo';
+                btnSeguir.onclick = dejarDeSeguir;
+            } else {
+                btnSeguir.innerHTML = `<ion-icon name="person-add"></ion-icon> Seguir`;
+                btnSeguir.className = 'btn-seguir';
+                btnSeguir.onclick = seguirUsuario;
+            }
+        }
 
-        console.log(`📦 Publicaciones de ${usuarioViendo}:`, itemsUsuario.length);
+        // ✅ SEGUIR USUARIO
+        async function seguirUsuario() {
+            if (!usuarioActual) {
+                alert("Debes iniciar sesión para seguir usuarios");
+                window.location.href = './puente.html';
+                return;
+            }
 
-        const container = document.getElementById('user-items');
+            const btnSeguir = document.getElementById('btn-seguir');
+            const originalContent = btnSeguir.innerHTML;
+            btnSeguir.disabled = true;
+            btnSeguir.innerHTML = `<ion-icon name="hourglass-outline"></ion-icon> Procesando...`;
 
-        if (itemsUsuario.length === 0) {
-            container.innerHTML = `
+            try {
+                const response = await fetch(`${API_URL}/usuarios/toggle-seguir/${usuarioActual}/${usuarioViendo}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (data.siguiendo) {
+                        alert(`✅ Ahora sigues a @${usuarioViendo}`);
+                    }
+                    await cargarPerfilUsuario();
+                } else {
+                    throw new Error(data.error || "Error al seguir");
+                }
+            } catch (error) {
+                console.error("❌ Error:", error);
+                alert(error.message || "Error de conexión");
+                btnSeguir.disabled = false;
+                btnSeguir.innerHTML = originalContent;
+            }
+        }
+
+        // ✅ DEJAR DE SEGUIR
+        async function dejarDeSeguir() {
+            if (!confirm(`¿Dejar de seguir a @${usuarioViendo}?`)) return;
+            
+            const btnSeguir = document.getElementById('btn-seguir');
+            const originalContent = btnSeguir.innerHTML;
+            btnSeguir.disabled = true;
+            btnSeguir.innerHTML = `<ion-icon name="hourglass-outline"></ion-icon> Procesando...`;
+
+            try {
+                const response = await fetch(`${API_URL}/usuarios/toggle-seguir/${usuarioActual}/${usuarioViendo}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (!data.siguiendo) {
+                        alert(`💔 Dejaste de seguir a @${usuarioViendo}`);
+                    }
+                    await cargarPerfilUsuario();
+                } else {
+                    throw new Error(data.error || "Error al dejar de seguir");
+                }
+            } catch (error) {
+                console.error("❌ Error:", error);
+                alert(error.message || "Error de conexión");
+                btnSeguir.disabled = false;
+                btnSeguir.innerHTML = originalContent;
+            }
+        }
+
+        // ✅ MOSTRAR ERROR
+        function mostrarError(titulo, mensaje) {
+            document.querySelector('.container').innerHTML = `
                 <div class="empty-msg">
-                    <ion-icon name="cloud-offline" style="font-size:3rem;"></ion-icon>
-                    <p>Este usuario aún no ha publicado nada.</p>
+                    <ion-icon name="alert-circle" style="font-size:4rem; color:var(--danger);"></ion-icon>
+                    <h3>${titulo}</h3>
+                    <p>${mensaje}</p>
+                    <button onclick="location.href='./biblioteca.html'" style="
+                        margin-top: 20px;
+                        background: var(--primary);
+                        color: #000;
+                        border: none;
+                        padding: 12px 30px;
+                        border-radius: 8px;
+                        font-weight: 900;
+                        cursor: pointer;
+                    ">
+                        Volver al inicio
+                    </button>
                 </div>
             `;
-            return;
         }
 
-        container.innerHTML = '';
-
-        itemsUsuario.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'item-card';
-            card.onclick = () => {
-                window.location.href = `./biblioteca.html?id=${item._id}`;
-            };
-
-            card.innerHTML = `
-                <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/250x150?text=Sin+Imagen'">
-                <div class="item-info">
-                    <div class="item-title">${item.title}</div>
-                    <div class="item-category">${item.category || 'General'}</div>
-                </div>
-            `;
-
-            container.appendChild(card);
+        // ✅ INICIALIZAR
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("🚀 Inicializando perfil público...");
+            cargarPerfilUsuario();
         });
-
-    } catch (error) {
-        console.error("❌ Error cargando publicaciones:", error);
-        document.getElementById('user-items').innerHTML = `
-            <div class="empty-msg">
-                <p style="color:var(--danger);">Error al cargar publicaciones</p>
-            </div>
-        `;
-    }
-}
-
-// ✅ VERIFICAR SEGUIMIENTO
-async function verificarSeguimiento() {
-    const btnSeguir = document.getElementById('btn-seguir');
-    
-    // Si es el mismo usuario
-    if (usuarioActual && usuarioActual.toLowerCase() === usuarioViendo.toLowerCase()) {
-        btnSeguir.innerHTML = `<ion-icon name="person-circle"></ion-icon> Tu perfil`;
-        btnSeguir.disabled = true;
-        btnSeguir.style.opacity = '0.5';
-        return;
-    }
-
-    // Si no hay usuario logueado
-    if (!usuarioActual) {
-        configurarBotonSeguir(false);
-        return;
-    }
-
-    try {
-        // Usar ruta pública para verificar seguimiento
-        const response = await fetchAPI(
-            `${API_URL}/usuarios/verifica-seguimiento/${usuarioActual}/${usuarioViendo}`
-        );
-        
-        configurarBotonSeguir(response.estaSiguiendo || false);
-
-    } catch (error) {
-        console.error("❌ Error verificando seguimiento:", error);
-        configurarBotonSeguir(false);
-    }
-}
-
-// ✅ CONFIGURAR BOTÓN DE SEGUIR
-function configurarBotonSeguir(estaSiguiendo) {
-    const btnSeguir = document.getElementById('btn-seguir');
-    
-    if (!usuarioActual) {
-        btnSeguir.innerHTML = `<ion-icon name="log-in"></ion-icon> Inicia sesión para seguir`;
-        btnSeguir.onclick = () => window.location.href = './index.html';
-        btnSeguir.disabled = false;
-        btnSeguir.className = 'btn-seguir';
-        return;
-    }
-
-    btnSeguir.disabled = false;
-    
-    if (estaSiguiendo) {
-        btnSeguir.innerHTML = `<ion-icon name="checkmark-circle"></ion-icon> Siguiendo`;
-        btnSeguir.className = 'btn-seguir btn-siguiendo';
-        btnSeguir.onclick = dejarDeSeguir;
-    } else {
-        btnSeguir.innerHTML = `<ion-icon name="person-add"></ion-icon> Seguir`;
-        btnSeguir.className = 'btn-seguir';
-        btnSeguir.onclick = seguirUsuario;
-    }
-}
-
-// ✅ SEGUIR USUARIO
-async function seguirUsuario() {
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-        alert("Debes iniciar sesión para seguir usuarios");
-        window.location.href = './index.html';
-        return;
-    }
-
-    const btnSeguir = document.getElementById('btn-seguir');
-    const originalContent = btnSeguir.innerHTML;
-    btnSeguir.disabled = true;
-    btnSeguir.innerHTML = `<ion-icon name="hourglass-outline"></ion-icon> Procesando...`;
-
-    try {
-        const response = await fetch(`${API_URL}/auth/follow/${usuarioViendo}`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            alert(`✅ Ahora sigues a @${usuarioViendo}`);
-            await cargarPerfilUsuario(); // Recargar todo
-        } else {
-            throw new Error(data.error || "Error al seguir");
-        }
-    } catch (error) {
-        console.error("❌ Error:", error);
-        alert(error.message || "Error de conexión");
-        btnSeguir.disabled = false;
-        btnSeguir.innerHTML = originalContent;
-    }
-}
-
-// ✅ DEJAR DE SEGUIR
-async function dejarDeSeguir() {
-    if (!confirm(`¿Dejar de seguir a @${usuarioViendo}?`)) return;
-    
-    const token = localStorage.getItem('token');
-    const btnSeguir = document.getElementById('btn-seguir');
-    const originalContent = btnSeguir.innerHTML;
-    btnSeguir.disabled = true;
-    btnSeguir.innerHTML = `<ion-icon name="hourglass-outline"></ion-icon> Procesando...`;
-
-    try {
-        const response = await fetch(`${API_URL}/auth/follow/${usuarioViendo}`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            alert(`💔 Dejaste de seguir a @${usuarioViendo}`);
-            await cargarPerfilUsuario(); // Recargar todo
-        } else {
-            throw new Error(data.error || "Error al dejar de seguir");
-        }
-    } catch (error) {
-        console.error("❌ Error:", error);
-        alert(error.message || "Error de conexión");
-        btnSeguir.disabled = false;
-        btnSeguir.innerHTML = originalContent;
-    }
-}
-
-// ✅ MOSTRAR ERROR
-function mostrarError(titulo, mensaje) {
-    document.querySelector('.container').innerHTML = `
-        <div class="empty-msg">
-            <ion-icon name="alert-circle" style="font-size:3rem; color:var(--danger);"></ion-icon>
-            <h3>${titulo}</h3>
-            <p>${mensaje}</p>
-            <button onclick="location.reload()" style="
-                margin-top: 20px;
-                background: var(--primary);
-                color: #000;
-                border: none;
-                padding: 12px 30px;
-                border-radius: 8px;
-                font-weight: bold;
-                cursor: pointer;
-            ">
-                Reintentar
-            </button>
-        </div>
-    `;
-}
-
-// ✅ INICIALIZAR
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 Inicializando perfil público...");
-    cargarPerfilUsuario();
-});
-;
     </script>
 </body>
 </html>

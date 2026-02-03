@@ -21,9 +21,6 @@
                 <ion-icon name="cloud-upload"></ion-icon>
             </button>
             
-            <button class="ProfileIcon" id="btn-mi-perfil" title="Mi perfil">
-                <ion-icon name="person"></ion-icon>
-            </button>
             
             <a class="reportButton" id="reportButton" href="#" onclick="handleMail(event)">
     <ion-icon name="information-circle"></ion-icon>
@@ -260,5 +257,16 @@
 
     <!-- SCRIPT PRINCIPAL -->
     <script src="./script.js"></script>
+    
+    <!-- FUNCIÓN DE SOPORTE -->
+    <script>
+        function handleMail(event) {
+            event.preventDefault();
+            const email = 'mr.m0onster@protonmail.com';
+            const subject = encodeURIComponent('Soporte - UP GAMES');
+            const body = encodeURIComponent('Hola, necesito ayuda con...\n\n[Describe tu problema aquí]');
+            window.location.href = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
+        }
+    </script>
 </body>
 </html>
