@@ -63,7 +63,7 @@ function getVerificadoBadge(nombreUsuario) {
     `;
 }
 
-// 3. RENDERIZADO DE ALTO RENDIMIENTO
+// 3. RENDERIZADO DE ALTO RENDIMIENTO CON LINKSTATUS
 function renderizar(lista) {
     output.innerHTML = lista.length ? "" : `
         <div class="no-results">
@@ -80,7 +80,14 @@ function renderizar(lista) {
         card.className = "juego-card";
         card.setAttribute("data-id", item._id);
         
-        const isOnline = (item.reportes || 0) < 3;
+        // ⭐ NUEVO: Usar linkStatus del backend
+        const linkStatus = item.linkStatus || (item.reportes >= 3 ? 'revision' : 'online');
+        const isOnline = linkStatus === 'online';
+        const statusText = linkStatus === 'online' ? 'Online' : 
+                          linkStatus === 'revision' ? 'Revisión' : 'Caído';
+        const statusIcon = linkStatus === 'online' ? 'checkmark-circle' : 
+                          linkStatus === 'revision' ? 'alert-circle' : 'close-circle';
+        
         const media = /\.(mp4|webm|mov)$/i.test(item.image) ?
             `<video src="${item.image}" class="juego-img" autoplay muted loop playsinline></video>` :
             `<img src="${item.image}" class="juego-img" loading="lazy">`;
@@ -89,8 +96,8 @@ function renderizar(lista) {
 
         card.innerHTML = `
             <div class="status-badge ${isOnline ? 'status-online' : 'status-review'}">
-                <ion-icon name="${isOnline ? 'checkmark-circle' : 'alert-circle'}"></ion-icon>
-                <span>${isOnline ? 'Online' : 'Revisión'}</span>
+                <ion-icon name="${statusIcon}"></ion-icon>
+                <span>${statusText}</span>
             </div>
             <div class="close-btn"><ion-icon name="close-outline"></ion-icon></div>
             ${media}
@@ -200,261 +207,248 @@ function renderizar(lista) {
     output.appendChild(fragment);
 }
 
-// 4. FUNCIÓN VISITAR PERFIL
-function visitarPerfil(usuario) {
-    if (!usuario) return;
-    window.location.href = `./perfil-publico.html?u=${encodeURIComponent(usuario)}`;
+// Cerrar overlay
+if (overlay) {
+    overlay.addEventListener('click', function() {
+        document.querySelectorAll('.juego-card.expandida').forEach(c => c.classList.remove('expandida'));
+        overlay.style.display = "none";
+        document.body.style.overflow = "auto";
+    });
 }
 
-// ✅ FUNCIÓN PARA SEGUIR USUARIO
-async function seguirUsuario(usuarioASeguir) {
-    const usuarioActual = localStorage.getItem("user_admin");
-    
-    if (!usuarioActual) {
-        alert("⚠️ Inicia sesión para seguir usuarios.");
-        window.location.href = './index.html';
-        return;
-    }
-    
-    try {
-        const res = await fetch(`${API_URL}/usuarios/seguir`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                seguidor: usuarioActual, 
-                siguiendo: usuarioASeguir 
-            })
-        });
-        
-        if (res.ok) {
-            alert(`✅ Ahora sigues a @${usuarioASeguir}`);
-            // Recargar si estamos en perfil público
-            if (window.location.pathname.includes('perfil-publico')) {
-                location.reload();
-            }
-        } else {
-            const data = await res.json();
-            alert(data.message || "ℹ️ Ya sigues a este usuario.");
-        }
-    } catch (e) {
-        console.error(e);
-        alert("❌ Error al seguir usuario.");
-    }
-}
-
-// ✅ NUEVO: Función para dejar de seguir
-async function dejarDeSeguir(usuarioADejarDeSeguir) {
-    const usuarioActual = localStorage.getItem("user_admin");
-    
-    if (!usuarioActual) return;
-    
-    if (confirm(`¿Dejar de seguir a @${usuarioADejarDeSeguir}?`)) {
-        try {
-            const res = await fetch(`${API_URL}/usuarios/dejar-seguir`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    seguidor: usuarioActual, 
-                    siguiendo: usuarioADejarDeSeguir 
-                })
-            });
-            
-            if (res.ok) {
-                alert(`💔 Dejaste de seguir a @${usuarioADejarDeSeguir}`);
-                if (window.location.pathname.includes('perfil-publico')) {
-                    location.reload();
-                }
-            }
-        } catch (e) {
-            console.error(e);
-            alert("❌ Error al dejar de seguir.");
-        }
-    }
-}
-
-// Hacer funciones globales
-window.seguirUsuario = seguirUsuario;
-window.dejarDeSeguir = dejarDeSeguir;
-window.visitarPerfil = visitarPerfil;
-
-// ✅ CORREGIDO: Botón Mi Perfil redirige a perfil.html local
-const btnMiPerfil = document.getElementById("btn-mi-perfil");
-if (btnMiPerfil) {
-    btnMiPerfil.onclick = () => {
-        const u = localStorage.getItem("user_admin");
-        if (u) {
-            window.location.href = "./perfil.html";
-        } else {
-            window.location.href = "./index.html";
-        }
-    };
-}
-
-// 5. BUSCADOR - ✅ CORREGIDO
+// 4. BÚSQUEDA EN TIEMPO REAL
 if (buscador) {
-    buscador.addEventListener('input', function(e) {
-        const term = e.target.value.toLowerCase().trim();
-        const filtrados = todosLosItems.filter(i =>
-            (i.title + (i.usuario || "") + (i.category || "")).toLowerCase().includes(term)
+    buscador.addEventListener("input", function(e) {
+        const q = e.target.value.toLowerCase().trim();
+        const filtrados = q === "" ? todosLosItems : todosLosItems.filter(i =>
+            (i.title || "").toLowerCase().includes(q) || 
+            (i.usuario || "").toLowerCase().includes(q) ||
+            (i.category || "").toLowerCase().includes(q)
         );
         renderizar(filtrados);
     });
 }
 
-// 6. FUNCIONES SOCIALES (Sincronizadas con rutas del Server)
-async function share(id) {
-    const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
-    try {
-        await navigator.clipboard.writeText(url);
-        alert("✅ Enlace copiado al portapapeles.");
-    } catch (e) {
-        // Fallback para navegadores que no soportan clipboard
-        const textarea = document.createElement('textarea');
-        textarea.value = url;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        alert("✅ Enlace copiado al portapapeles.");
-    }
-}
-
+// ==========================================
+// 5. SISTEMA DE FAVORITOS
+// ==========================================
 async function fav(id) {
     const user = localStorage.getItem("user_admin");
-    if (!user) return alert("⚠️ Inicia sesión para guardar favoritos.");
+    if (!user) {
+        if (confirm("Debes iniciar sesión para guardar favoritos.\n¿Ir a Login?")) {
+            window.location.href = "./puente.html";
+        }
+        return;
+    }
+    
     try {
-        const res = await fetch(`${API_URL}/favoritos/add`, {
+        const r = await fetch(`${API_URL}/favoritos/add`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ usuario: user, itemId: id })
         });
         
-        if (res.ok) {
-            alert("💾 Guardado en Bóveda.");
+        if (r.ok) {
+            showMiniToast("❤️ Guardado en favoritos");
         } else {
-            const data = await res.json();
-            alert(data.message || "ℹ️ Ya está en tu Bóveda.");
+            const errData = await r.json();
+            if (errData.error && errData.error.includes("Ya está")) {
+                showMiniToast("Ya está en tus favoritos");
+            } else {
+                showMiniToast("Error al guardar");
+            }
         }
-    } catch (e) { 
+    } catch (e) {
         console.error(e);
-        alert("❌ Error al guardar en favoritos.");
+        showMiniToast("❌ Error al guardar en favoritos.");
     }
 }
 
+// ==========================================
+// 6. SISTEMA DE COMPARTIR
+// ==========================================
+async function share(id) {
+    const base = window.location.origin + window.location.pathname;
+    const url = `${base}?id=${id}`;
+    
+    if (navigator.share) {
+        try {
+            await navigator.share({ url, title: 'Mira este contenido', text: 'Compartido desde UP GAMES' });
+            showMiniToast("✅ Enlace compartido correctamente");
+        } catch (e) {
+            copiarAlPortapapeles(url);
+        }
+    } else {
+        copiarAlPortapapeles(url);
+    }
+}
+
+function copiarAlPortapapeles(texto) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto)
+            .then(() => showMiniToast("📋 Enlace copiado al portapapeles"))
+            .catch(() => copiarConFallback(texto));
+    } else {
+        copiarConFallback(texto);
+    }
+}
+
+function copiarConFallback(texto) {
+    const input = document.createElement("input");
+    input.value = texto;
+    document.body.appendChild(input);
+    input.select();
+    input.setSelectionRange(0, 99999);
+    try {
+        document.execCommand("copy");
+        showMiniToast("📋 Enlace copiado");
+    } catch (err) {
+        showMiniToast("❌ No se pudo copiar");
+    }
+    document.body.removeChild(input);
+}
+
+// ==========================================
+// 7. SISTEMA DE REPORTES (MEJORADO)
+// ==========================================
 async function report(id) {
     if (confirm("⚠️ ¿Reportar error en este enlace?")) {
         try {
-            await fetch(`${API_URL}/items/report/${id}`, { method: 'PUT' });
-            alert("✅ Reporte enviado. Gracias por tu colaboración.");
+            const response = await fetch(`${API_URL}/items/report/${id}`, { method: 'PUT' });
+            const data = await response.json();
+            
+            if (response.ok) {
+                showMiniToast("✅ Reporte enviado. Gracias por tu colaboración.");
+                
+                // ⭐ Actualizar el estado visual inmediatamente
+                if (data.linkStatus === 'revision') {
+                    const card = document.querySelector(`[data-id="${id}"]`);
+                    if (card) {
+                        const statusBadge = card.querySelector('.status-badge');
+                        if (statusBadge) {
+                            statusBadge.className = 'status-badge status-review';
+                            statusBadge.innerHTML = `
+                                <ion-icon name="alert-circle"></ion-icon>
+                                <span>Revisión</span>
+                            `;
+                        }
+                    }
+                }
+            } else {
+                showMiniToast("❌ Error al enviar reporte.");
+            }
         } catch (e) {
             console.error(e);
-            alert("❌ Error al enviar reporte.");
+            showMiniToast("❌ Error al enviar reporte.");
         }
     }
 }
 
+// ==========================================
+// 8. SISTEMA DE COMENTARIOS
+// ==========================================
 async function cargarComm(id) {
     const box = document.getElementById(`list-${id}`);
     if (!box) return;
     
     try {
-        const res = await fetch(`${API_URL}/comentarios/${id}`);
-        const data = await res.json();
+        const r = await fetch(`${API_URL}/comentarios/${id}`);
+        const comms = await r.json();
         
-        box.innerHTML = data.map(c => `
-            <div class="comm-item" style="margin-bottom:8px; border-left:2px solid var(--primary); padding-left:8px;">
-                <b style="color:var(--primary); font-size:0.7rem; cursor:pointer;" 
-                   class="user-tag-comment" data-usuario="${c.usuario}">
-                    @${c.usuario}
-                    ${getVerificadoBadge(c.usuario)}
-                </b>
-                <p style="font-size:0.75rem; color:#ddd; margin:0;">${c.texto || 'Sin texto'}</p>
-            </div>
-        `).join('') || '<p style="font-size:0.7rem; color:#555;">Sin opiniones aún.</p>';
+        if (!comms.length) {
+            box.innerHTML = '<p style="color:#888; font-size:0.7rem; text-align:center;">Aún no hay comentarios.</p>';
+            return;
+        }
         
-        // Agregar listeners a nombres de usuarios en comentarios
-        box.querySelectorAll('.user-tag-comment').forEach(tag => {
-            tag.addEventListener('click', (e) => {
-                e.stopPropagation();
-                visitarPerfil(tag.dataset.usuario);
-            });
-        });
+        box.innerHTML = comms.map(c => `
+            <div class="comentario-item">
+                <div class="comm-header">
+                    <strong class="comm-user">@${c.usuario}</strong>
+                    <span class="comm-fecha">${timeAgo(c.fecha)}</span>
+                </div>
+                <p class="comm-texto">${c.texto}</p>
+            </div>`).join('');
     } catch (e) {
-        box.innerHTML = '<p style="color: #ff4343; font-size:0.8rem;">Error al cargar opiniones</p>';
+        box.innerHTML = '<p style="color:red; font-size:0.7rem;">Error al cargar comentarios</p>';
     }
 }
 
 async function postComm(id) {
     const user = localStorage.getItem("user_admin");
     const input = document.getElementById(`input-${id}`);
-    if (!user) return alert("⚠️ Inicia sesión para comentar.");
-    if (!input || !input.value.trim()) return;
+    
+    if (!user) {
+        showMiniToast("⚠️ Debes iniciar sesión para comentar");
+        return;
+    }
+    
+    const texto = input.value.trim();
+    if (!texto) return;
     
     try {
-        const res = await fetch(`${API_URL}/comentarios`, {
+        const r = await fetch(`${API_URL}/comentarios`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuario: user, texto: input.value.trim(), itemId: id })
+            body: JSON.stringify({ itemId: id, usuario: user, texto })
         });
-        if (res.ok) {
+        
+        if (r.ok) {
             input.value = "";
             cargarComm(id);
-        } else {
-            alert("❌ Error al publicar comentario.");
+            showMiniToast("✅ Comentario publicado");
         }
-    } catch (e) { 
-        console.error(e);
-        alert("❌ Error de conexión.");
+    } catch (e) {
+        showMiniToast("❌ Error al comentar");
     }
 }
 
-function handleMail(event) {
-    event.preventDefault(); // Evita que el visor intente cargar la URL y falle
+// ==========================================
+// 9. HELPER: TIME AGO
+// ==========================================
+function timeAgo(fecha) {
+    const ahora = Date.now();
+    const diff = ahora - new Date(fecha).getTime();
+    const mins = Math.floor(diff / 60000);
+    const horas = Math.floor(mins / 60);
+    const dias = Math.floor(horas / 24);
     
-    const email = "mr.m0onster@protonmail.com";
-    const subject = "Reporte UpGames";
-    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
-
-    // Intentamos abrirlo en una ventana nueva. 
-    // Esto fuerza a Android a preguntar "¿Con qué app quieres abrir esto?" 
-    // en lugar de intentar cargarlo dentro de SPCK.
-    window.open(mailtoUrl, '_system'); 
-    
-    // Fallback: Si después de 1 segundo el usuario sigue aquí, 
-    // es que el visor es muy limitado. Copiamos el email al portapapeles.
-    setTimeout(() => {
-        navigator.clipboard.writeText(email);
-        alert("Copiado al portapapeles: " + email);
-    }, 1000);
+    if (mins < 1) return "Ahora";
+    if (mins < 60) return `${mins}m`;
+    if (horas < 24) return `${horas}h`;
+    if (dias < 7) return `${dias}d`;
+    return new Date(fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
 
-
-
-
-// 7. SISTEMA DE MONETIZACIÓN (PUENTE) - Mantenido igual
-document.addEventListener('click', function(e) {
-    const anchor = e.target.closest('a');
-    if (anchor && anchor.href) {
-        const urlDestino = anchor.href;
-        if (urlDestino.includes('mailto:mr.m0onster@protonmail.com')) return;
-        
-        const dominiosSeguros = ['roucedevstudio.github.io', 'backendapp-037y.onrender.com', window.location.hostname];
-        const esSeguro = dominiosSeguros.some(dominio => urlDestino.includes(dominio));
-        
-        if (!esSeguro) {
-            e.preventDefault();
-            window.location.href = './puente.html?dest=' + encodeURIComponent(urlDestino);
-        }
+// ==========================================
+// 10. MINI TOAST NOTIFICATION
+// ==========================================
+function showMiniToast(msg) {
+    let toast = document.getElementById('miniToast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'miniToast';
+        toast.style.cssText = `
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.9); color: #5EFF43; padding: 12px 24px;
+            border-radius: 50px; font-size: 0.85rem; font-weight: 700;
+            z-index: 99999; display: none; box-shadow: 0 4px 15px rgba(94,255,67,0.3);
+            border: 1px solid #5EFF43;
+        `;
+        document.body.appendChild(toast);
     }
-}, true);
-
-// 8. CERRAR OVERLAY AL HACER CLICK FUERA
-if (overlay) {
-    overlay.onclick = () => {
-        document.querySelector('.juego-card.expandida')?.classList.remove('expandida');
-        overlay.style.display = 'none';
-        document.body.style.overflow = 'auto';
-    };
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2500);
 }
 
-document.addEventListener("DOMContentLoaded", cargarContenido);
+// ==========================================
+// 11. NAVEGACIÓN A PERFIL PÚBLICO
+// ==========================================
+function visitarPerfil(usuario) {
+    window.location.href = `./perfil-publico.html?usuario=${encodeURIComponent(usuario)}`;
+}
+
+// ==========================================
+// 12. INICIALIZACIÓN
+// ==========================================
+window.addEventListener("load", cargarContenido);
