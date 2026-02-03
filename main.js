@@ -740,7 +740,7 @@ async function cargarEstadisticasPerfil() {
 }
 
 // ==========================================
-// MÉTODO ALTERNATIVO PARA CARGAR ESTADÍSTICAS
+// MÉT ALTERNATIVO PARA CARGAR ESTADÍSTICAS
 // ==========================================
 async function cargarEstadisticasAlternativo() {
     console.log("🔄 Intentando método alternativo para estadísticas...");
@@ -773,12 +773,388 @@ async function cargarEstadisticasAlternativo() {
     }
 }
 
+
+
+
+
+// ==========================================
+// FUNCIONES ADICIONALES PARA MAIN.JS
+// Agregar estas funciones al final del archivo main.js existente
+// ==========================================
+
+// ========== VARIABLES GLOBALES PARA EDICIÓN ========== //
+let currentEditItemId = null;
+
+// ========== CARGAR HISTORIAL MEJORADO CON EDICIÓN ========== //
+async function cargarEstadoActual() {
+    const container = document.getElementById("showContent");
+    if (!container) return;
+    if (!usuarioLogueado) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <ion-icon name="alert-circle"></ion-icon>
+                <h3>Sesión requerida</h3>
+                <p>Inicia sesión para ver tus publicaciones</p>
+            </div>`;
+        return;
+    }
+    
+    try {
+        const res = await fetch(`${API_URL}/items`);
+        const data = await res.json();
+        const misAportes = Array.isArray(data) ? data.filter(item => item.usuario === usuarioLogueado) : [];
+        
+        if (misAportes.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <ion-icon name="cloud-offline"></ion-icon>
+                    <h3>Sin publicaciones</h3>
+                    <p>Aún no has publicado nada. ¡Empieza ahora!</p>
+                </div>`;
+            return;
+        }
+        
+        // Renderizar con opciones de editar/eliminar
+        container.innerHTML = "";
+        misAportes.reverse().forEach(item => {
+            const isPending = item.status === 'pendiente' || item.status === 'pending';
+            const statusClass = isPending ? 'status-pending' : 'status-approved';
+            const statusText = isPending ? 'Pendiente' : 'Aprobado';
+            const statusIcon = isPending ? 'time' : 'checkmark-circle';
+
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            card.innerHTML = `
+                <div class="item-status ${statusClass}">
+                    <ion-icon name="${statusIcon}"></ion-icon>
+                    ${statusText}
+                </div>
+                <img src="${item.image || 'https://via.placeholder.com/300x200?text=Sin+Imagen'}" 
+                     alt="${item.title}"
+                     onerror="this.src='https://via.placeholder.com/300x200?text=Sin+Imagen'">
+                <div class="item-info">
+                    <h4 class="item-title">${item.title || 'Sin título'}</h4>
+                    <p class="item-category">${item.category || 'General'}</p>
+                    <div class="item-actions">
+                        <button class="btn-action btn-edit" onclick="openEditModal('${item._id}')">
+                            <ion-icon name="create"></ion-icon>
+                            Editar
+                        </button>
+                        <button class="btn-action btn-delete" onclick="eliminarArchivo('${item._id}')">
+                            <ion-icon name="trash"></ion-icon>
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    } catch (e) {
+        console.error("Error cargando historial:", e);
+        container.innerHTML = `
+            <div class="empty-state">
+                <ion-icon name="warning"></ion-icon>
+                <h3>Error de conexión</h3>
+                <p>No se pudo cargar el historial</p>
+            </div>`;
+    }
+}
+
+// ========== ABRIR MODAL DE EDICIÓN ========== //
+function openEditModal(itemId) {
+    currentEditItemId = itemId;
+    
+    // Buscar el item en los datos
+    fetch(`${API_URL}/items`)
+        .then(res => res.json())
+        .then(data => {
+            const item = data.find(i => i._id === itemId);
+            if (!item) {
+                showToast('❌ Item no encontrado');
+                return;
+            }
+
+            // Llenar el formulario
+            document.getElementById('edit-id').value = item._id;
+            document.getElementById('edit-title').value = item.title || '';
+            document.getElementById('edit-description').value = item.description || '';
+            document.getElementById('edit-link').value = item.link || '';
+            document.getElementById('edit-image').value = item.image || '';
+            document.getElementById('edit-category').value = item.category || 'Juego';
+
+            // Abrir modal
+            document.getElementById('editModal').classList.add('active');
+        })
+        .catch(e => {
+            console.error('Error al cargar item:', e);
+            showToast('❌ Error al cargar datos');
+        });
+}
+
+// ========== CERRAR MODAL DE EDICIÓN ========== //
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+    currentEditItemId = null;
+}
+
+// ========== GUARDAR EDICIÓN ========== //
+document.getElementById('editForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!currentEditItemId) {
+        showToast('❌ Error: ID no encontrado');
+        return;
+    }
+
+    const updates = {
+        title: document.getElementById('edit-title').value.trim(),
+        description: document.getElementById('edit-description').value.trim(),
+        link: document.getElementById('edit-link').value.trim(),
+        image: document.getElementById('edit-image').value.trim(),
+        category: document.getElementById('edit-category').value
+    };
+
+    // Validar enlace
+    const verificacionLink = analizarEnlaceSeguro(updates.link);
+    if (verificacionLink.ok === false) {
+        showToast(verificacionLink.msg);
+        return;
+    }
+
+    if (!updates.title || !updates.link) {
+        showToast('⚠️ Título y enlace son obligatorios');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/admin/items/${currentEditItemId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates)
+        });
+
+        if (response.ok) {
+            showToast('✅ Publicación actualizada');
+            closeEditModal();
+            cargarEstadoActual();
+        } else {
+            const error = await response.json();
+            showToast('❌ Error: ' + (error.error || 'No se pudo actualizar'));
+        }
+    } catch (e) {
+        console.error('Error al actualizar:', e);
+        showToast('❌ Error de conexión');
+    }
+});
+
+// ========== CARGAR BÓVEDA (FAVORITOS) ========== //
+async function cargarBoveda() {
+    const container = document.getElementById("vaultContent");
+    if (!container) return;
+    if (!usuarioLogueado) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <ion-icon name="alert-circle"></ion-icon>
+                <h3>Sesión requerida</h3>
+                <p>Inicia sesión para ver tus favoritos</p>
+            </div>`;
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/favoritos/${usuarioLogueado}`);
+        const favoritos = await res.json();
+
+        if (!Array.isArray(favoritos) || favoritos.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <ion-icon name="heart-dislike"></ion-icon>
+                    <h3>Sin favoritos</h3>
+                    <p>Aún no has guardado nada en tu bóveda</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = "";
+        favoritos.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            card.innerHTML = `
+                <img src="${item.image || 'https://via.placeholder.com/300x200?text=Sin+Imagen'}" 
+                     alt="${item.title}"
+                     onerror="this.src='https://via.placeholder.com/300x200?text=Sin+Imagen'">
+                <div class="item-info">
+                    <h4 class="item-title">${item.title || 'Sin título'}</h4>
+                    <p class="item-category">@${item.usuario || 'Anónimo'}</p>
+                    <div class="item-actions">
+                        <a href="${item.link}" target="_blank" class="btn-action" style="text-decoration:none;">
+                            <ion-icon name="download"></ion-icon>
+                            Descargar
+                        </a>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    } catch (e) {
+        console.error("Error cargando bóveda:", e);
+        container.innerHTML = `
+            <div class="empty-state">
+                <ion-icon name="warning"></ion-icon>
+                <h3>Error de conexión</h3>
+                <p>No se pudo cargar la bóveda</p>
+            </div>`;
+    }
+}
+
+// ========== ACTUALIZAR PREVIEW ========== //
+function actualizarPreview() {
+    const prevTitle = document.getElementById('prev-title');
+    const prevTag = document.getElementById('prev-tag');
+    const prevImg = document.getElementById('prev-img');
+    const prevDesc = document.getElementById('prev-desc');
+    const addTitle = document.getElementById('addTitle');
+    const addCategory = document.getElementById('addCategory');
+    const addImage = document.getElementById('addImage');
+    const addDescription = document.getElementById('addDescription');
+    const addLink = document.getElementById('addLink');
+
+    if (prevTitle && addTitle) {
+        prevTitle.textContent = addTitle.value || "Título de la publicación";
+    }
+    if (prevTag && addCategory) {
+        prevTag.textContent = (addCategory.value || "CATEGORÍA").toUpperCase();
+    }
+    if (prevImg && addImage) {
+        prevImg.src = addImage.value || "https://via.placeholder.com/300x200?text=Vista+Previa";
+    }
+    if (prevDesc && addDescription) {
+        prevDesc.textContent = addDescription.value || "Descripción de la publicación...";
+    }
+
+    // Validación visual del link
+    if (addLink && addLink.value.trim() !== "") {
+        const res = analizarEnlaceSeguro(addLink.value.trim());
+        addLink.style.borderColor = res.ok ? "#5EFF43" : "#ff4444";
+    } else if (addLink) {
+        addLink.style.borderColor = "";
+    }
+}
+
+// ========== GUARDAR AVATAR ========== //
+async function saveAvatar() {
+    const avatarUrl = document.getElementById('input-avatar-url').value.trim();
+    
+    if (!avatarUrl) {
+        showToast('⚠️ Ingresa una URL de avatar');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/usuarios/update-avatar`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                usuario: usuarioLogueado,
+                avatarUrl: avatarUrl
+            })
+        });
+
+        if (res.ok) {
+            showToast('✅ Avatar actualizado');
+            // Actualizar vista
+            const avatarImg = document.getElementById('avatar-img');
+            if (avatarImg) {
+                avatarImg.src = avatarUrl;
+                avatarImg.style.display = 'block';
+                document.querySelector('.avatar-icon').style.display = 'none';
+            }
+            closeSettingsModal();
+        } else {
+            showToast('❌ Error al actualizar avatar');
+        }
+    } catch (e) {
+        console.error('Error:', e);
+        showToast('❌ Error de conexión');
+    }
+}
+
+// ========== GUARDAR BIO ========== //
+async function saveBio() {
+    const bio = document.getElementById('input-bio').value.trim();
+    
+    if (!bio) {
+        showToast('⚠️ La bio no puede estar vacía');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/usuarios/update-bio`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                usuario: usuarioLogueado,
+                bio: bio
+            })
+        });
+
+        if (res.ok) {
+            showToast('✅ Bio actualizada');
+            // Actualizar vista
+            const userBio = document.getElementById('user-bio');
+            if (userBio) {
+                userBio.textContent = bio;
+            }
+            closeSettingsModal();
+        } else {
+            showToast('❌ Error al actualizar bio');
+        }
+    } catch (e) {
+        console.error('Error:', e);
+        showToast('❌ Error de conexión');
+    }
+}
+
+// ========== TOAST NOTIFICATION ========== //
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    
+    toast.textContent = message;
+    toast.style.display = 'block';
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 2500);
+}
+
+// ========== EXPONER FUNCIONES GLOBALES ========== //
+window.openEditModal = openEditModal;
+window.closeEditModal = closeEditModal;
+window.cargarBoveda = cargarBoveda;
+window.saveAvatar = saveAvatar;
+window.saveBio = saveBio;
+window.showToast = showToast;
+
+// ========== ESCUCHADORES DE EVENTOS ========== //
+// Preview en tiempo real
+['addTitle', 'addCategory', 'addImage', 'addDescription', 'addLink'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', actualizarPreview);
+});
+
+// Inicialización
+
+
+
 // Hacer funciones globales
 window.guardarAvatar = guardarAvatar;
 window.eliminarDeBoveda = eliminarDeBoveda;
 window.cerrarSesion = cerrarSesion;
 window.cargarBoveda = cargarBoveda; // ✅ Exportar para poder llamarla manualmente
 window.cargarEstadisticasPerfil = cargarEstadisticasPerfil; // ✅ Exportar función de estadísticas
+
+
+
 
 // ✅ INICIALIZACIÓN MEJORADA
 document.addEventListener("DOMContentLoaded", () => {
