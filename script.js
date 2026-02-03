@@ -363,7 +363,10 @@ async function cargarComm(id) {
         box.innerHTML = comms.map(c => `
             <div class="comentario-item">
                 <div class="comm-header">
-                    <strong class="comm-user">@${c.usuario}</strong>
+                    <strong class="comm-user">
+                        @${c.usuario}
+                        ${getVerificadoBadge(c.usuario)}
+                    </strong>
                     <span class="comm-fecha">${timeAgo(c.fecha)}</span>
                 </div>
                 <p class="comm-texto">${c.texto}</p>
