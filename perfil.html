@@ -1005,8 +1005,8 @@
 
         <!-- Tabs de navegación -->
         <nav class="nav-tabs">
-            <div class="tab active" onclick="switchTab('subir')">
-                <ion-icon name="cloud-upload"></ion-icon> SUBIR
+            <div class="tab active" onclick="switchTab('publicar')">
+                <ion-icon name="cloud-upload"></ion-icon> PUBLICAR
             </div>
             <div class="tab" onclick="switchTab('historial')">
                 <ion-icon name="time"></ion-icon> HISTORIAL
@@ -1019,19 +1019,18 @@
 
     <!-- ========== CONTENIDO ========== -->
     <div class="container">
-        <!-- TAB: SUBIR -->
-        <div id="tab-subir" class="tab-content active">
+        <!-- TAB: PUBLICAR -->
+        <div id="tab-publicar" class="tab-content active">
             <div class="upload-section">
                 <h3 class="section-title">
                     <ion-icon name="cloud-upload"></ion-icon>
                     SUBIR NUEVO PROYECTO
                 </h3>
 
-                <form id="uploadForm" onsubmit="subirPublicacion(event)">
-                    <div class="form-grid">
+                <div class="form-grid">
                         <div class="form-group">
                             <label class="form-label">Título del Proyecto</label>
-                            <input type="text" id="addTitle" class="form-input" placeholder="Ej: GTA V Optimizado" required>
+                            <input type="text" id="addTitle" class="form-input" placeholder="Ej: GTA V Optimizado">
                         </div>
 
                         <div class="form-group">
@@ -1044,7 +1043,7 @@
                                 Ingresar Link de Descarga
                                 <span class="info-icon" onclick="toggleTooltip(event, 'tooltip-link')">?</span>
                             </label>
-                            <input type="url" id="addLink" class="form-input" placeholder="https://mediafire.com/..." required>
+                            <input type="url" id="addLink" class="form-input" placeholder="https://mediafire.com/...">
                         </div>
 
                         <!-- Tooltip de Link -->
@@ -1120,7 +1119,7 @@
                                     VER INFO
                                 </span>
                             </label>
-                            <select id="addCategory" class="form-select" required>
+                            <select id="addCategory" class="form-select">
                                 <option value="Juego">Juego</option>
                                 <option value="Mod">Mod</option>
                                 <option value="Optimizacion">Optimización</option>
@@ -1145,11 +1144,11 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn-submit" id="subirBack">
+                    <button class="btn-submit" id="subirBack">
                         <ion-icon name="cloud-upload"></ion-icon>
                         ENVIAR A REVISIÓN
                     </button>
-                </form>
+                </div>
             </div>
         </div>
 
