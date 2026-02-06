@@ -166,7 +166,6 @@
 
     <script>
         const API_URL = "https://backendapp-037y.onrender.com";
-        // ✅ CORREGIDO: Redirección a biblioteca.html local
         const REDIRECT_URL = "./biblioteca.html";
         let isLoginMode = true;
 
@@ -221,15 +220,17 @@
 
                 if (data.success) {
                     localStorage.setItem("token", data.token);
-                    localStorage.setItem("RefreshToken", data.refreshToken);
+                    localStorage.setItem("RefreshToken", data.refreshToken || "");
                     localStorage.setItem("user_admin", data.usuario);
                     showMsg("✅ ACCESO CONCEDIDO", "#5EFF43");
                     setTimeout(() => window.location.replace(REDIRECT_URL), 500);
                 } else {
-                    showMsg("❌ " + (data.mensaje || "Error de credenciales"), "#ff4343");
+                    // ✅ CORREGIDO: Cambiar data.mensaje a data.error
+                    showMsg("❌ " + (data.error || "Error de credenciales"), "#ff4343");
                     setLoading(false);
                 }
             } catch (error) {
+                console.error("Error de conexión:", error);
                 showMsg("⚠️ Servidor despertando, reintente en 10s.", "#ff4343");
                 setLoading(false);
             }
@@ -244,7 +245,7 @@
             els.btn.disabled = loading;
             if (loading) {
                 els.btn.innerText = "CONECTANDO...";
-                showMsg("⏳ Consultando base de datos...", "#5EFF43");
+                showMsg("⏳ Consultando base de datos...", "#5EFF45");
             } else {
                 els.btn.innerText = isLoginMode ? "ACCEDER AL ÍNDICE" : "REGISTRAR PERFIL";
             }

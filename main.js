@@ -44,7 +44,8 @@ function analizarEnlaceSeguro(url) {
     '1fichier.com',
     'qiwi.gg',
     'krakenfiles.com',
-    'dropbox.com'
+    'dropbox.com',
+    'github.com'
 ];
 
     
