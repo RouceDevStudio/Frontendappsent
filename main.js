@@ -581,7 +581,7 @@ async function cargarBoveda() {
                     </p>
                     
                     <div class="vault-item-actions" style="display: flex; gap: 10px;">
-                        <button onclick="window.open('${safeLink}', '_blank')" style="
+                        <button onclick="window.open('puente.html?dest=${encodeURIComponent(safeLink)}', '_blank')" style="
                             flex: 1;
                             background: var(--primary);
                             color: #000;
@@ -969,6 +969,9 @@ document.getElementById('editForm')?.addEventListener('submit', async (e) => {
 });
 
 // ========== CARGAR BÓVEDA (FAVORITOS) ========== //
+// Esta función está duplicada - la versión correcta está en la línea 483
+// Comentada para evitar conflictos
+/*
 async function cargarBoveda() {
     const container = document.getElementById("vaultContent");
     if (!container) return;
@@ -1027,6 +1030,8 @@ async function cargarBoveda() {
             </div>`;
     }
 }
+*/
+
 
 // ========== ACTUALIZAR PREVIEW ========== //
 function actualizarPreview() {

@@ -120,7 +120,7 @@ function renderizar(lista) {
                 <p class="cloud-note">${item.description || 'Sin descripción.'}</p>
                 
                 <div class="boton-descargar-full" style="position:relative; cursor:pointer;">
-                    <a href="${item.link}" target="_blank" 
+                    <a href="puente.html?dest=${encodeURIComponent(item.link)}" target="_blank" 
                        style="position:absolute; top:0; left:0; width:100%; height:100%; text-decoration:none; color:inherit; display:flex; align-items:center; justify-content:center;"
                        onclick="event.stopPropagation();">
                        ACCEDER A LA NUBE
