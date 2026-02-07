@@ -1029,8 +1029,37 @@
 
                 <div class="form-grid">
                         <div class="form-group">
-                            <label class="form-label">Título del Proyecto</label>
+                            <label class="form-label">
+                                Título del Proyecto
+                                <span class="info-icon" onclick="toggleTooltip(event, 'tooltip-title')">?</span>
+                            </label>
                             <input type="text" id="addTitle" class="form-input" placeholder="Ej: GTA V Optimizado">
+                        </div>
+
+                        <!-- Tooltip de Título -->
+                        <div id="tooltip-title" class="info-tooltip">
+                            <button class="tooltip-close" onclick="closeTooltip('tooltip-title')">×</button>
+                            <h4><ion-icon name="shield-checkmark"></ion-icon> Bot de Metadata Activo</h4>
+                            <p class="warning-text">⚠️ Sistema anti-piratería activado</p>
+                            <p style="color: white; font-weight: 600; margin-top: 12px;">Palabras PROHIBIDAS en el título:</p>
+                            <ul>
+                                <li><strong>crack</strong>, <strong>cracked</strong>, <strong>crackeado</strong></li>
+                                <li><strong>pirata</strong>, <strong>pirateado</strong></li>
+                                <li><strong>gratis</strong>, <strong>free</strong></li>
+                                <li><strong>full</strong>, <strong>completo</strong></li>
+                                <li><strong>premium</strong>, <strong>pro</strong> (sin licencia)</li>
+                                <li><strong>descargar</strong>, <strong>download</strong></li>
+                            </ul>
+                            <p class="success-text" style="margin-top: 12px;">
+                                ✅ Usa títulos descriptivos y profesionales
+                            </p>
+                            <p style="margin-top: 8px; font-size: 0.8rem; color: #bbb;">
+                                Ejemplo correcto: "GTA V Mod de Gráficos Mejorados"
+                            </p>
+                            <p style="margin-top: 8px; font-size: 0.75rem; color: var(--text-dim);">
+                                <ion-icon name="information-circle"></ion-icon> 
+                                Las publicaciones con palabras prohibidas serán rechazadas automáticamente
+                            </p>
                         </div>
 
                         <div class="form-group">

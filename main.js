@@ -267,6 +267,26 @@ async function subirJuego() {
     const descripcionFormateada = els.addDescription.value.trim();
     const linkDescarga = els.addLink.value.trim();
     
+    // 🛡️ BOT DE KEYWORDS: VALIDACIÓN ANTI-PIRATERÍA
+    const bannedKeywords = [
+        'crack', 'cracked', 'crackeado', 'crackeo',
+        'pirata', 'pirateado', 'piratear',
+        'gratis', 'free', 'gratuito',
+        'full', 'completo', 'complete',
+        'premium gratis', 'pro gratis',
+        'descargar gratis', 'download free'
+    ];
+    
+    const tituloLower = tituloFormateado.toLowerCase();
+    const palabraDetectada = bannedKeywords.find(keyword => {
+        const regex = new RegExp('\\b' + keyword + '\\b', 'i');
+        return regex.test(tituloLower);
+    });
+    
+    if (palabraDetectada) {
+        return alert(`🚫 BOT DE METADATA: Palabra prohibida detectada: "${palabraDetectada}"\n\n⚠️ No se permite usar términos que inciten a la piratería.\n\nUsa un título descriptivo y profesional.`);
+    }
+    
     // 🛡️ VALIDACIÓN DE ENLACE ANTES DE SUBIR
     const verificacionLink = analizarEnlaceSeguro(linkDescarga);
     if (verificacionLink.ok === false) {
@@ -1137,10 +1157,45 @@ window.saveBio = saveBio;
 window.showToast = showToast;
 
 // ========== ESCUCHADORES DE EVENTOS ========== //
+// Bot de Keywords - Validación en tiempo real
+const bannedKeywordsVisual = [
+    'crack', 'cracked', 'crackeado', 'crackeo',
+    'pirata', 'pirateado', 'piratear',
+    'gratis', 'free', 'gratuito',
+    'full', 'completo', 'complete',
+    'premium', 'pro',
+    'descargar', 'download'
+];
+
+function validarTituloEnTiempoReal() {
+    const titleInput = document.getElementById('addTitle');
+    if (!titleInput) return;
+    
+    const texto = titleInput.value.toLowerCase();
+    const tienePalabraProhibida = bannedKeywordsVisual.some(keyword => {
+        const regex = new RegExp('\\b' + keyword + '\\b', 'i');
+        return regex.test(texto);
+    });
+    
+    if (tienePalabraProhibida && texto.length > 0) {
+        titleInput.style.borderColor = '#ff4444';
+        titleInput.style.boxShadow = '0 0 0 2px rgba(255, 68, 68, 0.2)';
+    } else {
+        titleInput.style.borderColor = '';
+        titleInput.style.boxShadow = '';
+    }
+}
+
 // Preview en tiempo real
 ['addTitle', 'addCategory', 'addImage', 'addDescription', 'addLink'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener('input', actualizarPreview);
+    if (el) {
+        el.addEventListener('input', actualizarPreview);
+        // Validar keywords solo en el título
+        if (id === 'addTitle') {
+            el.addEventListener('input', validarTituloEnTiempoReal);
+        }
+    }
 });
 
 // Inicialización
