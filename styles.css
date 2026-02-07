@@ -17,6 +17,11 @@ body {
     overflow-x: hidden;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+
 /* --- HEADER (OPTIMIZADO) --- */
 header { 
     padding: 15px; 
