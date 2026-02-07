@@ -552,7 +552,8 @@ async function cargarBoveda() {
             const safeLink = item.link || '#';
             const safeCategory = (item.category || 'General').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             
-            // ✅ CRÍTICO: Usar favoritoId para eliminar (ID del documento Favorito)
+            // ✅ CRÍTICO: Usar el _id del item para eliminar (no el favoritoId)
+            const itemId = item._id;
             const favoritoId = item.favoritoId || item._id;
 
             div.innerHTML = `
@@ -599,7 +600,7 @@ async function cargarBoveda() {
                         " onmouseover="this.style.background='#4EDF33'" onmouseout="this.style.background='var(--primary)'">
                             <ion-icon name="cloud-download"></ion-icon> Ver
                         </button>
-                        <button onclick="eliminarDeBoveda('${favoritoId}')" style="
+                        <button onclick="eliminarDeBoveda('${itemId}')" style="
                             flex: 1;
                             background: var(--danger);
                             color: white;
@@ -653,26 +654,31 @@ async function cargarBoveda() {
 }
 
 // ✅ Función para eliminar de la bóveda - MEJORADA
-async function eliminarDeBoveda(favoritoId) {
+async function eliminarDeBoveda(itemId) {
     if (!confirm("¿Quitar este archivo de tu bóveda?")) return;
 
     try {
-        console.log(`🗑️ Eliminando favorito ID: ${favoritoId}`);
+        console.log(`🗑️ Eliminando favorito - Usuario: ${usuarioLogueado}, ItemID: ${itemId}`);
         
-        const res = await fetch(`${API_URL}/favoritos/delete/${favoritoId}`, {
+        const res = await fetch(`${API_URL}/favoritos/remove`, {
             method: 'DELETE',
             headers: { 
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({
+                usuario: usuarioLogueado,
+                itemId: itemId
+            })
         });
 
-        if (res.ok) {
+        const data = await res.json();
+
+        if (data.success || data.ok) {
             alert("💔 Eliminado de tu bóveda.");
             cargarBoveda(); // Recargar la lista
         } else {
-            const errorData = await res.json();
-            console.error("Error del servidor:", errorData);
-            alert(`❌ Error: ${errorData.mensaje || errorData.error || 'No se pudo eliminar de favoritos'}`);
+            console.error("Error del servidor:", data);
+            alert(`❌ Error: ${data.error || 'No se pudo eliminar de favoritos'}`);
         }
     } catch (error) {
         console.error("❌ Error eliminando de bóveda:", error);
@@ -968,9 +974,8 @@ document.getElementById('editForm')?.addEventListener('submit', async (e) => {
     }
 });
 
-// ========== CARGAR BÓVEDA (FAVORITOS) ========== //
-// Esta función está duplicada - la versión correcta está en la línea 483
-// Comentada para evitar conflictos
+// ========== CARGAR BÓVEDA (FAVORITOS) - FUNCIÓN DUPLICADA COMENTADA ========== //
+// La función correcta está en la línea 483
 /*
 async function cargarBoveda() {
     const container = document.getElementById("vaultContent");
