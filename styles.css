@@ -144,7 +144,8 @@ header {
 
 .user-tag { 
     color: var(--primary); 
-    font-size: 14px; 
+    font-size: 1.1rem; 
+    font-weight: bold;
     margin-bottom: 5px; 
     display: flex; 
     align-items: center; 
@@ -237,10 +238,14 @@ header {
     border-radius: 8px;
 }
 
+.expandida .juego-titulo{
+    font-size: 1.1rem;
+}
+
 .verificado-flex { display: flex; justify-content: space-between; align-items: center; }
 
 .status-text {
-    font-size: 0.85rem;
+    font-size: 0.89rem;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -269,6 +274,10 @@ header {
     font-weight: bold; 
     text-decoration: none; 
     margin-bottom: 20px; 
+}
+
+.expandida .category-badge{
+    font-size: .90rem;
 }
 
 /* --- SECCIÓN COMENTARIOS --- */
@@ -340,7 +349,7 @@ header {
 
 .no-results h3 { 
     color: var(--primary); 
-    font-size: 1.2rem; 
+    font-size: 1.3rem; 
     font-weight: 800;
     margin-bottom: 8px; 
     text-transform: uppercase;
@@ -363,14 +372,14 @@ header {
 }
 
 .category-badge {
-    font-size: 8px;
-    padding: 2px 6px;
+    font-size: .60rem;
+    padding: 1px 5px;
     border-radius: 4px;
     background: rgba(0, 0, 0, 0.5);
-    color: var(--primary) !important;
+    color: #8FFF3C !important;
     border: 1px solid var(--primary);
     text-transform: uppercase;
-    font-weight: 800;
+    font-weight: 1000;
 }
 
 /* --- CLOUD LOADER (ANIMACIONES OPTIMIZADAS) --- */
@@ -424,7 +433,7 @@ header {
 
 .footer-legal { text-align: center; padding: 40px 20px; color: #666; font-size: 0.75rem; }
 
-/* Agregar al final de tu CSS */
+
 .verificado-badge {
     display: inline-flex;
     align-items: center;
@@ -432,13 +441,13 @@ header {
     vertical-align: middle;
 }
 
-.verificado-badge.level-1 { color: #977500; } /* azul claro */
+.verificado-badge.level-1 { color: #DEDEDEE0; } /* azul claro */
 .verificado-badge.level-2 { color: #FFEF02; 
-    filter: drop-shadow(#FFF99B);
+    box-shadow: 0 1px 20px #FFF99B;
 } /* azul fuerte */
 .verificado-badge.level-3 { color: #49FFFB; 
     border-radius: 50%;
-    box-shadow: 0 5px 15px 0#99FFEF;
+    box-shadow: 0 1px 20px #99FFEF;
 } /* dorado */
 
 
@@ -447,5 +456,5 @@ header {
 }
 
 .user-tag.verificado {
-    font-weight: 500;
+    font-weight: 900;
 }
