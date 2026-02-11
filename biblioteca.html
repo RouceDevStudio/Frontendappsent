@@ -74,38 +74,45 @@
         backdrop-filter: blur(5px);
     "></div>
 
- <div id="modal-terminos" class="custom-modal-wrapper">
+
+<div id="modal-terminos" class="custom-modal-wrapper">
     <div class="custom-modal-card">
         <div class="custom-modal-header">
-            <span class="emoji-header">📋</span>
-            <h1>TÉRMINOS Y CONDICIONES</h1>
+            <span class="emoji-header">🚀</span>
+            <h1>BIENVENIDO A UPGAMES</h1>
+            <p style="color: #888; font-size: 0.8rem; margin-top: 5px;">La evolución de las librerías digitales</p>
         </div>
         
         <div class="custom-modal-body">
-            <h3>1. Aceptación de Términos</h3>
-            <p>Al acceder y utilizar Metadata Index, aceptas cumplir con estos términos y condiciones.</p>
-            
-            <h3>2. Uso Permitido</h3>
-            <p>Este servicio es únicamente para compartir metadatos (enlaces) a archivos legítimos. No almacenamos archivos directamente.</p>
-            
-            <h3>3. Contenido Prohibido</h3>
-            <ul>
-                <li>Material con derechos de autor sin autorización.</li>
-                <li>Contenido ilegal o malicioso.</li>
-                <li>Enlaces a sitios fraudulentos.</li>
-                <li>Malware o virus.</li>
-            </ul>
+            <div class="benefits-section">
+                <h3>💎 BENEFICIOS EXCLUSIVOS</h3>
+                <ul class="benefits-list">
+                    <li><strong>Monetización Real:</strong> Gana $1.00 USD por cada 1,000 descargas de tus aportes.</li>
+                    <li><strong>Lanzadera Indie:</strong> Publica tus propios juegos, apps o mods con visibilidad global gratuita.</li>
+                    <li><strong>Seguridad 24/7:</strong> Navega tranquilo gracias a nuestros bots que filtran malware y contenido +18.</li>
+                    <li><strong>Comunidad Activa:</strong> Indexa y encuentra metadatos de software que no hallarás en tiendas oficiales.</li>
+                    <li><strong>Estatus de Trusted Indexer:</strong> Sube de nivel y obtén prioridad en el feed principal.</li>
+                </ul>
+            </div>
 
-            <h3>4. Responsabilidad</h3>
-            <p>Los usuarios son responsables del contenido que suben. Nos reservamos el derecho de eliminar cualquier contenido que viole estos términos.</p>
+            <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
+
+            <h3>⚖️ BREVE RESUMEN LEGAL</h3>
+            <p>Para mantener este ecosistema seguro y gratuito, operamos bajo estas reglas:</p>
+            <ul class="legal-summary">
+                <li><strong>Intermediación:</strong> Somos una librería de metadatos; no almacenamos archivos.</li>
+                <li><strong>Responsabilidad:</strong> El contenido es responsabilidad de quien lo publica y lo descarga.</li>
+                <li><strong>Filtros Activos:</strong> Prohibido el contenido ilegal, piratería o material sensible.</li>
+                <li><strong>Neutralidad:</strong> No podemos revisar miles de links manualmente, pero atendemos reportes en 24-72h.</li>
+            </ul>
         </div>
 
         <div class="custom-modal-footer">
-            <a href="./terminos&condiciones.html" class="legal-link">Conoce más de nuestros términos y condiciones</a>
+            <a href="./terminos&condiciones.html" class="legal-link">Conoce nuestro contrato legal completo (v.2026.C)</a>
             
             <div class="button-group">
-                <button id="btn-aceptar-terminos" class="btn-confirm">✓ ACEPTAR Y CONTINUAR</button>
-                <button onclick="window.location.href='https://google.com'" class="btn-cancel">✕ RECHAZAR Y SALIR</button>
+                <button id="btn-aceptar-terminos" class="btn-confirm">✓ ACEPTAR Y EMPEZAR A GANAR</button>
+                <button onclick="window.location.href='https://google.com'" class="btn-cancel">RECHAZAR</button>
             </div>
         </div>
     </div>
@@ -114,16 +121,17 @@
 <style>
     :root {
         --neon-green: #39ff14;
-        --glass-bg: #1a1a1a;
-        --text-gray: #ccc;
+        --neon-blue: #00f2ff;
+        --glass-bg: #0d0d0d;
+        --text-gray: #bbb;
     }
 
     .custom-modal-wrapper {
-        display: none; /* Se controla por JS */
+        display: none;
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.9);
-        backdrop-filter: blur(10px);
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(15px);
         z-index: 10000;
         padding: 15px;
         font-family: 'Segoe UI', Roboto, sans-serif;
@@ -135,64 +143,88 @@
         left: 50%;
         transform: translate(-50%, -50%);
         background: var(--glass-bg);
-        border: 1px solid #333;
-        border-radius: 15px;
+        border: 1px solid #222;
+        border-radius: 20px;
         width: 100%;
-        max-width: 420px;
-        max-height: 85vh;
+        max-width: 480px;
+        max-height: 90vh;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        box-shadow: 0 0 50px rgba(0, 242, 255, 0.15);
     }
 
     .custom-modal-header {
-        padding: 20px;
+        padding: 25px 20px 15px;
         text-align: center;
-        border-bottom: 1px solid #333;
+        border-bottom: 1px solid #222;
     }
 
-    .emoji-header { font-size: 2rem; }
+    .emoji-header { font-size: 2.5rem; filter: drop-shadow(0 0 10px var(--neon-blue)); }
 
     .custom-modal-header h1 {
-        color: var(--neon-green);
-        font-size: 1.1rem;
+        color: #fff;
+        font-size: 1.4rem;
         margin: 10px 0 0;
-        letter-spacing: 1px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
     }
 
     .custom-modal-body {
-        padding: 20px;
+        padding: 25px;
         overflow-y: auto;
         color: var(--text-gray);
-        font-size: 0.9rem;
-        line-height: 1.6;
+        font-size: 0.95rem;
+        line-height: 1.5;
     }
 
     .custom-modal-body h3 {
-        color: var(--neon-green);
-        font-size: 0.95rem;
-        margin: 15px 0 5px;
+        color: var(--neon-blue);
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+        letter-spacing: 1px;
     }
 
-    .custom-modal-body ul { padding-left: 20px; }
+    .benefits-list, .legal-summary {
+        padding-left: 15px;
+        list-style: none;
+    }
+
+    .benefits-list li::before {
+        content: "✦";
+        color: var(--neon-green);
+        margin-right: 10px;
+        font-weight: bold;
+    }
+
+    .legal-summary li::before {
+        content: "•";
+        color: #ff003c;
+        margin-right: 10px;
+    }
+
+    .benefits-list li, .legal-summary li {
+        margin-bottom: 10px;
+    }
 
     .custom-modal-footer {
         padding: 20px;
-        background: rgba(0,0,0,0.2);
+        background: rgba(0,0,0,0.4);
+        border-top: 1px solid #222;
         display: flex;
         flex-direction: column;
         gap: 15px;
     }
 
     .legal-link {
-        color: var(--neon-green);
+        color: var(--neon-blue);
         font-size: 0.8rem;
         text-align: center;
-        text-decoration: underline;
-        opacity: 0.8;
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: 0.3s;
     }
 
-    .legal-link:hover { opacity: 1; }
+    .legal-link:hover { border-bottom: 1px solid var(--neon-blue); }
 
     .button-group {
         display: flex;
@@ -204,31 +236,40 @@
         background: var(--neon-green);
         color: #000;
         border: none;
-        padding: 14px;
-        border-radius: 8px;
-        font-weight: bold;
+        padding: 16px;
+        border-radius: 10px;
+        font-weight: 900;
         cursor: pointer;
         width: 100%;
+        text-transform: uppercase;
+        transition: 0.3s;
+    }
+
+    .btn-confirm:hover {
+        background: #fff;
+        box-shadow: 0 0 20px var(--neon-green);
     }
 
     .btn-cancel {
         background: transparent;
-        color: #ff4444;
-        border: 1px solid #ff4444;
+        color: #666;
+        border: 1px solid #333;
         padding: 10px;
-        border-radius: 8px;
+        border-radius: 10px;
         cursor: pointer;
         font-size: 0.8rem;
     }
 
     /* Desktop Adjustments */
     @media (min-width: 600px) {
-        .button-group {
-            flex-direction: row;
-        }
+        .button-group { flex-direction: row; }
         .btn-confirm { flex: 2; }
         .btn-cancel { flex: 1; }
     }
+
+    /* Custom scrollbar para el cuerpo del modal */
+    .custom-modal-body::-webkit-scrollbar { width: 5px; }
+    .custom-modal-body::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
 </style>
 
 <script>
@@ -236,19 +277,21 @@
         const modal = document.getElementById('modal-terminos');
         const btnAceptar = document.getElementById('btn-aceptar-terminos');
 
-        // Solo mostrar si NO se ha aceptado antes
-        if (!localStorage.getItem("upgames_terms_accepted")) {
+        // Solo mostrar si NO se ha aceptado la versión v.2026.C
+        if (localStorage.getItem("upgames_terms_version") !== "2026.C") {
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
 
         btnAceptar.addEventListener('click', () => {
-            localStorage.setItem("upgames_terms_accepted", "true");
+            localStorage.setItem("upgames_terms_version", "2026.C");
             modal.style.display = 'none';
             document.body.style.overflow = 'auto';
         });
     })();
 </script>
+
+
 
     <!-- IONICONS -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>

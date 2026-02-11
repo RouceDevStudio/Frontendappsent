@@ -3,223 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Términos y Condiciones Blindados | UpGames</title>
+    <title>Protocolo Legal v2.0 | UpGames</title>
     <style>
         :root {
-            --bg-color: #050505;
-            --card-bg: #0d0d0d;
-            --neon-blue: #00f2ff;
-            --neon-green: #39ff14;
-            --neon-red: #ff003c;
-            --text-color: #e0e0e0;
-            --glow: 0 0 10px rgba(0, 242, 255, 0.3);
+            --bg: #030303;
+            --surface: #0a0a0a;
+            --accent: #00f2ff;
+            --success: #39ff14;
+            --warning: #ffb800;
+            --danger: #ff003c;
+            --text-main: #ffffff;
+            --text-dim: #888888;
+            --border: #1a1a1a;
         }
 
         * { box-sizing: border-box; }
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
             margin: 0;
-            padding: 0;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
         }
 
         .container {
-            width: 100%;
-            max-width: 950px;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
-        header {
-            text-align: center;
-            padding: 40px 10px;
-        }
-
-        h1 {
-            color: var(--neon-blue);
-            text-shadow: 0 0 15px var(--neon-blue);
-            font-size: clamp(1.8rem, 8vw, 3rem);
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            margin: 0;
-        }
-
-        .version {
-            color: var(--neon-green);
-            font-weight: bold;
-            font-size: 0.9rem;
-            text-shadow: 0 0 5px var(--neon-green);
-            display: block;
-            margin-top: 10px;
-        }
-
-        .full-text-card {
-            background: var(--card-bg);
-            border: 1px solid #222;
-            padding: clamp(20px, 5vw, 50px);
-            border-radius: 15px;
-            box-shadow: 0 0 40px rgba(0,0,0,1);
+        /* HEADER REDISEÑADO */
+        .legal-header {
+            text-align: left;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 20px;
             margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 20px;
         }
 
-        .alert-box {
-            border: 1px dashed var(--neon-red);
-            padding: 20px;
-            background: rgba(255, 0, 60, 0.05);
-            margin-bottom: 30px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            color: #ff99aa;
-        }
-
-        h2 {
-            border-left: 4px solid var(--neon-blue);
-            padding-left: 15px;
-            color: var(--neon-blue);
-            text-shadow: 0 0 5px var(--neon-blue);
-            margin-top: 50px;
-            font-size: clamp(1.3rem, 5vw, 1.8rem);
+        .legal-header h1 {
+            font-size: 3rem;
+            margin: 0;
+            letter-spacing: -2px;
             text-transform: uppercase;
+            line-height: 1;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
         }
 
-        h3 {
-            color: var(--neon-green);
-            text-shadow: 0 0 3px var(--neon-green);
-            margin-top: 35px;
-            font-size: 1.2rem;
-            border-bottom: 1px solid #333;
-            padding-bottom: 5px;
-        }
-
-        p {
-            margin-bottom: 18px;
-            text-align: justify;
-            color: #bbb;
-            font-size: clamp(0.95rem, 4vw, 1.05rem);
-        }
-
-        strong { color: #fff; text-shadow: 0 0 2px rgba(255,255,255,0.5); }
-
-        .legal-tag {
-            display: inline-block;
-            background: #222;
-            color: var(--neon-blue);
-            padding: 2px 8px;
+        .status-badge {
+            background: rgba(57, 255, 20, 0.1);
+            color: var(--success);
+            padding: 5px 12px;
             border-radius: 4px;
             font-size: 0.75rem;
-            margin-bottom: 10px;
-            border: 1px solid var(--neon-blue);
-        }
-
-        .btn-back {
-            display: inline-flex;
-            align-items: center;
-            margin-bottom: 20px;
-            color: var(--neon-green);
-            text-decoration: none;
-            border: 1px solid var(--neon-green);
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
+            font-weight: 800;
+            border: 1px solid var(--success);
             text-transform: uppercase;
-            font-weight: bold;
         }
 
-        .btn-back:hover {
-            background: var(--neon-green);
-            color: #000;
-            box-shadow: 0 0 20px var(--neon-green);
+        /* CUADÍCULA DE TÉRMINOS */
+        .term-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+            transition: border-color 0.3s ease;
         }
 
-        footer {
+        .term-section:hover {
+            border-color: #333;
+        }
+
+        .term-section h2 {
+            color: var(--accent);
+            font-size: 1.2rem;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .term-section h2::before {
+            content: "";
+            width: 4px;
+            height: 20px;
+            background: var(--accent);
+            display: inline-block;
+        }
+
+        .important-note {
+            background: rgba(255, 0, 60, 0.05);
+            border-left: 4px solid var(--danger);
+            padding: 20px;
+            margin: 20px 0;
+            color: #ff99aa;
+            font-size: 0.95rem;
+        }
+
+        /* LISTAS ESTILIZADAS */
+        .legal-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .legal-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #151515;
+            color: var(--text-dim);
+            font-size: 0.95rem;
+        }
+
+        .legal-list li strong {
+            color: var(--text-main);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* FOOTER */
+        .legal-footer {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border);
             text-align: center;
-            padding: 60px 10px;
-            color: #666;
+            color: var(--text-dim);
             font-size: 0.85rem;
-            border-top: 1px solid #111;
         }
 
-        @media (max-width: 480px) {
-            .full-text-card { border-radius: 0; border-left: none; border-right: none; }
+        .contact-btn {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: bold;
+            border: 1px solid var(--accent);
+            padding: 10px 20px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 20px;
+            transition: 0.3s;
         }
 
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #050505; }
-        ::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 10px; }
+        .contact-btn:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+        @media (max-width: 600px) {
+            .legal-header h1 { font-size: 2rem; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <a href="./index.html" class="btn-back">← SALIR DEL PROTOCOLO</a>
-
-    <header>
-        <h1>UPGAMES</h1>
-        <span class="version">CONTRATO DE LICENCIA Y TÉRMINOS LEGALES V.2026.B</span>
+    <header class="legal-header">
+        <div>
+            <h1>UPGAMES</h1>
+            <div style="color: var(--text-dim); font-size: 0.9rem;">Librería Digital de Metadatos Indexados</div>
+        </div>
+        <div class="status-badge">Versión 2026.C-ELITE // ACTIVA</div>
     </header>
 
-    <div class="full-text-card">
-        
-        <div class="alert-box">
-            <strong>ADVERTENCIA DE CUMPLIMIENTO:</strong> El acceso, navegación y uso de UpGames constituye la aceptación inmediata e irrevocable de estos términos. Si usted no está de acuerdo con la exención total de responsabilidad aquí descrita, debe cesar el uso de la plataforma de inmediato.
-        </div>
-
-        <span class="legal-tag">ESTATUS JURÍDICO</span>
-        <h2>1. NATURALEZA DEL SERVICIO Y NEUTRALIDAD</h2>
-        <p>UpGames opera exclusivamente como un <strong>proveedor de servicios de intermediación técnica</strong>. Según los estándares internacionales de "Safe Harbor" (Puerto Seguro), nuestra función es la de un directorio de metadatos y una interfaz de organización de información alojada en nubes externas.</p>
-        <p><strong>Conocimiento Efectivo:</strong> Al ser un proceso automatizado por la comunidad, UpGames no posee "conocimiento efectivo" de la licitud de cada enlace indexado. Nuestra responsabilidad solo nace en el momento en que se recibe una notificación de infracción válida y esta no es atendida.</p>
-
-        <span class="legal-tag">JURISDICCIÓN: COLOMBIA</span>
-        <h2>2. LIMITACIÓN DE RESPONSABILIDAD</h2>
-        <p>Bajo ninguna circunstancia UpGames, sus desarrolladores o administradores serán responsables ante el usuario o terceros por pérdida de datos, daños en hardware, o implicaciones legales derivadas del contenido indexado por otros usuarios.</p>
-        <p><strong>Uso de Software:</strong> Todo software o enlace externo es utilizado bajo el propio riesgo del usuario. UpGames no garantiza que el contenido sea seguro, funcional o libre de errores. Usted renuncia expresamente a cualquier acción legal contra el equipo de desarrollo de UpGames.</p>
-
-        <span class="legal-tag">MONETIZACIÓN</span>
-        <h2>3. RÉGIMEN ECONÓMICO Y PÁGINA PUENTE</h2>
-        <p>UpGames utiliza un sistema de "página puente" con publicidad de terceros (Adsterra) para financiar su infraestructura técnica (servidores MongoDB, ancho de banda y seguridad).</p>
-        <p><strong>Aclaración de Lucro:</strong> El ingreso generado no constituye la venta de propiedad intelectual ni el cobro por descargas, sino una <strong>contraprestación por el servicio de mantenimiento de la interfaz</strong>. El usuario acepta la visualización de dicha publicidad como método de pago indirecto por el uso de la plataforma.</p>
-
-        <span class="legal-tag">PROPIEDAD INTELECTUAL</span>
-        <h2>4. PROTOCOLO DMCA Y RESTRICCIÓN DE CONTENIDO</h2>
-        <p>Respetamos la propiedad intelectual. UpGames no aloja archivos en sus servidores. Si usted es titular de derechos y desea solicitar la desindexación de un enlace:</p>
-        <p><strong>Procedimiento:</strong> Debe enviar una comunicación formal a <strong>mr.m0onster@protonmail.com</strong> incluyendo la prueba de titularidad y el enlace específico dentro de UpGames. El plazo de respuesta y ejecución es de 24 a 72 horas hábiles.</p>
-
-        <h2>5. SEGURIDAD TÉCNICA Y "SANDBOXING"</h2>
-        <p>UpGames implementa algoritmos de revisión para proteger la integridad del usuario, no para validar el contenido. 
-        <ul>
-            <li><strong>Bloqueo Preventivo:</strong> Filtrado de archivos .exe sospechosos y acortadores maliciosos.</li>
-            <li><strong>Neutralidad de Contenido:</strong> El hecho de que un enlace pase los filtros técnicos no implica un aval de su legalidad por parte de UpGames.</li>
-        </ul></p>
-
-        <h2 style="color: var(--neon-red); border-color: var(--neon-red);">CÓDIGO DE CONDUCTA Y SANCIONES</h2>
-        
-        <h3>1. POLÍTICA NSFW Y VIOLENCIA</h3>
-        <p>UpGames mantiene un entorno "Todo Público" respecto a la moralidad del contenido. Queda estrictamente prohibida la indexación de material pornográfico, gore o que incite al odio. El incumplimiento resultará en un <strong>Baneo de Hardware/IP</strong> permanente.</p>
-
-        <h3>2. INTEGRIDAD DEL SISTEMA</h3>
-        <p>Cualquier intento de ingeniería inversa, inyección SQL, ataques DDoS o uso de bots para inflar niveles resultará en la eliminación inmediata de la cuenta y la entrega de registros técnicos a las autoridades competentes si así lo requieren.</p>
-
-        <h3>3. JURISDICCIÓN APLICABLE</h3>
-        <p>Este contrato se rige por las leyes de la <strong>República de Colombia</strong>. Cualquier disputa se someterá exclusivamente a los tribunales de este país, renunciando el usuario a cualquier otra jurisdicción por razón de su ubicación geográfica.</p>
-
-        <h2>BENEFICIOS DEL ECOSISTEMA</h2>
-
-        <h3>1. LA LANZADERA INDIE</h3>
-        <p>UpGames actúa como un acelerador gratuito para desarrolladores. Ofrecemos visibilidad sin costos de publicación, permitiendo que el software independiente llegue a miles de usuarios sin intermediarios comerciales.</p>
-
-        <h3>2. SISTEMA DE REPUTACIÓN</h3>
-        <p>Nuestro algoritmo premia la calidad. Los niveles altos otorgan al usuario el estatus de "Trusted Indexer" (Indexador Confiable), lo que aumenta la visibilidad de sus aportes en el feed principal.</p>
-
+    <div class="important-note">
+        <strong>CLÁUSULA DE CONSENTIMIENTO:</strong> El uso de la infraestructura de UpGames implica la aceptación automática de este protocolo técnico-legal. Si el usuario no ratifica cada punto aquí expuesto, debe desconectarse de la plataforma de inmediato.
     </div>
 
-    <footer>
-        &copy; 2026 UpGames - República de Colombia<br>
-        Infraestructura protegida bajo leyes de neutralidad tecnológica.<br>
-        Contacto Legal: <strong>mr.m0onster@protonmail.com</strong>
+    <section class="term-section">
+        <h2>1. Neutralidad y Rol Tecnológico</h2>
+        <p>UpGames se define como un **intermediario técnico neutro**. Nuestra infraestructura organiza y presenta metadatos proporcionados exclusivamente por la comunidad.</p>
+        <ul class="legal-list">
+            <li><strong>No Alojamiento:</strong> No almacenamos, distribuimos ni transmitimos archivos directamente en nuestros servidores.</li>
+            <li><strong>Limitación de Conocimiento:</strong> Debido a la automatización del feed y el volumen de datos, UpGames no ejerce un control previo sobre la legalidad de los enlaces externos.</li>
+            <li><strong>Responsabilidad del Usuario:</strong> El indexador es el único responsable legal del contenido vinculado y de las consecuencias derivadas de su acceso.</li>
+        </ul>
+    </section>
+
+    <section class="term-section">
+        <h2>2. Sistema de Seguridad y Filtrado</h2>
+        <p>Aunque no supervisamos cada link manualmente, aplicamos capas de seguridad proactiva para proteger al ecosistema:</p>
+        <ul class="legal-list">
+            <li><strong>Bot de Keywords:</strong> Sistema automatizado que bloquea términos relacionados con piratería explícita y contenido +18 para advertir a la comunidad.</li>
+            <li><strong>Bot de Integridad:</strong> Filtrado dinámico de enlaces maliciosos, scripts engañosos y archivos ejecutables (.exe) no verificados.</li>
+            <li><strong>Aviso Técnico:</strong> El paso exitoso por estos filtros no garantiza la seguridad total del link externo; el usuario asume el riesgo al abandonar la plataforma.</li>
+        </ul>
+    </section>
+
+    <section class="term-section">
+        <h2>3. Monetización y Prevención de Fraude</h2>
+        <p>UpGames incentiva la curación de datos mediante un sistema de pagos por rendimiento (1 USD por cada 1,000 descargas válidas).</p>
+        <ul class="legal-list">
+            <li><strong>Auditoría de Tráfico:</strong> UpGames se reserva el derecho de auditar y retener pagos si se detecta actividad sospechosa o inorgánica.</li>
+            <li><strong>Fraude Prohibido:</strong> El uso de VPNs, bots, granjas de clics o cualquier manipulación de las estadísticas de descarga resultará en la **anulación total del saldo** y baneo definitivo.</li>
+            <li><strong>Incentivo al Desarrollador:</strong> Los desarrolladores indie pueden publicar software gratuito y monetizarlo legítimamente bajo estas mismas condiciones.</li>
+        </ul>
+    </section>
+
+    <section class="term-section">
+        <h2>4. Derechos de Autor y Retiro (DMCA)</h2>
+        <p>Respetamos la propiedad intelectual y operamos bajo protocolos de **Notice and Takedown**.</p>
+        <p>Para solicitar el retiro de un metadato que infrinja derechos protegidos, el titular debe:</p>
+        <ol style="color: var(--text-dim); font-size: 0.95rem;">
+            <li>Enviar prueba de titularidad legal.</li>
+            <li>Identificar el link específico dentro de UpGames.</li>
+            <li>Dirigir la solicitud a <strong>mr.m0onster@protonmail.com</strong>.</li>
+        </ol>
+        <p>El plazo de procesamiento para desindexar contenido es de 24 a 72 horas hábiles.</p>
+    </section>
+
+    <section class="term-section" style="border-color: var(--danger);">
+        <h2 style="color: var(--danger);">5. Jurisdicción y Validez</h2>
+        <p>Este documento constituye el acuerdo total entre UpGames y el usuario. Se rige por las leyes de la **República de Colombia**. Cualquier disputa será resuelta en los tribunales competentes de dicho país.</p>
+    </section>
+
+    <footer class="legal-footer">
+        <div>&copy; 2026 UpGames - Infraestructura Tecnológica Blindada</div>
+        <a href="mailto:mr.m0onster@protonmail.com" class="contact-btn">CONTACTO LEGAL: mr.m0onster@protonmail.com</a>
+        <p style="margin-top: 20px; opacity: 0.5;">Bogotá, Colombia // Registro de Seguridad v2.0</p>
     </footer>
 </div>
 
