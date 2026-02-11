@@ -122,6 +122,9 @@
             min-height: 1.2em;
             transition: color 0.2s;
         }
+
+        /* ⭐ NUEVO: Ocultar campo email en login */
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -136,16 +139,24 @@
         <div id="form-content">
             <div class="input-group">
                 <label for="user">
-                    <ion-icon name="person-circle-outline"></ion-icon> IDENTIFICADOR DE USUARIO
+                    <ion-icon name="person-circle-outline"></ion-icon> NOMBRE DE USUARIO
                 </label>
-                <input id="user" type="text" placeholder="Usuario" autocomplete="username">
+                <input id="user" type="text" placeholder="Usuario (3-20 caracteres)" autocomplete="username" minlength="3" maxlength="20">
+            </div>
+
+            <!-- ⭐ NUEVO: Campo de email (solo visible en modo registro) -->
+            <div class="input-group hidden" id="email-group">
+                <label for="email">
+                    <ion-icon name="mail-outline"></ion-icon> CORREO ELECTRÓNICO
+                </label>
+                <input id="email" type="email" placeholder="tucorreo@ejemplo.com" autocomplete="email">
             </div>
 
             <div class="input-group">
                 <label for="pass">
-                    <ion-icon name="shield-keyhole-outline"></ion-icon> CLAVE DE ACCESO
+                    <ion-icon name="shield-keyhole-outline"></ion-icon> CONTRASEÑA
                 </label>
-                <input id="pass" type="password" placeholder="••••••••" autocomplete="current-password">
+                <input id="pass" type="password" placeholder="••••••••" autocomplete="current-password" minlength="6">
             </div>
 
             <button id="btnAction">ACCEDER AL ÍNDICE</button>
@@ -172,12 +183,15 @@
         // Cache de selectores
         const els = {
             title: document.getElementById("form-title"),
+            subtitle: document.getElementById("form-subtitle"),
             btn: document.getElementById("btnAction"),
             toggle: document.getElementById("toggle-mode"),
             msg: document.getElementById("msg"),
             text: document.getElementById("switch-text"),
             icon: document.getElementById("main-icon"),
             user: document.getElementById("user"),
+            email: document.getElementById("email"),
+            emailGroup: document.getElementById("email-group"),
             pass: document.getElementById("pass")
         };
 
@@ -185,47 +199,105 @@
             if (localStorage.getItem("user_admin")) window.location.replace(REDIRECT_URL);
         };
 
+        // ⭐ TOGGLE ENTRE LOGIN Y REGISTRO
         els.toggle.onclick = (e) => {
             e.preventDefault();
             isLoginMode = !isLoginMode;
             
-            els.title.innerText = isLoginMode ? "Metadata Index" : "Nuevo Registro";
-            els.btn.innerText = isLoginMode ? "ACCEDER AL ÍNDICE" : "REGISTRAR PERFIL";
-            els.text.innerText = isLoginMode ? "¿No tienes acceso?" : "¿Ya eres miembro?";
-            els.toggle.innerText = isLoginMode ? "Crear cuenta nueva" : "Inicia sesión aquí";
-            els.icon.name = isLoginMode ? "database-outline" : "person-add-outline";
+            if (isLoginMode) {
+                // MODO LOGIN
+                els.title.innerText = "Metadata Index";
+                els.subtitle.innerText = "Librería Digital de Juegos, Apps y Software";
+                els.btn.innerText = "ACCEDER AL ÍNDICE";
+                els.text.innerText = "¿No tienes acceso?";
+                els.toggle.innerText = "Crear cuenta nueva";
+                els.icon.name = "database-outline";
+                els.emailGroup.classList.add("hidden");
+                els.user.placeholder = "Email o nombre de usuario";
+            } else {
+                // MODO REGISTRO
+                els.title.innerText = "Nuevo Registro";
+                els.subtitle.innerText = "Únete a la comunidad UP GAMES";
+                els.btn.innerText = "REGISTRAR PERFIL";
+                els.text.innerText = "¿Ya eres miembro?";
+                els.toggle.innerText = "Inicia sesión aquí";
+                els.icon.name = "person-add-outline";
+                els.emailGroup.classList.remove("hidden");
+                els.user.placeholder = "Usuario (3-20 caracteres)";
+            }
+            
             els.msg.innerText = "";
+            els.user.value = "";
+            els.email.value = "";
+            els.pass.value = "";
         };
 
+        // ⭐ FUNCIÓN PRINCIPAL: LOGIN O REGISTRO
         els.btn.onclick = async () => {
             const usuario = els.user.value.trim();
             const password = els.pass.value.trim();
+            const email = els.email.value.trim();
 
+            // Validaciones
             if (!usuario || !password) {
-                showMsg("⚠️ Ingrese credenciales", "#ff4343");
+                showMsg("⚠️ Completa todos los campos", "#ff4343");
                 return;
             }
 
-            setLoading(true);
-            const endpoint = isLoginMode ? "/auth/login" : "/auth/register";
+            if (isLoginMode) {
+                // LOGIN (acepta email o usuario)
+                await loginUsuario(usuario, password);
+            } else {
+                // REGISTRO (requiere email)
+                if (!email) {
+                    showMsg("⚠️ El email es obligatorio para registro", "#ff4343");
+                    return;
+                }
+                
+                if (usuario.length < 3 || usuario.length > 20) {
+                    showMsg("⚠️ Usuario debe tener 3-20 caracteres", "#ff4343");
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showMsg("⚠️ Contraseña debe tener al menos 6 caracteres", "#ff4343");
+                    return;
+                }
+                
+                if (!email.includes('@') || !email.includes('.')) {
+                    showMsg("⚠️ Email inválido", "#ff4343");
+                    return;
+                }
+                
+                await registrarUsuario(usuario, email, password);
+            }
+        };
 
+        // ⭐ FUNCIÓN: LOGIN
+        async function loginUsuario(identificador, password) {
+            setLoading(true);
+            
             try {
-                const res = await fetch(`${API_URL}${endpoint}`, {
+                const res = await fetch(`${API_URL}/auth/login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ usuario, password })
+                    body: JSON.stringify({ 
+                        usuario: identificador, // Puede ser email o nombre
+                        password 
+                    })
                 });
 
                 const data = await res.json();
 
                 if (data.success) {
+                    // Guardar datos en localStorage
                     localStorage.setItem("token", data.token);
-                    localStorage.setItem("RefreshToken", data.refreshToken || "");
                     localStorage.setItem("user_admin", data.usuario);
+                    localStorage.setItem("email", data.email);
+                    
                     showMsg("✅ ACCESO CONCEDIDO", "#5EFF43");
                     setTimeout(() => window.location.replace(REDIRECT_URL), 500);
                 } else {
-                    // ✅ CORREGIDO: Cambiar data.mensaje a data.error
                     showMsg("❌ " + (data.error || "Error de credenciales"), "#ff4343");
                     setLoading(false);
                 }
@@ -234,7 +306,43 @@
                 showMsg("⚠️ Servidor despertando, reintente en 10s.", "#ff4343");
                 setLoading(false);
             }
-        };
+        }
+
+        // ⭐ FUNCIÓN: REGISTRO
+        async function registrarUsuario(usuario, email, password) {
+            setLoading(true);
+            
+            try {
+                const res = await fetch(`${API_URL}/auth/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        usuario, 
+                        email, 
+                        password 
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    // Guardar datos en localStorage
+                    localStorage.setItem("token", data.token);
+                    localStorage.setItem("user_admin", data.usuario);
+                    localStorage.setItem("email", data.email);
+                    
+                    showMsg("✅ REGISTRO EXITOSO", "#5EFF43");
+                    setTimeout(() => window.location.replace(REDIRECT_URL), 500);
+                } else {
+                    showMsg("❌ " + (data.error || "Error al registrar"), "#ff4343");
+                    setLoading(false);
+                }
+            } catch (error) {
+                console.error("Error de conexión:", error);
+                showMsg("⚠️ Error de conexión. Intenta nuevamente.", "#ff4343");
+                setLoading(false);
+            }
+        }
 
         function showMsg(text, color) {
             els.msg.innerText = text;

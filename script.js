@@ -33,7 +33,7 @@ async function cargarContenido() {
         
         if (loadingState) loadingState.style.display = "none";
         
-        todosLosItems = data.filter(i => i.status === "aprobado");
+        todosLosItems = data;
         renderizar(todosLosItems);
         
         const sharedId = new URLSearchParams(window.location.search).get('id');
@@ -63,7 +63,7 @@ function getVerificadoBadge(nombreUsuario) {
     `;
 }
 
-// 3. RENDERIZADO DE ALTO RENDIMIENTO CON LINKSTATUS
+// 3. RENDERIZADO DE ALTO RENDIMIENTO CON LINKSTATUS Y DESCARGAS
 function renderizar(lista) {
     output.innerHTML = lista.length ? "" : `
         <div class="no-results">
@@ -94,6 +94,14 @@ function renderizar(lista) {
         
         const nivelAutor = mapaUsuarios[item.usuario] || 0;
 
+        // ⭐ NUEVO: Mostrar descargas efectivas
+        const descargasEfectivas = item.descargasEfectivas || 0;
+        const descargasTexto = descargasEfectivas > 0 ? 
+            `<div style="display:flex; align-items:center; gap:5px; color:#888; font-size:0.7rem; margin-top:5px;">
+                <ion-icon name="download-outline" style="font-size:0.9rem;"></ion-icon>
+                <span>${formatNumber(descargasEfectivas)} descargas</span>
+            </div>` : '';
+
         card.innerHTML = `
             <div class="status-badge ${isOnline ? 'status-online' : 'status-review'}">
                 <ion-icon name="${statusIcon}"></ion-icon>
@@ -112,6 +120,7 @@ function renderizar(lista) {
                     <span class="category-badge">${item.category || 'Gral'}</span>
                 </div>
                 <h4 class="juego-titulo">${item.title}</h4>
+                ${descargasTexto}
                 <div class="social-actions">
                     <button class="action-btn btn-fav" data-id="${item._id}"><ion-icon name="heart-sharp"></ion-icon></button>
                     <button class="action-btn btn-share" data-id="${item._id}"><ion-icon name="share-social-sharp"></ion-icon></button>
@@ -120,7 +129,7 @@ function renderizar(lista) {
                 <p class="cloud-note">${item.description || 'Sin descripción.'}</p>
                 
                 <div class="boton-descargar-full" style="position:relative; cursor:pointer;">
-                    <a href="puente.html?dest=${encodeURIComponent(item.link)}" target="_blank" 
+                    <a href="puente.html?id=${item._id}" target="_blank" 
                        style="position:absolute; top:0; left:0; width:100%; height:100%; text-decoration:none; color:inherit; display:flex; align-items:center; justify-content:center;"
                        onclick="event.stopPropagation();">
                        ACCEDER A LA NUBE
@@ -207,25 +216,44 @@ function renderizar(lista) {
     output.appendChild(fragment);
 }
 
-// Cerrar overlay
-if (overlay) {
-    overlay.addEventListener('click', function() {
-        document.querySelectorAll('.juego-card.expandida').forEach(c => c.classList.remove('expandida'));
-        overlay.style.display = "none";
-        document.body.style.overflow = "auto";
+// ⭐ HELPER: Formatear números (ej: 1000 → 1K)
+function formatNumber(num) {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+}
+
+// ==========================================
+// 4. BUSCADOR EN TIEMPO REAL
+// ==========================================
+if (buscador) {
+    buscador.addEventListener("input", (e) => {
+        const busqueda = e.target.value.toLowerCase().trim();
+        
+        if (!busqueda) {
+            renderizar(todosLosItems);
+            return;
+        }
+        
+        const filtrados = todosLosItems.filter(i => 
+            i.title?.toLowerCase().includes(busqueda) ||
+            i.description?.toLowerCase().includes(busqueda) ||
+            i.category?.toLowerCase().includes(busqueda) ||
+            i.usuario?.toLowerCase().includes(busqueda)
+        );
+        
+        renderizar(filtrados);
     });
 }
 
-// 4. BÚSQUEDA EN TIEMPO REAL
-if (buscador) {
-    buscador.addEventListener("input", function(e) {
-        const q = e.target.value.toLowerCase().trim();
-        const filtrados = q === "" ? todosLosItems : todosLosItems.filter(i =>
-            (i.title || "").toLowerCase().includes(q) || 
-            (i.usuario || "").toLowerCase().includes(q) ||
-            (i.category || "").toLowerCase().includes(q)
-        );
-        renderizar(filtrados);
+// Cerrar cards expandidas al hacer clic en overlay
+if (overlay) {
+    overlay.addEventListener('click', () => {
+        document.querySelectorAll('.juego-card.expandida').forEach(card => {
+            card.classList.remove('expandida');
+        });
+        overlay.style.display = 'none';
+        document.body.style.overflow = 'auto';
     });
 }
 
@@ -235,24 +263,36 @@ if (buscador) {
 async function fav(id) {
     const user = localStorage.getItem("user_admin");
     if (!user) {
-        if (confirm("Debes iniciar sesión para guardar favoritos.\n¿Ir a Login?")) {
-            window.location.href = "./puente.html";
-        }
+        showMiniToast("⚠️ Debes iniciar sesión para guardar favoritos");
         return;
     }
-    
+
     try {
-        const r = await fetch(`${API_URL}/favoritos/add`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuario: user, itemId: id })
-        });
-        
-        if (r.ok) {
-            showMiniToast("❤️ Guardado en favoritos");
+        const existe = await fetch(`${API_URL}/favoritos/${user}`);
+        const favs = await existe.json();
+        const yaExiste = favs.some(f => f._id === id);
+
+        if (yaExiste) {
+            const response = await fetch(`${API_URL}/favoritos/remove`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario: user, itemId: id })
+            });
+
+            if (response.ok) {
+                showMiniToast("💔 Eliminado de favoritos");
+            }
         } else {
-            const errData = await r.json();
-            if (errData.error && errData.error.includes("Ya está")) {
+            const response = await fetch(`${API_URL}/favoritos/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario: user, itemId: id })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showMiniToast("💚 Guardado en favoritos");
+            } else if (response.status === 400) {
                 showMiniToast("Ya está en tus favoritos");
             } else {
                 showMiniToast("Error al guardar");

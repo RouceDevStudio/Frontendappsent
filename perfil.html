@@ -1014,6 +1014,8 @@
             <div class="tab" onclick="switchTab('boveda')">
                 <ion-icon name="shield-checkmark"></ion-icon> BÓVEDA
             </div>
+            
+            
         </nav>
     </header>
 
@@ -1365,6 +1367,183 @@
             </div>
         </div>
     </div>
+    
+    <div class="economia-card" style="
+    background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+    border: 1px solid rgba(94, 255, 67, 0.2);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+">
+    <h3 style="
+        color: var(--primary);
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    ">
+        <ion-icon name="cash-outline" style="font-size: 1.5rem;"></ion-icon>
+        MI ECONOMÍA
+    </h3>
+
+    <!-- Saldo Disponible -->
+    <div style="
+        background: rgba(94, 255, 67, 0.05);
+        border: 1px solid rgba(94, 255, 67, 0.2);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 15px;
+        text-align: center;
+    ">
+        <div style="font-size: 0.75rem; color: #888; margin-bottom: 5px;">SALDO DISPONIBLE</div>
+        <div id="saldo-display" style="
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(94, 255, 67, 0.3);
+        ">$0.00</div>
+        <div style="font-size: 0.7rem; color: #666; margin-top: 5px;">USD</div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div style="
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 15px;
+    ">
+        <div style="
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        ">
+            <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);" id="descargas-totales">0</div>
+            <div style="font-size: 0.65rem; color: #888; margin-top: 3px;">DESCARGAS TOTALES</div>
+        </div>
+        
+        <div style="
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        ">
+            <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);" id="juegos-elegibles">0</div>
+            <div style="font-size: 0.65rem; color: #888; margin-top: 3px;">JUEGOS +2K VISTAS</div>
+        </div>
+    </div>
+
+    <!-- Estado de verificación -->
+    <div id="estado-verificacion" style="
+        background: rgba(255, 204, 0, 0.1);
+        border: 1px solid rgba(255, 204, 0, 0.3);
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 15px;
+        display: none;
+    ">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #ffcc00;">
+            <ion-icon name="alert-circle" style="font-size: 1.2rem;"></ion-icon>
+            <span id="verificacion-msg">Necesitas verificación nivel 1+ para monetizar</span>
+        </div>
+    </div>
+
+    <!-- Email de PayPal -->
+    <div style="margin-bottom: 15px;">
+        <label style="
+            display: block;
+            color: #888;
+            font-size: 0.7rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        ">
+            <ion-icon name="logo-paypal"></ion-icon> EMAIL DE PAYPAL
+        </label>
+        <div style="display: flex; gap: 8px;">
+            <input 
+                type="email" 
+                id="paypal-email-input" 
+                placeholder="tucorreo@paypal.com"
+                style="
+                    flex: 1;
+                    padding: 10px;
+                    background: #000;
+                    border: 1px solid #333;
+                    border-radius: 8px;
+                    color: white;
+                    font-size: 0.85rem;
+                "
+            >
+            <button 
+                id="btn-guardar-paypal"
+                style="
+                    padding: 10px 20px;
+                    background: var(--primary);
+                    color: #000;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    font-size: 0.75rem;
+                "
+            >GUARDAR</button>
+        </div>
+    </div>
+
+    <!-- Botón de solicitar pago -->
+    <button 
+        id="btn-solicitar-pago"
+        disabled
+        style="
+            width: 100%;
+            padding: 15px;
+            background: #333;
+            color: #666;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: not-allowed;
+            transition: all 0.3s;
+        "
+    >
+        SOLICITAR PAGO (Mínimo $10 USD)
+    </button>
+
+    <!-- Estado de solicitud pendiente -->
+    <div id="solicitud-pendiente" style="
+        background: rgba(94, 255, 67, 0.1);
+        border: 1px solid rgba(94, 255, 67, 0.3);
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 15px;
+        display: none;
+    ">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--primary);">
+            <ion-icon name="checkmark-circle" style="font-size: 1.2rem;"></ion-icon>
+            <span>Tienes una solicitud de pago pendiente de revisión</span>
+        </div>
+    </div>
+
+    <!-- Info -->
+    <div style="
+        margin-top: 15px;
+        padding: 10px;
+        background: rgba(255,255,255,0.02);
+        border-radius: 8px;
+        font-size: 0.65rem;
+        color: #666;
+        line-height: 1.4;
+    ">
+        <strong style="color: var(--primary);">💡 Requisitos para cobrar:</strong><br>
+        • Saldo mínimo: $10 USD<br>
+        • Verificación nivel 1+<br>
+        • Al menos 1 juego con +2,000 descargas<br>
+        • Email de PayPal configurado
+    </div>
+</div>
 
     <!-- Scripts -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
@@ -1492,6 +1671,147 @@
             mostrarUsuarioVerificado();
             cargarEstadoActual();
         });
+        
+        
+        // ⭐ FUNCIÓN: CARGAR DATOS DE ECONOMÍA
+async function cargarDatosEconomia() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.log('No hay token, usuario no logueado');
+        return;
+    }
+
+    try {
+        const response = await fetch('https://backendapp-037y.onrender.com/economia/mi-saldo', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            console.error('Error al obtener datos económicos');
+            return;
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Actualizar saldo
+            document.getElementById('saldo-display').innerText = `$${data.saldo.toFixed(2)}`;
+            
+            // Actualizar descargas totales
+            document.getElementById('descargas-totales').innerText = formatNumber(data.descargasTotales);
+            
+            // Actualizar juegos elegibles
+            document.getElementById('juegos-elegibles').innerText = data.juegosElegibles;
+            
+            // Actualizar email de PayPal
+            if (data.paypalEmail) {
+                document.getElementById('paypal-email-input').value = data.paypalEmail;
+            }
+
+            // Mostrar advertencia si no está verificado
+            if (!data.isVerificado || data.verificadoNivel < 1) {
+                document.getElementById('estado-verificacion').style.display = 'block';
+            }
+
+            // Mostrar si tiene solicitud pendiente
+            if (data.solicitudPagoPendiente) {
+                document.getElementById('solicitud-pendiente').style.display = 'block';
+                document.getElementById('btn-solicitar-pago').disabled = true;
+            } else if (data.puedeRetirar) {
+                // Habilitar botón de pago
+                const btnPago = document.getElementById('btn-solicitar-pago');
+                btnPago.disabled = false;
+                btnPago.style.background = 'var(--primary)';
+                btnPago.style.color = '#000';
+                btnPago.style.cursor = 'pointer';
+            }
+
+            console.log('✅ Datos económicos cargados:', data);
+        }
+    } catch (error) {
+        console.error('Error al cargar datos económicos:', error);
+    }
+}
+
+// ⭐ FUNCIÓN: GUARDAR EMAIL DE PAYPAL
+document.getElementById('btn-guardar-paypal').addEventListener('click', async () => {
+    const token = localStorage.getItem('token');
+    const paypalEmail = document.getElementById('paypal-email-input').value.trim();
+
+    if (!paypalEmail) {
+        alert('⚠️ Ingresa un email de PayPal válido');
+        return;
+    }
+
+    if (!paypalEmail.includes('@') || !paypalEmail.includes('.')) {
+        alert('⚠️ Email inválido');
+        return;
+    }
+
+    try {
+        const response = await fetch('https://backendapp-037y.onrender.com/economia/actualizar-paypal', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ paypalEmail })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('✅ Email de PayPal actualizado correctamente');
+        } else {
+            alert('❌ ' + (data.error || 'Error al actualizar'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error de conexión');
+    }
+});
+
+// ⭐ FUNCIÓN: SOLICITAR PAGO
+document.getElementById('btn-solicitar-pago').addEventListener('click', async () => {
+    if (!confirm('¿Confirmas que deseas solicitar un pago? El administrador revisará tu solicitud.')) {
+        return;
+    }
+
+    const token = localStorage.getItem('token');
+
+    try {
+        const response = await fetch('https://backendapp-037y.onrender.com/economia/solicitar-pago', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('✅ ' + data.mensaje);
+            cargarDatosEconomia(); // Recargar datos
+        } else {
+            alert('❌ ' + (data.error || 'Error al solicitar pago'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error de conexión');
+    }
+});
+
+// ⭐ HELPER: Formatear números
+function formatNumber(num) {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+}
+
+// ⭐ CARGAR DATOS AL INICIAR
+cargarDatosEconomia();
     </script>
 </body>
 </html>

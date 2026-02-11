@@ -155,7 +155,7 @@ async function cargarEstadoActual() {
     }
     
     try {
-        const res = await fetch(`${API_URL}/items`);
+        const res = await fetch(`${API_URL}/items/usuario/${usuarioLogueado}`)
         const data = await res.json();
         const listaBruta = Array.isArray(data) ? data : [];
         const misAportes = listaBruta.filter(item => item.usuario === usuarioLogueado);
@@ -582,7 +582,7 @@ async function cargarBoveda() {
                     </p>
                     
                     <div class="vault-item-actions" style="display: flex; gap: 10px;">
-                        <button onclick="window.open('puente.html?dest=${encodeURIComponent(safeLink)}', '_blank')" style="
+                        <button onclick="window.open('puente.html?id=${itemId}', '_blank')" style="
                             flex: 1;
                             background: var(--primary);
                             color: #000;
@@ -598,7 +598,7 @@ async function cargarBoveda() {
                             gap: 5px;
                             transition: all 0.2s;
                         " onmouseover="this.style.background='#4EDF33'" onmouseout="this.style.background='var(--primary)'">
-                            <ion-icon name="cloud-download"></ion-icon> Ver
+                            <ion-icon name="cloud-download"></ion-icon> Acceder
                         </button>
                         <button onclick="eliminarDeBoveda('${itemId}')" style="
                             flex: 1;
