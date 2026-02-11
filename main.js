@@ -742,20 +742,18 @@ async function cargarEstadisticasPerfil() {
             await cargarEstadisticasAlternativo();
         }
         
-        // Cargar número de publicaciones aprobadas
-        const itemsRes = await fetch(`${API_URL}/items`);
+        // Cargar número de publicaciones aprobadas usando endpoint específico del usuario
+        const itemsRes = await fetch(`${API_URL}/items/user/${usuarioLogueado}`);
         if (itemsRes.ok) {
             const itemsData = await itemsRes.json();
-            const allItems = itemsData 
-                ? (Array.isArray(itemsData) ? itemsData : (Array.isArray(itemsData.items) ? itemsData.items : []))
-                : [];
+            const allItems = Array.isArray(itemsData) ? itemsData : [];
             
             // Contar solo publicaciones aprobadas del usuario
             const publicacionesUsuario = allItems.filter(item => 
-                item.usuario === usuarioLogueado && item.status === 'aprobado'
+                item.status === 'aprobado'
             );
             
-            console.log(`📦 Publicaciones: ${publicacionesUsuario.length}`);
+            console.log(`📦 Publicaciones aprobadas: ${publicacionesUsuario.length} de ${allItems.length} totales`);
             document.getElementById('stat-uploads').textContent = publicacionesUsuario.length;
         }
         
@@ -827,9 +825,9 @@ async function cargarEstadoActual() {
     }
     
     try {
-        const res = await fetch(`${API_URL}/items`);
+        const res = await fetch(`${API_URL}/items/user/${usuarioLogueado}`);
         const data = await res.json();
-        const misAportes = Array.isArray(data) ? data.filter(item => item.usuario === usuarioLogueado) : [];
+        const misAportes = Array.isArray(data) ? data : [];
         
         if (misAportes.length === 0) {
             container.innerHTML = `
@@ -841,13 +839,20 @@ async function cargarEstadoActual() {
             return;
         }
         
-        // Renderizar con opciones de editar/eliminar
+        // Renderizar con opciones de editar/eliminar Y estadísticas
         container.innerHTML = "";
         misAportes.reverse().forEach(item => {
             const isPending = item.status === 'pendiente' || item.status === 'pending';
             const statusClass = isPending ? 'status-pending' : 'status-approved';
             const statusText = isPending ? 'Pendiente' : 'Aprobado';
             const statusIcon = isPending ? 'time' : 'checkmark-circle';
+            
+            // ⭐ AGREGAR ESTADÍSTICAS DE DESCARGAS
+            const descargas = item.descargasEfectivas || 0;
+            const linkStatus = item.linkStatus || 'online';
+            const linkStatusText = linkStatus === 'online' ? '🟢 Online' : 
+                                   linkStatus === 'revision' ? '🟡 En Revisión' : 
+                                   '🔴 Caído';
 
             const card = document.createElement('div');
             card.className = 'item-card';
@@ -862,6 +867,23 @@ async function cargarEstadoActual() {
                 <div class="item-info">
                     <h4 class="item-title">${item.title || 'Sin título'}</h4>
                     <p class="item-category">${item.category || 'General'}</p>
+                    
+                    <!-- ⭐ ESTADÍSTICAS DE LA PUBLICACIÓN -->
+                    <div style="display: flex; gap: 15px; margin: 10px 0; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                        <div style="flex: 1; text-align: center;">
+                            <div style="font-size: 1.2rem; font-weight: bold; color: #5EFF43;">${descargas}</div>
+                            <div style="font-size: 0.65rem; color: #888;">DESCARGAS</div>
+                        </div>
+                        <div style="flex: 1; text-align: center;">
+                            <div style="font-size: 0.75rem; font-weight: bold;">${linkStatusText}</div>
+                            <div style="font-size: 0.65rem; color: #888;">ESTADO LINK</div>
+                        </div>
+                        <div style="flex: 1; text-align: center;">
+                            <div style="font-size: 0.75rem; font-weight: bold; color: ${item.reportes >= 3 ? '#ff4444' : '#888'};">${item.reportes || 0}</div>
+                            <div style="font-size: 0.65rem; color: #888;">REPORTES</div>
+                        </div>
+                    </div>
+                    
                     <div class="item-actions">
                         <button class="btn-action btn-edit" onclick="openEditModal('${item._id}')">
                             <ion-icon name="create"></ion-icon>

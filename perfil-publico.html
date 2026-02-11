@@ -466,15 +466,14 @@
         // ✅ CARGAR PUBLICACIONES
         async function cargarPublicaciones() {
             try {
-                const response = await fetchAPI(`${API_URL}/items`);
+                const response = await fetchAPI(`${API_URL}/items/user/${usuarioViendo}`);
                 
-                const allItems = Array.isArray(response) ? response : (response.items || []);
-                
-                // Filtrar publicaciones del usuario (case-insensitive)
-                const itemsUsuario = allItems.filter(item => 
-                    item.usuario.toLowerCase() === usuarioViendo.toLowerCase() && 
-                    item.status === 'aprobado'
-                );
+                // ⭐ Si el usuario viendo es el autor, mostrar TODAS sus publicaciones (incluyendo caídas)
+                // Si es otro usuario, solo mostrar las aprobadas
+                const esAutor = usuarioActual && usuarioActual.toLowerCase() === usuarioViendo.toLowerCase();
+                const itemsUsuario = Array.isArray(response) 
+                    ? (esAutor ? response : response.filter(item => item.status === 'aprobado'))
+                    : [];
 
                 console.log(`📦 Publicaciones de ${usuarioViendo}:`, itemsUsuario.length);
 
@@ -494,6 +493,13 @@
                 container.innerHTML = '';
 
                 itemsUsuario.forEach(item => {
+                    // ⭐ AGREGAR ESTADÍSTICAS DE DESCARGAS
+                    const descargas = item.descargasEfectivas || 0;
+                    const linkStatus = item.linkStatus || 'online';
+                    const linkStatusText = linkStatus === 'online' ? '🟢 Online' : 
+                                           linkStatus === 'revision' ? '🟡 En Revisión' : 
+                                           '🔴 Caído';
+
                     const card = document.createElement('div');
                     card.className = 'item-card';
                     card.onclick = () => {
@@ -507,6 +513,18 @@
                         <div class="item-info">
                             <div class="item-title">${item.title}</div>
                             <div class="item-category">${item.category || 'General'}</div>
+                            
+                            <!-- ⭐ ESTADÍSTICAS DE LA PUBLICACIÓN -->
+                            <div style="display: flex; gap: 10px; margin-top: 8px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 6px; font-size: 0.7rem;">
+                                <div style="flex: 1; text-align: center;">
+                                    <div style="font-weight: bold; color: #5EFF43;">${descargas}</div>
+                                    <div style="color: #888; font-size: 0.6rem;">DESCARGAS</div>
+                                </div>
+                                <div style="flex: 1; text-align: center;">
+                                    <div style="font-weight: bold; font-size: 0.65rem;">${linkStatusText}</div>
+                                    <div style="color: #888; font-size: 0.6rem;">ESTADO</div>
+                                </div>
+                            </div>
                         </div>
                     `;
 
