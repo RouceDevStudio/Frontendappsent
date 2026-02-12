@@ -29,34 +29,242 @@
         </div>
     </header>
 
-    <!-- LOADING STATE -->
-    <div id="loading-state" style="
-        position: fixed;
-        top: 50%;
-        left: 50%;
+    <!-- PRELOADER UPGAMES — ANIMACIÓN VISUAL -->
+    <div id="upgames-preloader">
+        <div class="pl-bg-glow"></div>
+
+        <div class="pl-center">
+
+            <!-- Logo animado -->
+            <div class="pl-logo-wrap">
+                <div class="pl-logo-ring"></div>
+                <div class="pl-logo-ring pl-ring-2"></div>
+                <div class="pl-logo-text">
+                    <span class="pl-up">UP</span><span class="pl-gm">GAMES</span>
+                </div>
+            </div>
+
+            <!-- Partículas flotantes decorativas -->
+            <div class="pl-particles">
+                <span class="pl-dot" style="--x:20%;--y:30%;--d:1.2s"></span>
+                <span class="pl-dot" style="--x:80%;--y:20%;--d:0.8s"></span>
+                <span class="pl-dot" style="--x:15%;--y:70%;--d:1.6s"></span>
+                <span class="pl-dot" style="--x:75%;--y:65%;--d:0.5s"></span>
+                <span class="pl-dot" style="--x:50%;--y:85%;--d:1.0s"></span>
+                <span class="pl-dot pl-dot-blue" style="--x:35%;--y:15%;--d:0.7s"></span>
+                <span class="pl-dot pl-dot-blue" style="--x:88%;--y:50%;--d:1.4s"></span>
+            </div>
+
+            <!-- Barra de progreso minimalista -->
+            <div class="pl-bar-track">
+                <div class="pl-bar-fill" id="pl-bar"></div>
+            </div>
+
+            <p class="pl-tagline" id="pl-tagline">LA NUBE DE CONTENIDO</p>
+        </div>
+    </div>
+
+    <!-- LOADING STATE (fallback mientras el preloader cierra y el backend aún carga) -->
+    <div id="loading-state" style="display:none;
+        position: fixed; top: 50%; left: 50%;
         transform: translate(-50%, -50%);
-        text-align: center;
-        z-index: 9999;
-    ">
-        <div style="
-            width: 60px;
-            height: 60px;
-            border: 4px solid #333;
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        "></div>
-        <p style="color: var(--primary); font-size: 0.9rem; font-weight: bold;">
-            CARGANDO NUBE DE ARCHIVOS...
+        text-align: center; z-index: 9999;">
+        <div style="width:50px;height:50px;border:3px solid #222;
+            border-top-color:#5EFF43;border-radius:50%;
+            animation:spin 0.9s linear infinite;margin:0 auto 16px;"></div>
+        <p style="color:#5EFF43;font-size:0.8rem;font-weight:700;letter-spacing:2px;">
+            CARGANDO NUBE...
         </p>
     </div>
 
     <style>
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ━━━━━━━━━━━━━━━━━━━━ PRELOADER ━━━━━━━━━━━━━━━━━━━━ */
+        #upgames-preloader {
+            position: fixed;
+            inset: 0;
+            background: #080808;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        #upgames-preloader.ocultar {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Resplandor de fondo */
+        .pl-bg-glow {
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(94,255,67,0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: plGlowPulse 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes plGlowPulse {
+            0%, 100% { transform: scale(1);   opacity: 0.6; }
+            50%       { transform: scale(1.15); opacity: 1;   }
+        }
+
+        /* Contenedor central */
+        .pl-center {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 36px;
+        }
+
+        /* Logo con aros giratorios */
+        .pl-logo-wrap {
+            position: relative;
+            width: 140px; height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pl-logo-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 1.5px solid transparent;
+            border-top-color: #5EFF43;
+            border-right-color: rgba(94,255,67,0.2);
+            animation: plSpin 2.2s linear infinite;
+        }
+        .pl-ring-2 {
+            inset: 14px;
+            border-top-color: transparent;
+            border-bottom-color: #00f2ff;
+            border-left-color: rgba(0,242,255,0.2);
+            animation: plSpinRev 3s linear infinite;
+        }
+        @keyframes plSpin    { to { transform: rotate(360deg);  } }
+        @keyframes plSpinRev { to { transform: rotate(-360deg); } }
+
+        /* Texto del logo */
+        .pl-logo-text {
+            font-size: 1.6rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            animation: plLogoPulse 2s ease-in-out infinite;
+            user-select: none;
+        }
+        .pl-up { color: #5EFF43; text-shadow: 0 0 18px rgba(94,255,67,0.7); }
+        .pl-gm { color: #fff; }
+        @keyframes plLogoPulse {
+            0%, 100% { opacity: 1;    transform: scale(1);    }
+            50%       { opacity: 0.85; transform: scale(0.97); }
+        }
+
+        /* Partículas */
+        .pl-particles { position: fixed; inset: 0; pointer-events: none; }
+        .pl-dot {
+            position: absolute;
+            left: var(--x);
+            top: var(--y);
+            width: 4px; height: 4px;
+            background: rgba(94,255,67,0.5);
+            border-radius: 50%;
+            animation: plFloat var(--d, 1s) ease-in-out infinite alternate;
+            box-shadow: 0 0 6px rgba(94,255,67,0.4);
+        }
+        .pl-dot-blue {
+            background: rgba(0,242,255,0.5);
+            box-shadow: 0 0 6px rgba(0,242,255,0.4);
+        }
+        @keyframes plFloat {
+            from { transform: translateY(0px)  scale(1);    opacity: 0.4; }
+            to   { transform: translateY(-14px) scale(1.3); opacity: 1;   }
+        }
+
+        /* Barra de progreso */
+        .pl-bar-track {
+            width: 200px; height: 2px;
+            background: #1a1a1a;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .pl-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #5EFF43, #00f2ff);
+            border-radius: 10px;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(94,255,67,0.6);
+        }
+
+        /* Tagline */
+        .pl-tagline {
+            color: #2a2a2a;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            animation: plTagFade 2s ease-in-out infinite alternate;
+        }
+        @keyframes plTagFade {
+            from { color: #222; }
+            to   { color: #444; }
         }
     </style>
+
+    <script>
+    // ═══════════════════════════════════════════
+    // LÓGICA DEL PRELOADER
+    // El preloader y la petición al backend arrancan
+    // al mismo tiempo. La barra avanza sola hasta 85%
+    // y se "congela" esperando al backend.
+    // Cuando el backend responde, salta a 100% y cierra.
+    // ═══════════════════════════════════════════
+    (function initPreloader() {
+        const preloader = document.getElementById('upgames-preloader');
+        const bar       = document.getElementById('pl-bar');
+        const tagline   = document.getElementById('pl-tagline');
+
+        let cerrado = false;
+
+        // Avance automático de la barra: llega a 85% en ~3s
+        const etapas = [
+            { pct: 20, delay: 300  },
+            { pct: 40, delay: 700  },
+            { pct: 60, delay: 1200 },
+            { pct: 75, delay: 1900 },
+            { pct: 85, delay: 2600 },
+        ];
+
+        etapas.forEach(({ pct, delay }) => {
+            setTimeout(() => {
+                if (!cerrado) bar.style.width = pct + '%';
+            }, delay);
+        });
+
+        // Llamada desde script.js cuando el backend responde
+        window.preloaderTerminar = function() {
+            if (cerrado) return;
+            cerrado = true;
+            bar.style.width = '100%';
+            tagline.textContent = '¡BIENVENIDO!';
+            tagline.style.color = '#5EFF43';
+            setTimeout(() => preloader.classList.add('ocultar'), 420);
+        };
+
+        // Fallback: cerrar a los 12s pase lo que pase
+        setTimeout(() => {
+            if (!cerrado) {
+                cerrado = true;
+                preloader.classList.add('ocultar');
+            }
+        }, 12000);
+    })();
+    </script>
 
     <!-- GRID DE ARCHIVOS -->
     <div id="output"></div>
