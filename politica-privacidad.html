@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad | UpGames</title>
+    <style>
+        :root {
+            --bg: #030303;
+            --surface: #0a0a0a;
+            --accent: #00f2ff;
+            --success: #39ff14;
+            --text-main: #ffffff;
+            --text-dim: #888888;
+            --border: #1a1a1a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .header {
+            text-align: left;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+        h1 {
+            font-size: 3rem;
+            margin: 0;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+        }
+        .version {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+        }
+        h2 {
+            color: var(--accent);
+            font-size: 1.2rem;
+            margin-top: 0;
+        }
+        .important {
+            background: rgba(255, 184, 0, 0.08);
+            border-left: 4px solid #ffb800;
+            padding: 15px;
+            margin: 15px 0;
+            color: #ffd966;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        .contact {
+            background: rgba(57, 255, 20, 0.1);
+            border: 1px solid var(--success);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header class="header">
+        <h1>🔒 POLÍTICA DE PRIVACIDAD</h1>
+        <div class="version">Versión 1.0 | Última actualización: 13 de Febrero, 2026</div>
+        <div style="color: var(--text-dim); margin-top: 10px;">
+            UpGames - Plataforma de Indexación de Metadatos
+        </div>
+    </header>
+
+    <div class="important">
+        <strong>📋 RESUMEN EJECUTIVO:</strong> UpGames recopila información mínima necesaria para operar el servicio. Tus datos personales NUNCA se venden a terceros. Esta política cumple con GDPR (Europa), LGPD (Brasil) y CCPA (California).
+    </div>
+
+    <section class="section">
+        <h2>1. Responsable del Tratamiento de Datos</h2>
+        <p><strong>Operador:</strong> Jhonatan David Castro Galviz</p>
+        <p><strong>Cédula de Ciudadanía:</strong> 1032940198</p>
+        <p><strong>Domicilio:</strong> Colombia</p>
+        <p><strong>Contacto de Privacidad:</strong> <a href="mailto:mr.m0onster@protonmail.com">mr.m0onster@protonmail.com</a></p>
+    </section>
+
+    <section class="section">
+        <h2>2. Datos que Recopilamos</h2>
+        
+        <h3 style="color: var(--text-main); margin-top: 20px;">2.1 Datos de Registro (Obligatorios)</h3>
+        <ul>
+            <li><strong>Nombre de usuario:</strong> Identificador único elegido por ti (3-20 caracteres)</li>
+            <li><strong>Email:</strong> Para autenticación, recuperación de cuenta y notificaciones críticas</li>
+            <li><strong>Contraseña:</strong> Almacenada con hash bcrypt (nunca guardamos contraseñas en texto plano)</li>
+        </ul>
+
+        <h3 style="color: var(--text-main); margin-top: 20px;">2.2 Datos de Monetización (Opcionales)</h3>
+        <ul>
+            <li><strong>Email de PayPal:</strong> Solo si deseas recibir pagos por descargas de tus juegos indexados</li>
+            <li><strong>Datos de verificación:</strong> Nivel de verificación (0-3) asignado por administradores</li>
+        </ul>
+
+        <h3 style="color: var(--text-main); margin-top: 20px;">2.3 Datos Técnicos (Automáticos)</h3>
+        <ul>
+            <li><strong>Dirección IP:</strong> Para detección de fraude y límites anti-bots (2 descargas por IP por día)</li>
+            <li><strong>User-Agent:</strong> Navegador y sistema operativo (para compatibilidad)</li>
+            <li><strong>Timestamps:</strong> Fecha y hora de acciones (subida de juegos, descargas, logins)</li>
+            <li><strong>Logs de actividad:</strong> Actividades sospechosas para prevención de fraude</li>
+        </ul>
+
+        <h3 style="color: var(--text-main); margin-top: 20px;">2.4 Datos de Contenido Indexado</h3>
+        <ul>
+            <li><strong>Metadatos de juegos:</strong> Título, descripción, imagen, enlace externo, categoría, tags</li>
+            <li><strong>Estadísticas:</strong> Número de descargas efectivas, reportes de enlaces caídos</li>
+        </ul>
+
+        <div class="important">
+            <strong>⚠️ IMPORTANTE:</strong> UpGames NO almacena archivos de juegos. Solo indexamos enlaces externos a servicios de terceros (Mega, MediaFire, Google Drive, etc.).
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>3. Finalidad del Tratamiento de Datos</h2>
+        <p>Utilizamos tus datos personales EXCLUSIVAMENTE para:</p>
+        <ul>
+            <li><strong>Autenticación:</strong> Verificar tu identidad al iniciar sesión</li>
+            <li><strong>Seguridad:</strong> Detectar y prevenir fraude, spam, y actividad maliciosa</li>
+            <li><strong>Monetización:</strong> Calcular y procesar pagos por descargas efectivas verificadas</li>
+            <li><strong>Comunicación:</strong> Enviar notificaciones críticas (cambios en términos, alertas de seguridad)</li>
+            <li><strong>Cumplimiento Legal:</strong> Responder a solicitudes DMCA y órdenes judiciales</li>
+            <li><strong>Mejora del Servicio:</strong> Análisis agregado y anónimo de tendencias</li>
+        </ul>
+    </section>
+
+    <section class="section">
+        <h2>4. Compartir Datos con Terceros</h2>
+        
+        <h3 style="color: var(--text-main);">4.1 Servicios que Pueden Recibir Tus Datos</h3>
+        <ul>
+            <li><strong>PayPal:</strong> Tu email de PayPal se comparte con PayPal Inc. para procesar pagos</li>
+            <li><strong>MongoDB Atlas:</strong> Base de datos alojada en servidores AWS (cifrados en reposo)</li>
+            <li><strong>Render.com:</strong> Hosting del backend (logs de servidor)</li>
+            <li><strong>GitHub Pages:</strong> Hosting del frontend (sin datos sensibles)</li>
+        </ul>
+
+        <h3 style="color: var(--text-main); margin-top: 20px;">4.2 NUNCA Compartimos Datos Para:</h3>
+        <ul>
+            <li>❌ Publicidad dirigida o perfilado</li>
+            <li>❌ Venta a brokers de datos</li>
+            <li>❌ Marketing de terceros no afiliados</li>
+            <li>❌ Análisis de comportamiento para fines comerciales ajenos a UpGames</li>
+        </ul>
+
+        <div class="important">
+            <strong>🔒 GARANTÍA:</strong> Tus datos personales NUNCA se venden, alquilan o intercambian con terceros para marketing.
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>5. Retención de Datos</h2>
+        <ul>
+            <li><strong>Datos de cuenta:</strong> Mientras tu cuenta esté activa + 1 año después de eliminación</li>
+            <li><strong>IPs de descargas:</strong> 24 horas (auto-eliminación mediante TTL de MongoDB)</li>
+            <li><strong>Logs de actividad sospechosa:</strong> 90 días (para análisis de patrones)</li>
+            <li><strong>Historial de pagos:</strong> 7 años (obligación fiscal)</li>
+            <li><strong>Contenido indexado:</strong> Hasta que lo elimines o sea removido por DMCA</li>
+        </ul>
+    </section>
+
+    <section class="section">
+        <h2>6. Tus Derechos (GDPR, LGPD, CCPA)</h2>
+        <p>Como usuario, tienes derecho a:</p>
+        
+        <ul>
+            <li><strong>✓ Acceso:</strong> Solicitar una copia de todos tus datos personales en formato JSON</li>
+            <li><strong>✓ Rectificación:</strong> Corregir datos incorrectos o desactualizados</li>
+            <li><strong>✓ Eliminación ("Derecho al Olvido"):</strong> Borrar tu cuenta y datos asociados</li>
+            <li><strong>✓ Portabilidad:</strong> Exportar tus datos en formato legible por máquina</li>
+            <li><strong>✓ Oposición:</strong> Oponerte al procesamiento de datos para fines específicos</li>
+            <li><strong>✓ Limitación:</strong> Restringir el procesamiento en casos justificados</li>
+            <li><strong>✓ No Venta (CCPA):</strong> Optar por no vender datos personales (ya no vendemos ninguno)</li>
+        </ul>
+
+        <div class="contact">
+            <strong>📧 Para Ejercer Tus Derechos:</strong><br>
+            Envía un email a: <a href="mailto:mr.m0onster@protonmail.com">mr.m0onster@protonmail.com</a><br>
+            Asunto: "Solicitud de Privacidad - [Tu Usuario]"<br>
+            <br>
+            <strong>Tiempo de Respuesta:</strong> Máximo 30 días hábiles<br>
+            <strong>Costo:</strong> GRATUITO (primera solicitud por año)
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>7. Seguridad de Datos</h2>
+        <p>Implementamos medidas técnicas y organizativas para proteger tus datos:</p>
+        <ul>
+            <li>🔐 <strong>Cifrado:</strong> HTTPS/TLS 1.3 en tránsito, AES-256 en reposo (MongoDB)</li>
+            <li>🔑 <strong>Hashing:</strong> Contraseñas con bcrypt (factor de costo 10)</li>
+            <li>🛡️ <strong>Tokens JWT:</strong> Autenticación segura con expiración de 15 minutos</li>
+            <li>⚡ <strong>Rate Limiting:</strong> Protección contra ataques de fuerza bruta</li>
+            <li>🚫 <strong>Anti-Fraude:</strong> Sistema de detección automática de comportamiento sospechoso</li>
+            <li>📋 <strong>Logs de Auditoría:</strong> Registro de accesos administrativos</li>
+        </ul>
+
+        <div class="important">
+            <strong>⚠️ Notificación de Brechas:</strong> En caso de brecha de seguridad que afecte datos sensibles, notificaremos por email en un plazo máximo de 72 horas.
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>8. Cookies y Tecnologías de Rastreo</h2>
+        
+        <h3 style="color: var(--text-main);">8.1 Cookies Esenciales (No Requieren Consentimiento)</h3>
+        <ul>
+            <li><strong>localStorage.token:</strong> Token JWT para mantener sesión iniciada</li>
+            <li><strong>localStorage.user_admin:</strong> Nombre de usuario logueado (solo identificador)</li>
+        </ul>
+
+        <h3 style="color: var(--text-main); margin-top: 20px;">8.2 Cookies de Publicidad (Terceros)</h3>
+        <ul>
+            <li><strong>highperformanceformat.com:</strong> Anuncios en página puente (30s antes de descarga)</li>
+            <li><strong>effectivegatecpm.com:</strong> Red publicitaria de monetización</li>
+        </ul>
+
+        <p>Puedes bloquear estas cookies con extensiones del navegador (uBlock Origin, Privacy Badger) sin afectar funcionalidad básica.</p>
+    </section>
+
+    <section class="section">
+        <h2>9. Transferencias Internacionales</h2>
+        <p>Tus datos pueden ser transferidos y procesados en servidores ubicados fuera de tu país de residencia:</p>
+        <ul>
+            <li><strong>MongoDB Atlas:</strong> Servidores AWS (Virginia, EE.UU.) - Cláusulas contractuales estándar (SCC)</li>
+            <li><strong>Render.com:</strong> Oregon, EE.UU. - Certificado Privacy Shield (válido)</li>
+            <li><strong>PayPal:</strong> Global - Política de privacidad propia</li>
+        </ul>
+        <p>Estas transferencias cumplen con requisitos GDPR mediante mecanismos de salvaguarda aprobados.</p>
+    </section>
+
+    <section class="section">
+        <h2>10. Privacidad de Menores</h2>
+        <p><strong>UpGames NO está dirigido a menores de 13 años.</strong></p>
+        <p>Si descubrimos que hemos recopilado datos de un menor sin consentimiento parental, eliminaremos esa información inmediatamente.</p>
+        <p>Padres/tutores pueden contactarnos en: <a href="mailto:mr.m0onster@protonmail.com">mr.m0onster@protonmail.com</a></p>
+    </section>
+
+    <section class="section">
+        <h2>11. Cambios a Esta Política</h2>
+        <p>Nos reservamos el derecho de actualizar esta política en cualquier momento. Los cambios se notificarán mediante:</p>
+        <ul>
+            <li>📧 Email a usuarios registrados (cambios sustanciales)</li>
+            <li>🔔 Banner en la plataforma (30 días antes de aplicar)</li>
+            <li>📅 Actualización de la fecha "Última actualización" arriba</li>
+        </ul>
+        <p><strong>Uso continuado = Aceptación de cambios.</strong> Si no estás de acuerdo, puedes eliminar tu cuenta.</p>
+    </section>
+
+    <section class="section">
+        <h2>12. Contacto</h2>
+        <div class="contact">
+            <strong>Oficial de Protección de Datos (DPO):</strong><br>
+            Jhonatan David Castro Galviz<br>
+            <br>
+            <strong>Email:</strong> <a href="mailto:mr.m0onster@protonmail.com">mr.m0onster@protonmail.com</a><br>
+            <strong>Asunto recomendado:</strong> "Privacidad - [Tu Consulta]"<br>
+            <br>
+            <strong>Tiempo de respuesta:</strong> 5-10 días hábiles<br>
+            <br>
+            <strong>Autoridad de Control (Colombia):</strong><br>
+            Superintendencia de Industria y Comercio (SIC)<br>
+            Website: <a href="https://www.sic.gov.co" target="_blank">www.sic.gov.co</a>
+        </div>
+    </section>
+
+    <div class="important" style="margin-top: 40px;">
+        <strong>✅ COMPROMISO DE TRANSPARENCIA:</strong> Esta política se redactó en lenguaje claro y directo. Si algo no está claro, por favor contáctanos. Tienes derecho a entender cómo se usan tus datos.
+    </div>
+
+    <div style="text-align: center; margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border); color: var(--text-dim); font-size: 0.85rem;">
+        © 2026 UpGames. Todos los derechos reservados.<br>
+        <a href="terminos&condiciones.html">Términos y Condiciones</a> • 
+        <a href="politica-privacidad.html">Política de Privacidad</a>
+    </div>
+
+</div>
+
+</body>
+</html>
