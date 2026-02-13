@@ -2,366 +2,700 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Metadata Index - Librería Digital</title>
-    <link rel="preconnect" href="https://unpkg.com">
-    <link rel="preconnect" href="https://backendapp-037y.onrender.com">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>⚡ UPGAMES - Descarga la Nube del Futuro</title>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <style>
         :root {
-            --primary: #5EFF43;
-            --bg: #0a0a0a;
-            --card: #161616;
-            --text-dim: #666;
-            --danger: #ff4343;
+            --neon: #5EFF43;
+            --neon-dim: rgba(94, 255, 67, 0.12);
+            --secondary: #00f2ff;
+            --bg: #000000;
+            --card: #0f0f0f;
+            --border: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #888;
             --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: var(--bg);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        * {
             margin: 0;
-            color: white;
-        }
-
-        .form-card {
-            width: 100%;
-            max-width: 400px;
-            padding: 35px;
-            background: var(--card);
-            border-radius: 20px;
-            border: 1px solid #222;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            transition: transform var(--transition);
+            padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        header { text-align: center; margin-bottom: 30px; }
-        
-        #main-icon { color: var(--primary); font-size: 3rem; margin-bottom: 10px; }
-
-        h2 { 
-            color: var(--primary); 
-            font-size: 1.6rem; 
-            letter-spacing: 2px; 
-            margin: 0; 
-            text-transform: uppercase; 
+        body {
+            background-color: var(--bg);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 0%, var(--neon-dim) 0%, transparent 60%),
+                radial-gradient(circle at 80% 80%, rgba(0, 242, 255, 0.08) 0%, transparent 50%);
         }
 
-        .subtitle { color: var(--text-dim); font-size: 0.85rem; margin-top: 10px; }
-
-        .input-group { margin-top: 20px; }
-        .input-group:first-child { margin-top: 0; }
-
-        label {
-            color: var(--primary);
+        /* ━━━━━━━━━━━━━━━━ HERO SECTION ━━━━━━━━━━━━━━━━ */
+        .hero {
+            min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            letter-spacing: 1px;
+            justify-content: center;
+            padding: 40px 24px;
+            text-align: center;
+            position: relative;
         }
 
-        input {
-            width: 100%;
-            padding: 12px;
-            background: #000;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: white;
-            outline: none;
-            box-sizing: border-box;
-            transition: border-color var(--transition), box-shadow var(--transition);
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, var(--neon), transparent);
+            opacity: 0.3;
         }
 
-        input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 8px rgba(94, 255, 67, 0.2);
+        .logo-container {
+            position: relative;
+            margin-bottom: 40px;
+            animation: floatLogo 3s ease-in-out infinite;
         }
 
-        #btnAction {
-            width: 100%;
-            margin-top: 25px;
-            padding: 15px;
-            background: var(--primary);
-            color: black;
-            border: none;
-            border-radius: 8px;
-            font-weight: 900;
-            cursor: pointer;
-            text-transform: uppercase;
+        @keyframes floatLogo {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .logo {
+            width: 140px;
+            height: 140px;
+            border-radius: 32px;
+            border: 2px solid var(--border);
+            box-shadow: 
+                0 0 40px var(--neon-dim),
+                0 8px 32px rgba(0, 0, 0, 0.4);
+            object-fit: cover;
             transition: var(--transition);
         }
 
-        #btnAction:hover:not(:disabled) {
-            filter: brightness(1.1);
+        .logo:hover {
+            transform: scale(1.05);
+            box-shadow: 
+                0 0 60px rgba(94, 255, 67, 0.3),
+                0 12px 48px rgba(0, 0, 0, 0.6);
+        }
+
+        .version-badge {
+            background: rgba(255,255,255,0.05);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-weight: 900;
+            letter-spacing: -2px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 0.85rem;
+            color: var(--neon);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 48px;
+            font-weight: 700;
+        }
+
+        /* ━━━━━━━━━━━━━━━━ BOTÓN DE DESCARGA ━━━━━━━━━━━━━━━━ */
+        .download-btn {
+            width: 100%;
+            max-width: 340px;
+            background: var(--neon);
+            color: #000;
+            padding: 20px 32px;
+            border-radius: 16px;
+            text-decoration: none;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: var(--transition);
+            box-shadow: 
+                0 0 30px rgba(94, 255, 67, 0.3),
+                0 10px 40px rgba(94, 255, 67, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: 0.5s;
+        }
+
+        .download-btn:hover::before {
+            left: 100%;
+        }
+
+        .download-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(94, 255, 67, 0.3);
+            box-shadow: 
+                0 0 50px rgba(94, 255, 67, 0.5),
+                0 15px 60px rgba(94, 255, 67, 0.3);
         }
 
-        #btnAction:disabled {
-            background: #333;
-            color: #666;
-            cursor: not-allowed;
+        .download-btn:active {
+            transform: translateY(0) scale(0.98);
         }
 
-        .toggle-container { text-align: center; margin-top: 25px; font-size: 0.8rem; color: #555; }
-        
-        #toggle-mode { color: var(--primary); text-decoration: none; font-weight: bold; cursor: pointer; }
+        .download-btn ion-icon {
+            font-size: 1.8rem;
+        }
 
-        #msg {
+        /* ━━━━━━━━━━━━━━━━ SECCIÓN DE BENEFICIOS ━━━━━━━━━━━━━━━━ */
+        .section {
+            max-width: 1200px;
+            margin: 80px auto;
+            padding: 0 24px;
+        }
+
+        .section-header {
             text-align: center;
-            font-size: 11px;
-            margin-top: 20px;
-            font-weight: bold;
-            min-height: 1.2em;
-            transition: color 0.2s;
+            margin-bottom: 60px;
         }
 
-        /* ⭐ NUEVO: Ocultar campo email en login */
-        .hidden { display: none !important; }
+        .section-title {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .section-heading {
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .section-description {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* ━━━━━━━━━━━━━━━━ GRID DE BENEFICIOS ━━━━━━━━━━━━━━━━ */
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .benefit-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px 28px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .benefit-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top right, var(--neon-dim), transparent 70%);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .benefit-card:hover {
+            border-color: var(--neon);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(94, 255, 67, 0.15);
+        }
+
+        .benefit-card:hover::before {
+            opacity: 1;
+        }
+
+        .benefit-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background: rgba(94, 255, 67, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .benefit-icon ion-icon {
+            font-size: 2rem;
+            color: var(--neon);
+        }
+
+        .benefit-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .benefit-description {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ━━━━━━━━━━━━━━━━ PROMOCIÓN DESARROLLADORES ━━━━━━━━━━━━━━━━ */
+        .promo-section {
+            background: linear-gradient(135deg, var(--card) 0%, #0a0a0a 100%);
+            border: 2px solid var(--neon);
+            border-radius: 24px;
+            padding: 40px 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .promo-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(94, 255, 67, 0.15) 0%, transparent 70%);
+            animation: promoGlow 4s ease-in-out infinite;
+        }
+
+        @keyframes promoGlow {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-10%, -10%) scale(1.1); }
+        }
+
+        .promo-badge {
+            display: inline-block;
+            background: var(--neon);
+            color: #000;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .promo-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .promo-description {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .promo-features {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .promo-feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(94, 255, 67, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(94, 255, 67, 0.2);
+        }
+
+        .promo-feature ion-icon {
+            color: var(--neon);
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .promo-feature-text {
+            text-align: left;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .promo-cta {
+            background: var(--text-primary);
+            color: #000;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+            position: relative;
+            z-index: 1;
+        }
+
+        .promo-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 255, 255, 0.2);
+        }
+
+        /* ━━━━━━━━━━━━━━━━ FOOTER ━━━━━━━━━━━━━━━━ */
+        footer {
+            padding: 60px 20px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            background: linear-gradient(to top, #000, transparent);
+        }
+
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--neon), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .footer-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 8px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+
+        .footer-link:hover {
+            color: var(--neon);
+        }
+
+        /* ━━━━━━━━━━━━━━━━ RESPONSIVE ━━━━━━━━━━━━━━━━ */
+        @media (min-width: 640px) {
+            .benefits-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .benefits-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 24px;
+            }
+
+            .promo-features {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .promo-feature {
+                flex: 0 1 calc(50% - 12px);
+            }
+        }
+
+        /* ━━━━━━━━━━━━━━━━ ANIMACIONES ━━━━━━━━━━━━━━━━ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .benefit-card, .promo-section {
+            animation: fadeInUp 0.6s ease-out backwards;
+        }
+
+        .benefit-card:nth-child(1) { animation-delay: 0.1s; }
+        .benefit-card:nth-child(2) { animation-delay: 0.2s; }
+        .benefit-card:nth-child(3) { animation-delay: 0.3s; }
+        .benefit-card:nth-child(4) { animation-delay: 0.4s; }
+        .benefit-card:nth-child(5) { animation-delay: 0.5s; }
+        .benefit-card:nth-child(6) { animation-delay: 0.6s; }
+        .benefit-card:nth-child(7) { animation-delay: 0.7s; }
+        .benefit-card:nth-child(8) { animation-delay: 0.8s; }
+
+        .promo-section { animation-delay: 0.9s; }
     </style>
 </head>
 <body>
 
-    <div id="login-container" class="form-card">
-        <header>
-            <ion-icon id="main-icon" name="database-outline"></ion-icon>
-            <h2 id="form-title">Metadata Index</h2>
-            <p id="form-subtitle" class="subtitle">Librería Digital de Juegos, Apps y Software</p>
-        </header>
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="logo-container">
+            <img src="IMG_20260124_021720.png" alt="UpGames Logo" class="logo">
+        </div>
+        
+        <div class="version-badge">
+            BUILD v1.0.4 • STABLE
+        </div>
+        
+        <h1>UPGAMES</h1>
+        <p class="tagline">Cloud Protocol System</p>
+        
+        <a href="https://github.com/RouceDevStudio/Download-UpGames-app/releases/download/UpGames/app3898327-1btag0.apk" class="download-btn">
+            <ion-icon name="cloud-download-outline"></ion-icon>
+            Descargar APK
+        </a>
+    </section>
 
-        <div id="form-content">
-            <div class="input-group">
-                <label for="user">
-                    <ion-icon name="person-circle-outline"></ion-icon> USUARIO O EMAIL
-                </label>
-                <input id="user" type="text" placeholder="Usuario o Email" autocomplete="username" minlength="3">
+    <!-- SECCIÓN DE BENEFICIOS -->
+    <section class="section">
+        <div class="section-header">
+            <p class="section-title">¿Por qué UpGames?</p>
+            <h2 class="section-heading">Todo lo que necesitas en una sola app</h2>
+            <p class="section-description">
+                Una plataforma completa que revoluciona la forma en que compartes, descubres y monetizas contenido digital.
+            </p>
+        </div>
+
+        <div class="benefits-grid">
+            <!-- Beneficio 1: Monetización -->
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <ion-icon name="cash-outline"></ion-icon>
+                </div>
+                <h3 class="benefit-title">Monetización Real</h3>
+                <p class="benefit-description">
+                    Gana $1.00 USD por cada 1,000 descargas de tu contenido. Tu creatividad ahora tiene valor tangible.
+                </p>
             </div>
 
-            <!-- ⭐ NUEVO: Campo de email (solo visible en modo registro) -->
-            <div class="input-group hidden" id="email-group">
-                <label for="email">
-                    <ion-icon name="mail-outline"></ion-icon> CORREO ELECTRÓNICO
-                </label>
-                <input id="email" type="email" placeholder="tucorreo@ejemplo.com" autocomplete="email">
+            <!-- Beneficio 2: Lanzadera Indie -->
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <ion-icon name="rocket-outline"></ion-icon>
+                </div>
+                <h3 class="benefit-title">Lanzadera Indie</h3>
+                <p class="benefit-description">
+                    Publica tus juegos, apps o mods con alcance global. Sin costos, sin intermediarios, solo tú y tu audiencia.
+                </p>
             </div>
 
-            <div class="input-group">
-                <label for="pass">
-                    <ion-icon name="shield-keyhole-outline"></ion-icon> CONTRASEÑA
-                </label>
-                <input id="pass" type="password" placeholder="••••••••" autocomplete="current-password" minlength="6">
+            <!-- Beneficio 3: Seguridad 24/7 -->
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <ion-icon name="shield-checkmark-outline"></ion-icon>
+                </div>
+                <h3 class="benefit-title">Seguridad 24/7</h3>
+                <p class="benefit-description">
+                    Bots automatizados filtran malware y contenido inapropiado. Navega con total tranquilidad.
+                </p>
             </div>
 
-            <button id="btnAction">ACCEDER AL ÍNDICE</button>
+            <!-- Beneficio 4: Biblioteca Global -->
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <ion-icon name="library-outline"></ion-icon>
+                </div>
+                <h3 class="benefit-title">Biblioteca Global</h3>
+                <p class="benefit-description">
+                    Accede a metadatos de software que no encontrarás en tiendas oficiales. Todo en un solo lugar.
+                </p>
+            </div>
 
-            <div class="toggle-container">
-                <p>
-                    <span id="switch-text">¿No tienes acceso?</span> 
-                    <a href="#" id="toggle-mode">Crear cuenta nueva</a>
+            <!-- Beneficio 5: Comunidad Activa -->
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <ion-icon name="people-outline"></ion-icon>
+                </div>
+                <h3 class="benefit-title">Comunidad Activa</h3>
+                <p class="benefit-description">
+                    Conecta con desarrolladores y usuarios de todo el mundo. Colabora, comparte y crece juntos.
+                </p>
+            </div>
+
+            <!-- Beneficio 6: Trusted Indexer -->
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <ion-icon name="star-outline"></ion-icon>
+                </div>
+                <h3 class="benefit-title">Sistema de Niveles</h3>
+                <p class="benefit-description">
+                    Sube de nivel como Trusted Indexer y obtén prioridad en el feed principal. Tu reputación importa.
+                </p>
+            </div>
+
+            <!-- Beneficio 7: Privacidad Total -->
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <ion-icon name="eye-off-outline"></ion-icon>
+                </div>
+                <h3 class="benefit-title">Privacidad Total</h3>
+                <p class="benefit-description">
+                    Nodos de acceso anónimo sin registro de datos personales. Tu identidad es un hash cifrado.
+                </p>
+            </div>
+
+            <!-- Beneficio 8: Descargas Directas -->
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <ion-icon name="flash-outline"></ion-icon>
+                </div>
+                <h3 class="benefit-title">Velocidad Extrema</h3>
+                <p class="benefit-description">
+                    Descargas directas a velocidad de fibra. Sin anuncios, sin esperas, sin complicaciones.
                 </p>
             </div>
         </div>
+    </section>
 
-        <p id="msg"></p>
-    </div>
+    <!-- PROMOCIÓN PARA DESARROLLADORES -->
+    <section class="section">
+        <div class="promo-section">
+            <div class="promo-badge">🎮 Especial Desarrolladores</div>
+            <h2 class="promo-title">Lanza tu juego sin límites</h2>
+            <p class="promo-description">
+                ¿Eres desarrollador independiente? UpGames es tu plataforma ideal para publicar y monetizar tus creaciones sin costos iniciales ni comisiones abusivas.
+            </p>
 
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+            <div class="promo-features">
+                <div class="promo-feature">
+                    <ion-icon name="checkmark-circle"></ion-icon>
+                    <span class="promo-feature-text">Publicación 100% gratuita</span>
+                </div>
+                <div class="promo-feature">
+                    <ion-icon name="checkmark-circle"></ion-icon>
+                    <span class="promo-feature-text">Sin comisiones ocultas</span>
+                </div>
+                <div class="promo-feature">
+                    <ion-icon name="checkmark-circle"></ion-icon>
+                    <span class="promo-feature-text">Alcance global inmediato</span>
+                </div>
+                <div class="promo-feature">
+                    <ion-icon name="checkmark-circle"></ion-icon>
+                    <span class="promo-feature-text">Monetización desde el día 1</span>
+                </div>
+            </div>
 
+            <a href="https://github.com/RouceDevStudio/Download-UpGames-app/releases/download/UpGames/app3898327-1btag0.apk" class="promo-cta">
+                <ion-icon name="download-outline"></ion-icon>
+                Únete Ahora
+            </a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">UPGAMES</div>
+            <p class="footer-text">Cloud Protocol System 2026</p>
+            <p class="footer-text">Secure Encrypted Network • Mobile Unit</p>
+            
+            <div class="footer-links">
+                <a href="#" class="footer-link">Soporte</a>
+                <a href="#" class="footer-link">Términos</a>
+                <a href="#" class="footer-link">Privacidad</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SCROLL SUAVE -->
     <script>
-        const API_URL = "https://backendapp-037y.onrender.com";
-        const REDIRECT_URL = "./biblioteca.html";
-        let isLoginMode = true;
-
-        // Cache de selectores
-        const els = {
-            title: document.getElementById("form-title"),
-            subtitle: document.getElementById("form-subtitle"),
-            btn: document.getElementById("btnAction"),
-            toggle: document.getElementById("toggle-mode"),
-            msg: document.getElementById("msg"),
-            text: document.getElementById("switch-text"),
-            icon: document.getElementById("main-icon"),
-            user: document.getElementById("user"),
-            email: document.getElementById("email"),
-            emailGroup: document.getElementById("email-group"),
-            pass: document.getElementById("pass")
-        };
-
-        window.onload = () => {
-            if (localStorage.getItem("user_admin")) window.location.replace(REDIRECT_URL);
-        };
-
-        // ⭐ TOGGLE ENTRE LOGIN Y REGISTRO
-        els.toggle.onclick = (e) => {
-            e.preventDefault();
-            isLoginMode = !isLoginMode;
-            
-            if (isLoginMode) {
-                // MODO LOGIN
-                els.title.innerText = "Metadata Index";
-                els.subtitle.innerText = "Librería Digital de Juegos, Apps y Software";
-                els.btn.innerText = "ACCEDER AL ÍNDICE";
-                els.text.innerText = "¿No tienes acceso?";
-                els.toggle.innerText = "Crear cuenta nueva";
-                els.icon.name = "database-outline";
-                els.emailGroup.classList.add("hidden");
-                els.user.placeholder = "Email o nombre de usuario";
-            } else {
-                // MODO REGISTRO
-                els.title.innerText = "Nuevo Registro";
-                els.subtitle.innerText = "Únete a la comunidad UP GAMES";
-                els.btn.innerText = "REGISTRAR PERFIL";
-                els.text.innerText = "¿Ya eres miembro?";
-                els.toggle.innerText = "Inicia sesión aquí";
-                els.icon.name = "person-add-outline";
-                els.emailGroup.classList.remove("hidden");
-                els.user.placeholder = "Usuario (3-20 caracteres)";
-            }
-            
-            els.msg.innerText = "";
-            els.user.value = "";
-            els.email.value = "";
-            els.pass.value = "";
-        };
-
-        // ⭐ FUNCIÓN PRINCIPAL: LOGIN O REGISTRO
-        els.btn.onclick = async () => {
-            const usuario = els.user.value.trim();
-            const password = els.pass.value.trim();
-            const email = els.email.value.trim();
-
-            // Validaciones
-            if (!usuario || !password) {
-                showMsg("⚠️ Completa todos los campos", "#ff4343");
-                return;
-            }
-
-            if (isLoginMode) {
-                // LOGIN (acepta email o usuario)
-                await loginUsuario(usuario, password);
-            } else {
-                // REGISTRO (requiere email)
-                if (!email) {
-                    showMsg("⚠️ El email es obligatorio para registro", "#ff4343");
-                    return;
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
                 }
-                
-                if (usuario.length < 3 || usuario.length > 20) {
-                    showMsg("⚠️ Usuario debe tener 3-20 caracteres", "#ff4343");
-                    return;
-                }
-                
-                if (password.length < 6) {
-                    showMsg("⚠️ Contraseña debe tener al menos 6 caracteres", "#ff4343");
-                    return;
-                }
-                
-                if (!email.includes('@') || !email.includes('.')) {
-                    showMsg("⚠️ Email inválido", "#ff4343");
-                    return;
-                }
-                
-                await registrarUsuario(usuario, email, password);
+            });
+        });
+
+        // Efecto parallax sutil en scroll
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            const hero = document.querySelector('.hero');
+            if (hero && currentScroll < window.innerHeight) {
+                hero.style.transform = `translateY(${currentScroll * 0.3}px)`;
+                hero.style.opacity = 1 - (currentScroll / window.innerHeight) * 0.5;
             }
-        };
-
-        // ⭐ FUNCIÓN: LOGIN
-        async function loginUsuario(identificador, password) {
-            setLoading(true);
-            
-            try {
-                const res = await fetch(`${API_URL}/auth/login`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        usuario: identificador, // Puede ser email o nombre
-                        password 
-                    })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    // Guardar datos en localStorage
-                    localStorage.setItem("token", data.token);
-                    localStorage.setItem("user_admin", data.usuario);
-                    localStorage.setItem("email", data.email);
-                    
-                    showMsg("✅ ACCESO CONCEDIDO", "#5EFF43");
-                    setTimeout(() => window.location.replace(REDIRECT_URL), 500);
-                } else {
-                    showMsg("❌ " + (data.error || "Error de credenciales"), "#ff4343");
-                    setLoading(false);
-                }
-            } catch (error) {
-                console.error("Error de conexión:", error);
-                showMsg("⚠️ Servidor despertando, reintente en 10s.", "#ff4343");
-                setLoading(false);
-            }
-        }
-
-        // ⭐ FUNCIÓN: REGISTRO
-        async function registrarUsuario(usuario, email, password) {
-            setLoading(true);
-            
-            try {
-                const res = await fetch(`${API_URL}/auth/register`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        usuario, 
-                        email, 
-                        password 
-                    })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    // Guardar datos en localStorage
-                    localStorage.setItem("token", data.token);
-                    localStorage.setItem("user_admin", data.usuario);
-                    localStorage.setItem("email", data.email);
-                    
-                    showMsg("✅ REGISTRO EXITOSO", "#5EFF43");
-                    setTimeout(() => window.location.replace(REDIRECT_URL), 500);
-                } else {
-                    showMsg("❌ " + (data.error || "Error al registrar"), "#ff4343");
-                    setLoading(false);
-                }
-            } catch (error) {
-                console.error("Error de conexión:", error);
-                showMsg("⚠️ Error de conexión. Intenta nuevamente.", "#ff4343");
-                setLoading(false);
-            }
-        }
-
-        function showMsg(text, color) {
-            els.msg.innerText = text;
-            els.msg.style.color = color;
-        }
-
-        function setLoading(loading) {
-            els.btn.disabled = loading;
-            if (loading) {
-                els.btn.innerText = "CONECTANDO...";
-                showMsg("⏳ Consultando base de datos...", "#5EFF45");
-            } else {
-                els.btn.innerText = isLoginMode ? "ACCEDER AL ÍNDICE" : "REGISTRAR PERFIL";
-            }
-        }
-
-        document.addEventListener("keypress", (e) => {
-            if(e.key === "Enter") els.btn.click();
+            lastScroll = currentScroll;
         });
     </script>
+
 </body>
 </html>

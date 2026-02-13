@@ -7,12 +7,12 @@
     --transition: 0.2s ease;
 }
 
-/* --- ESTILOS BASE --- */
+/* ━━━━━━━━━━━━ ESTILOS BASE ━━━━━━━━━━━━ */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
     background: var(--bg-dark);
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: #fff;
     overflow-x: hidden;
 }
@@ -21,8 +21,7 @@ html {
   scroll-behavior: smooth;
 }
 
-
-/* --- HEADER (OPTIMIZADO) --- */
+/* ━━━━━━━━━━━━ HEADER MEJORADO ━━━━━━━━━━━━ */
 header { 
     padding: 15px; 
     display: flex; 
@@ -31,90 +30,110 @@ header {
     position: sticky; 
     top: 0; 
     z-index: 1000; 
-    background: rgba(10,10,10,0.9); 
+    background: rgba(10,10,10,0.95); 
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px); /* Soporte Safari */
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid #1a1a1a;
 }
 
-.buscador-wrapper { position: relative; }
+.buscador-wrapper { 
+    position: relative; 
+    flex: 1;
+    max-width: 400px;
+}
 
 #buscador { 
     background: #000; 
-    border: 1px solid var(--primary); 
-    padding: 10px 15px 10px 40px; 
-    border-radius: 20px; 
+    border: 1.5px solid rgba(94, 255, 67, 0.3); 
+    padding: 11px 15px 11px 42px; 
+    border-radius: 12px; 
     color: var(--primary); 
-    width: 150px;
+    width: 100%;
     outline: none;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95rem;
 }
 
 #buscador:focus {
-    width: 210px;
-    box-shadow: 0 0 10px rgba(94, 255, 67, 0.3);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(94, 255, 67, 0.1);
+    background: #0a0a0a;
+}
+
+#buscador::placeholder {
+    color: #555;
 }
 
 .buscador-icon { 
     position: absolute; 
-    left: 12px; 
+    left: 14px; 
     top: 50%; 
     transform: translateY(-50%); 
-    color: var(--primary); 
+    color: #555; 
     font-size: 1.2rem; 
+    pointer-events: none;
 }
 
 .header-right-actions { display: flex; gap: 10px; }
 
 .UpIcon, .ProfileIcon, .reportButton { 
-    width: 45px; 
-    height: 45px; 
-    border-radius: 50%; 
-    border: none;
-    border: 2px solid var(--primary); 
+    width: 44px; 
+    height: 44px; 
+    border-radius: 12px; 
+    border: 1.5px solid rgba(94, 255, 67, 0.3); 
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    background: #2B2B2B; 
+    background: #1a1a1a; 
     cursor: pointer; 
-    transition: transform var(--transition);
+    transition: all 0.3s ease;
     will-change: transform;
-    padding: 2px;
-    /* Optimiza carga de GPU */
+    padding: 0;
 }
 
-.UpIcon:hover, .ProfileIcon, .reportButton:hover { transform: scale(1.05); }
+.UpIcon:hover, .ProfileIcon:hover, .reportButton:hover { 
+    transform: translateY(-2px); 
+    border-color: var(--primary);
+    background: #0a0a0a;
+}
 
-.UpIcon ion-icon, .ProfileIcon ion-icon, .reportButton ion-icon
-{ 
+.UpIcon ion-icon, .ProfileIcon ion-icon, .reportButton ion-icon { 
     color: var(--primary); 
-    font-size: 1.9rem; 
+    font-size: 1.5rem; 
 }
 
-/* --- GRID DE JUEGOS (UNIFICADO) --- */
+/* ━━━━━━━━━━━━ GRID DE JUEGOS ━━━━━━━━━━━━ */
 #output { 
     display: grid; 
     grid-template-columns: repeat(2, 1fr); 
-    gap: 11px; 
-    padding: 15px; 
+    gap: 12px; 
+    padding: 16px; 
     max-width: 1200px; 
     margin: 0 auto; 
     align-items: start; 
 }
 
-/* --- CARD MINIATURA --- */
+/* ━━━━━━━━━━━━ CARD MINIATURA (PROPORCIONES CORRECTAS) ━━━━━━━━━━━━ */
 .juego-card { 
     background: #1e1e1e; 
-    border-radius: 12px; 
-    border: 1px solid #333; 
+    border-radius: 14px; 
+    border: 1px solid #2a2a2a; 
     overflow: hidden; 
     display: flex; 
     flex-direction: column; 
     cursor: pointer; 
     position: relative; 
-    transition: transform var(--transition);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
 }
 
+.juego-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(94, 255, 67, 0.5);
+    box-shadow: 0 8px 20px rgba(94, 255, 67, 0.15);
+}
+
+/* PROPORCIÓN CORRECTA: 120px altura como en el original */
 .juego-img { 
     width: 100%; 
     height: 120px; 
@@ -128,44 +147,60 @@ header {
     left: 8px;
     font-size: 9px;
     font-weight: bold;
-    padding: 3px 8px;
-    border-radius: 5px;
+    padding: 4px 9px;
+    border-radius: 6px;
     text-transform: uppercase;
     z-index: 5;
     display: flex;
     align-items: center;
     gap: 3px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
-.status-online { background: rgba(94, 255, 67, 0.85); color: #000; }
-.status-review { background: var(--warning); color: #000; }
+.status-online { 
+    background: rgba(94, 255, 67, 0.92); 
+    color: #000;
+    box-shadow: 0 2px 8px rgba(94, 255, 67, 0.3);
+}
 
-.card-content { padding: 10px; display: flex; flex-direction: column; }
+.status-review { 
+    background: rgba(255, 204, 0, 0.92); 
+    color: #000;
+    box-shadow: 0 2px 8px rgba(255, 204, 0, 0.3);
+}
+
+.card-content { 
+    padding: 11px; 
+    display: flex; 
+    flex-direction: column; 
+}
 
 .user-tag { 
     color: var(--primary); 
-    font-size: 1.1rem; 
+    font-size: 0.85rem; 
     font-weight: bold;
-    margin-bottom: 5px; 
+    margin-bottom: 6px; 
     display: flex; 
     align-items: center; 
     gap: 4px; 
 }
 
 .juego-titulo { 
-    font-size: 1rem; 
-    font-weight: bold; 
+    font-size: 0.95rem; 
+    font-weight: 600; 
     color: #fff; 
     white-space: nowrap; 
     overflow: hidden; 
     text-overflow: ellipsis; 
+    margin-bottom: 8px;
 }
 
 .social-actions { 
     display: flex; 
     gap: 12px; 
     margin-top: 8px; 
-    border-top: 1px solid #222; 
+    border-top: 1px solid #2a2a2a; 
     padding-top: 8px; 
 }
 
@@ -175,9 +210,15 @@ header {
     color: var(--primary); 
     font-size: 1.2rem; 
     cursor: pointer; 
+    transition: transform 0.2s;
+    padding: 4px;
 }
 
-/* --- ELEMENTOS OCULTOS (AGRUPADOS PARA MEJOR RENDIMIENTO) --- */
+.action-btn:hover {
+    transform: scale(1.15);
+}
+
+/* ━━━━━━━━━━━━ ELEMENTOS OCULTOS ━━━━━━━━━━━━ */
 .cloud-note, 
 .comentarios-section, 
 .info-verificacion, 
@@ -186,13 +227,14 @@ header {
     display: none; 
 }
 
-/* --- CARTA EXPANDIDA (MODAL) --- */
+/* ━━━━━━━━━━━━ CARTA EXPANDIDA (MODAL) ━━━━━━━━━━━━ */
 .expandida-overlay { 
     position: fixed; 
-    inset: 0; /* Shorthand para top, left, width, height */
-    background: rgba(0,0,0,0.9); 
+    inset: 0;
+    background: rgba(0,0,0,0.92); 
     z-index: 9998; 
-    display: none; 
+    display: none;
+    backdrop-filter: blur(5px);
 }
 
 .juego-card.expandida {
@@ -201,12 +243,12 @@ header {
     left: 50%; 
     transform: translate(-50%, -50%);
     width: 92%; 
-    max-width: 400px; 
+    max-width: 420px; 
     z-index: 9999; 
     border: 2px solid var(--primary); 
-    border-radius: 20px;
+    border-radius: 18px;
     background: var(--card-bg); 
-    max-height: 85vh; 
+    max-height: 88vh; 
     overflow-y: auto; 
     cursor: default;
     display: block;
@@ -215,37 +257,58 @@ header {
 .expandida .close-btn { 
     display: flex; 
     position: absolute; 
-    top: 15px; 
-    right: 15px; 
+    top: 14px; 
+    right: 14px; 
     background: var(--danger); 
     color: white; 
-    width: 32px; 
-    height: 32px; 
+    width: 34px; 
+    height: 34px; 
     border-radius: 50%; 
     align-items: center; 
     justify-content: center; 
     z-index: 100; 
     border: 2px solid #fff;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: transform 0.2s;
 }
 
-.expandida .juego-img { height: 190px; }
+.expandida .close-btn:hover {
+    transform: scale(1.1);
+}
+
+/* PROPORCIÓN CORRECTA EN EXPANDIDA: 190px como en el original */
+.expandida .juego-img { 
+    height: 190px; 
+}
+
+.expandida .card-content {
+    padding: 16px;
+}
 
 .expandida .info-verificacion { 
     display: block; 
-    margin: 10px 0;
-    padding: 10px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 8px;
+    margin: 12px 0;
+    padding: 12px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    border: 1px solid #2a2a2a;
 }
 
-.expandida .juego-titulo{
-    font-size: 1.1rem;
+.expandida .juego-titulo {
+    font-size: 1.15rem;
+    white-space: normal;
+    margin-bottom: 10px;
 }
 
-.verificado-flex { display: flex; justify-content: space-between; align-items: center; }
+.verificado-flex { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
 
 .status-text {
-    font-size: 0.89rem;
+    font-size: 0.88rem;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -260,8 +323,9 @@ header {
     font-size: 0.9rem; 
     color: #bbb; 
     border-left: 3px solid var(--primary); 
-    padding-left: 10px; 
-    margin: 15px 0; 
+    padding-left: 12px; 
+    margin: 16px 0; 
+    line-height: 1.5;
 }
 
 .expandida .boton-descargar-full { 
@@ -269,67 +333,145 @@ header {
     background: var(--primary); 
     color: #000; 
     text-align: center; 
-    padding: 15px; 
-    border-radius: 10px; 
-    font-weight: bold; 
+    padding: 16px; 
+    border-radius: 12px; 
+    font-weight: 800; 
     text-decoration: none; 
-    margin-bottom: 20px; 
+    margin-bottom: 20px;
+    transition: all 0.3s;
+    position: relative;
 }
 
-.expandida .category-badge{
-    font-size: .90rem;
+.expandida .boton-descargar-full:hover {
+    background: #fff;
+    box-shadow: 0 4px 15px rgba(94, 255, 67, 0.4);
+    transform: translateY(-2px);
 }
 
-/* --- SECCIÓN COMENTARIOS --- */
+.expandida .category-badge {
+    font-size: 0.85rem;
+    padding: 4px 10px;
+}
+
+/* ━━━━━━━━━━━━ SECCIÓN COMENTARIOS (COMPLETA Y FUNCIONAL) ━━━━━━━━━━━━ */
 .expandida .comentarios-section { 
     display: block; 
-    border-top: 1px solid #333; 
-    padding-top: 15px;
+    border-top: 1px solid #2a2a2a; 
+    padding-top: 18px;
+    margin-top: 18px;
+}
+
+.expandida .comentarios-section h5 {
+    color: var(--primary);
+    font-size: 0.75rem;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .comentarios-list { 
-    max-height: 300px; 
+    max-height: 280px; 
     overflow-y: auto;
-    margin-bottom: 20px; 
-    padding: 5px;
-    border-radius: 5px;
-    background: #282828D4;
-    border: 1px solid #626262D4;
+    margin-bottom: 16px; 
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #2a2a2a;
 }
 
-.comm-item { 
-    background: #383838; 
-    padding: 8px; 
-    border-radius: 6px; 
-    margin-bottom: 5px; 
-    font-size: 0.8rem; 
+.comentarios-list:empty::after {
+    content: 'Aún no hay comentarios';
+    color: #666;
+    font-size: 0.85rem;
+    display: block;
+    text-align: center;
+    padding: 20px;
+}
+
+.comentario-item {
+    background: #222; 
+    padding: 10px; 
+    border-radius: 8px; 
+    margin-bottom: 8px;
+    border: 1px solid #2a2a2a;
+}
+
+.comentario-item:last-child {
+    margin-bottom: 0;
+}
+
+.comm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.comm-user {
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.comm-fecha {
+    color: #666;
+    font-size: 0.7rem;
+}
+
+.comm-texto {
+    color: #ccc;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    word-wrap: break-word;
 }
 
 .add-comment {
-    display: flex; gap: 8px;
-    margin: 5px;
-    
+    display: flex; 
+    gap: 8px;
 }
 
 .add-comment input { 
     flex: 1; 
-    background: #000; 
-    border: 1px solid #333; 
+    background: #0a0a0a; 
+    border: 1.5px solid #2a2a2a; 
     color: #fff; 
-    padding: 10px; 
-    border-radius: 8px; 
+    padding: 11px 14px; 
+    border-radius: 10px; 
     outline: none;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.add-comment input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(94, 255, 67, 0.1);
 }
 
 .add-comment button { 
     background: var(--primary); 
     border: none; 
-    padding: 0 15px; 
-    border-radius: 8px; 
+    padding: 0 18px; 
+    border-radius: 10px; 
     font-weight: bold; 
+    color: #000;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9rem;
 }
 
-/* --- ESTADOS VACÍOS Y CATEGORÍAS --- */
+.add-comment button:hover {
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(94, 255, 67, 0.3);
+}
+
+.add-comment button:active {
+    transform: scale(0.95);
+}
+
+/* ━━━━━━━━━━━━ ESTADO VACÍO MEJORADO ━━━━━━━━━━━━ */
 .no-results {
     grid-column: 1 / -1; 
     display: flex;
@@ -337,52 +479,67 @@ header {
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 60px 20px;
+    padding: 80px 20px;
+    min-height: 50vh;
 }
 
 .no-results ion-icon { 
-    font-size: 4.5rem; 
+    font-size: 6rem; 
     color: var(--primary); 
-    opacity: 0.2; 
-    margin-bottom: 15px; 
+    opacity: 0.15; 
+    margin-bottom: 24px;
+    filter: drop-shadow(0 0 20px rgba(94, 255, 67, 0.2));
 }
 
 .no-results h3 { 
-    color: var(--primary); 
-    font-size: 1.3rem; 
-    font-weight: 800;
-    margin-bottom: 8px; 
+    color: #fff; 
+    font-size: 1.5rem; 
+    font-weight: 700;
+    margin-bottom: 12px; 
     text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .no-results p { 
     color: #666; 
-    font-size: 0.85rem; 
-    margin-bottom: 20px; 
+    font-size: 0.95rem; 
+    margin-bottom: 28px;
+    max-width: 300px;
+    line-height: 1.5;
 }
 
 .btn-subir-vacio { 
-    padding: 12px 25px; 
+    padding: 14px 28px; 
     background: var(--primary); 
     color: #000; 
     text-decoration: none; 
-    font-weight: 900; 
-    border-radius: 10px; 
-    transition: 0.3s;
+    font-weight: 800; 
+    border-radius: 12px; 
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+}
+
+.btn-subir-vacio:hover {
+    background: #fff;
+    box-shadow: 0 4px 20px rgba(94, 255, 67, 0.4);
+    transform: translateY(-2px);
 }
 
 .category-badge {
-    font-size: .60rem;
-    padding: 1px 5px;
-    border-radius: 4px;
-    background: rgba(0, 0, 0, 0.5);
-    color: #8FFF3C !important;
-    border: 1px solid var(--primary);
+    font-size: 0.68rem;
+    padding: 3px 7px;
+    border-radius: 6px;
+    background: rgba(94, 255, 67, 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(94, 255, 67, 0.3);
     text-transform: uppercase;
-    font-weight: 1000;
+    font-weight: 700;
+    display: inline-block;
 }
 
-/* --- CLOUD LOADER (ANIMACIONES OPTIMIZADAS) --- */
+/* ━━━━━━━━━━━━ CLOUD LOADER ━━━━━━━━━━━━ */
 .cloud-loader-container {
     display: flex;
     flex-direction: column;
@@ -405,7 +562,7 @@ header {
     height: 80px;
     border: 2px solid var(--primary);
     border-radius: 50%;
-    animation: radar-pulse 1.5s infinite linear; /* Reducido de 2s a 1.5s */
+    animation: radar-pulse 1.5s infinite linear;
     opacity: 0;
     will-change: transform, opacity;
 }
@@ -416,10 +573,10 @@ header {
     letter-spacing: 2px;
     color: var(--primary);
     text-transform: uppercase;
-    animation: text-pulse 1s infinite alternate; /* Más rápido y suave */
+    animation: text-pulse 1s infinite alternate;
 }
 
-/* --- ANIMACIONES (USANDO TRANSFORMS PARA RENDIMIENTO) --- */
+/* ━━━━━━━━━━━━ ANIMACIONES ━━━━━━━━━━━━ */
 @keyframes radar-pulse {
     0% { transform: scale(0.8); opacity: 0; }
     50% { opacity: 0.5; }
@@ -431,9 +588,14 @@ header {
     to { opacity: 0.3; }
 }
 
-.footer-legal { text-align: center; padding: 40px 20px; color: #666; font-size: 0.75rem; }
+.footer-legal { 
+    text-align: center; 
+    padding: 40px 20px; 
+    color: #666; 
+    font-size: 0.75rem; 
+}
 
-
+/* ━━━━━━━━━━━━ BADGES DE VERIFICACIÓN ━━━━━━━━━━━━ */
 .verificado-badge {
     display: inline-flex;
     align-items: center;
@@ -441,15 +603,19 @@ header {
     vertical-align: middle;
 }
 
-.verificado-badge.level-1 { color: #DEDEDEE0; } /* azul claro */
-.verificado-badge.level-2 { color: #FFEF02; 
-    box-shadow: 0 1px 20px #FFF99B;
-} /* azul fuerte */
-.verificado-badge.level-3 { color: #49FFFB; 
-    border-radius: 50%;
-    box-shadow: 0 1px 20px #99FFEF;
-} /* dorado */
+.verificado-badge.level-1 { 
+    color: #DEDEDE; 
+}
 
+.verificado-badge.level-2 { 
+    color: #FFEF02;
+    filter: drop-shadow(0 0 4px #FFF99B);
+}
+
+.verificado-badge.level-3 { 
+    color: #49FFFB;
+    filter: drop-shadow(0 0 6px #99FFEF);
+}
 
 .verificado-badge ion-icon {
     font-size: 1rem;
@@ -457,4 +623,58 @@ header {
 
 .user-tag.verificado {
     font-weight: 900;
+}
+
+/* ━━━━━━━━━━━━ RESPONSIVE ━━━━━━━━━━━━ */
+@media (min-width: 600px) {
+    #output {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+    }
+    
+    .juego-img {
+        height: 140px;
+    }
+    
+    .expandida .juego-img {
+        height: 210px;
+    }
+}
+
+@media (min-width: 1024px) {
+    #output {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        padding: 24px;
+    }
+    
+    .juego-img {
+        height: 160px;
+    }
+    
+    .expandida .juego-img {
+        height: 230px;
+    }
+}
+
+/* ━━━━━━━━━━━━ SCROLLBARS ━━━━━━━━━━━━ */
+.comentarios-list::-webkit-scrollbar,
+.juego-card.expandida::-webkit-scrollbar {
+    width: 6px;
+}
+
+.comentarios-list::-webkit-scrollbar-track,
+.juego-card.expandida::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.comentarios-list::-webkit-scrollbar-thumb,
+.juego-card.expandida::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 10px;
+}
+
+.comentarios-list::-webkit-scrollbar-thumb:hover,
+.juego-card.expandida::-webkit-scrollbar-thumb:hover {
+    background: #444;
 }
