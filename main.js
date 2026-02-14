@@ -155,7 +155,7 @@ async function cargarEstadoActual() {
     }
     
     try {
-        const res = await fetch(`${API_URL}/items/user/${usuarioLogueado}`)
+        const res = await fetch(`${API_URL}/items/usuario/${usuarioLogueado}`)
         const data = await res.json();
         const listaBruta = Array.isArray(data) ? data : [];
         const misAportes = listaBruta.filter(item => item.usuario === usuarioLogueado);
@@ -398,7 +398,7 @@ async function guardarAvatar() {
         // ✅ Actualizar avatar si se proporcionó
         if (avatarUrl) {
             try {
-                const resAvatar = await fetch(`${API_URL}/usuarios/update-avatar`, {
+                const resAvatar = await fetch(`${API_URL}/auth/update-avatar`, {
                     method: 'PUT',
                     headers: { 
                         'Content-Type': 'application/json'
@@ -429,7 +429,7 @@ async function guardarAvatar() {
         // ✅ Actualizar bio si se proporcionó
         if (bio) {
             try {
-                const resBio = await fetch(`${API_URL}/usuarios/update-bio`, {
+                const resBio = await fetch(`${API_URL}/auth/update-bio`, {
                     method: 'PUT',
                     headers: { 
                         'Content-Type': 'application/json'
