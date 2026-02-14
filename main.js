@@ -155,7 +155,7 @@ async function cargarEstadoActual() {
     }
     
     try {
-        const res = await fetch(`${API_URL}/items/usuario/${usuarioLogueado}`)
+        const res = await fetch(`${API_URL}/items/user/${usuarioLogueado}`)
         const data = await res.json();
         const listaBruta = Array.isArray(data) ? data : [];
         const misAportes = listaBruta.filter(item => item.usuario === usuarioLogueado);
@@ -398,7 +398,7 @@ async function guardarAvatar() {
         // ✅ Actualizar avatar si se proporcionó
         if (avatarUrl) {
             try {
-                const resAvatar = await fetch(`${API_URL}/auth/update-avatar`, {
+                const resAvatar = await fetch(`${API_URL}/usuarios/update-avatar`, {
                     method: 'PUT',
                     headers: { 
                         'Content-Type': 'application/json'
@@ -429,7 +429,7 @@ async function guardarAvatar() {
         // ✅ Actualizar bio si se proporcionó
         if (bio) {
             try {
-                const resBio = await fetch(`${API_URL}/auth/update-bio`, {
+                const resBio = await fetch(`${API_URL}/usuarios/update-bio`, {
                     method: 'PUT',
                     headers: { 
                         'Content-Type': 'application/json'
@@ -825,7 +825,10 @@ async function cargarEstadoActual() {
     }
     
     try {
-        const res = await fetch(`${API_URL}/items/user/${usuarioLogueado}`);
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_URL}/items/user/${usuarioLogueado}`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
         const data = await res.json();
         const misAportes = Array.isArray(data) ? data : [];
         
@@ -910,34 +913,43 @@ async function cargarEstadoActual() {
 }
 
 // ========== ABRIR MODAL DE EDICIÓN ========== //
-function openEditModal(itemId) {
+async function openEditModal(itemId) {
     currentEditItemId = itemId;
     
-    // Buscar el item en los datos
-    fetch(`${API_URL}/items`)
-        .then(res => res.json())
-        .then(data => {
-            const item = data.find(i => i._id === itemId);
-            if (!item) {
-                showToast('❌ Item no encontrado');
-                return;
-            }
-
-            // Llenar el formulario
-            document.getElementById('edit-id').value = item._id;
-            document.getElementById('edit-title').value = item.title || '';
-            document.getElementById('edit-description').value = item.description || '';
-            document.getElementById('edit-link').value = item.link || '';
-            document.getElementById('edit-image').value = item.image || '';
-            document.getElementById('edit-category').value = item.category || 'Juego';
-
-            // Abrir modal
-            document.getElementById('editModal').classList.add('active');
-        })
-        .catch(e => {
-            console.error('Error al cargar item:', e);
-            showToast('❌ Error al cargar datos');
+    try {
+        const token = localStorage.getItem('token');
+        
+        // Buscar el item en los datos del usuario
+        const res = await fetch(`${API_URL}/items/user/${usuarioLogueado}`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
+        
+        if (!res.ok) {
+            throw new Error('Error al cargar datos');
+        }
+        
+        const data = await res.json();
+        const item = data.find(i => i._id === itemId);
+        
+        if (!item) {
+            showToast('❌ Item no encontrado');
+            return;
+        }
+
+        // Llenar el formulario
+        document.getElementById('edit-id').value = item._id;
+        document.getElementById('edit-title').value = item.title || '';
+        document.getElementById('edit-description').value = item.description || '';
+        document.getElementById('edit-link').value = item.link || '';
+        document.getElementById('edit-image').value = item.image || '';
+        document.getElementById('edit-category').value = item.category || 'Juego';
+
+        // Abrir modal
+        document.getElementById('editModal').classList.add('active');
+    } catch (e) {
+        console.error('Error al cargar item:', e);
+        showToast('❌ Error al cargar datos');
+    }
 }
 
 // ========== CERRAR MODAL DE EDICIÓN ========== //
@@ -975,10 +987,42 @@ document.getElementById('editForm')?.addEventListener('submit', async (e) => {
         return;
     }
 
+    // Validar keywords prohibidas
+    const bannedKeywords = [
+        'crack', 'cracked', 'crackeado', 'crackeo',
+        'pirata', 'pirateado', 'piratear',
+        'gratis', 'free', 'gratuito',
+        'full', 'completo', 'complete',
+        'premium gratis', 'pro gratis',
+        'descargar gratis', 'download free'
+    ];
+    
+    const tituloLower = updates.title.toLowerCase();
+    const palabraDetectada = bannedKeywords.find(keyword => {
+        const regex = new RegExp('\\b' + keyword + '\\b', 'i');
+        return regex.test(tituloLower);
+    });
+    
+    if (palabraDetectada) {
+        showToast(`🚫 Palabra prohibida: "${palabraDetectada}"`);
+        return;
+    }
+
     try {
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+            showToast("⚠️ Sesión expirada");
+            window.location.href = './index.html';
+            return;
+        }
+        
         const response = await fetch(`${API_URL}/admin/items/${currentEditItemId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify(updates)
         });
 
