@@ -1017,7 +1017,7 @@ document.getElementById('editForm')?.addEventListener('submit', async (e) => {
             return;
         }
         
-        const response = await fetch(`${API_URL}/admin/items/${currentEditItemId}`, {
+        const response = await fetch(`${API_URL}/items/${currentEditItemId}`, {
             method: 'PUT',
             headers: { 
                 'Content-Type': 'application/json',
