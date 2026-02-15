@@ -1014,6 +1014,9 @@
             <div class="tab" onclick="switchTab('boveda')">
                 <ion-icon name="shield-checkmark"></ion-icon> BÓVEDA
             </div>
+            <div class="tab" onclick="switchTab('reportes')">
+                <ion-icon name="flag"></ion-icon> MIS REPORTES
+            </div>
             
             
         </nav>
@@ -1205,6 +1208,28 @@
                 </h3>
                 <div class="items-grid" id="vaultContent">
                     <p class="empty-msg">Cargando bóveda...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: MIS REPORTES -->
+        <div id="tab-reportes" class="tab-content">
+            <div class="upload-section">
+                <h3 class="section-title">
+                    <ion-icon name="flag"></ion-icon>
+                    MIS PUBLICACIONES REPORTADAS
+                </h3>
+                <div style="background:rgba(0,242,255,.05);border:1px solid rgba(0,242,255,.2);border-radius:12px;padding:16px;margin-bottom:24px;">
+                    <div style="display:flex;align-items:flex-start;gap:12px;">
+                        <ion-icon name="information-circle" style="font-size:1.5rem;color:#00f2ff;flex-shrink:0;"></ion-icon>
+                        <div>
+                            <h4 style="color:#00f2ff;margin:0 0 8px;font-size:1rem;">¿Por qué es importante atender los reportes?</h4>
+                            <p style="color:#aaa;font-size:.9rem;line-height:1.6;margin:0;">Los reportes ayudan a mantener la calidad de la plataforma. Links caídos o desactualizados afectan tu reputación y pueden reducir tus ganancias. Actualiza tus publicaciones para mantener contentos a tus usuarios.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="items-grid" id="reportesContent">
+                    <p class="empty-msg">Cargando reportes...</p>
                 </div>
             </div>
         </div>
@@ -1599,6 +1624,7 @@
             // Recargar datos si es necesario
             if (tabName === 'historial') cargarEstadoActual();
             if (tabName === 'boveda') cargarBoveda();
+            if (tabName === 'reportes') cargarMisReportes();
         }
 
         // ========== MODALES ========== //
@@ -1810,6 +1836,115 @@ function formatNumber(num) {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
     return num.toString();
+}
+
+// ⭐ CARGAR BÓVEDA (publicaciones aprobadas)
+async function cargarBoveda() {
+    const user = localStorage.getItem("user_admin");
+    if (!user) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/items/user/${user}`);
+        const items = await res.json();
+        const aprobados = items.filter(i => i.status === 'aprobado');
+        
+        const content = document.getElementById('vaultContent');
+        if (aprobados.length === 0) {
+            content.innerHTML = '<p class="empty-msg">No tienes publicaciones aprobadas aún</p>';
+            return;
+        }
+        
+        content.innerHTML = aprobados.map(i => `
+            <div class="item-card">
+                <img src="${i.image}" alt="${i.title}">
+                <div class="item-info">
+                    <h4>${i.title}</h4>
+                    <div style="font-size:.75rem;color:#888;margin-top:5px;">
+                        ${i.descargasEfectivas || 0} descargas
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        console.error('Error cargando bóveda:', e);
+    }
+}
+
+// ⭐ CARGAR MIS REPORTES
+async function cargarMisReportes() {
+    const user = localStorage.getItem("user_admin");
+    if (!user) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/items/mis-reportes/${user}`);
+        const data = await res.json();
+        
+        const content = document.getElementById('reportesContent');
+        if (!data.success || !data.publicaciones || data.publicaciones.length === 0) {
+            content.innerHTML = `<div style="text-align:center;padding:60px 20px;color:#666;">
+                <ion-icon name="happy-outline" style="font-size:4rem;margin-bottom:15px;opacity:.3;"></ion-icon>
+                <h3 style="color:#888;margin-bottom:10px;font-size:1.2rem;">¡Excelente!</h3>
+                <p style="font-size:.95rem;line-height:1.6;">No tienes publicaciones con reportes activos.<br>Sigue compartiendo contenido de calidad.</p>
+            </div>`;
+            return;
+        }
+        
+        content.innerHTML = data.publicaciones.map(pub => {
+            const d = pub.reportesDesglose || {caido:0,viejo:0,malware:0};
+            const sColor = pub.linkStatus === 'online' ? 'var(--primary)' : 
+                          pub.linkStatus === 'revision' ? 'var(--warning)' : 'var(--danger)';
+            const sText = pub.linkStatus === 'online' ? '🟢 Online' :
+                         pub.linkStatus === 'revision' ? '🟡 En Revisión' : '🔴 Caído';
+            
+            return `<div style="background:var(--card);border:1px solid #222;border-radius:12px;padding:18px;border-left:4px solid ${sColor};">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+                    <div style="flex:1;">
+                        <h4 style="color:#fff;margin:0 0 8px;font-size:1rem;">${pub.title}</h4>
+                        <div style="font-size:.8rem;color:#666;">Publicado el ${new Date(pub.createdAt).toLocaleDateString('es-ES')}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="background:rgba(255,68,68,.12);color:#ff4444;padding:6px 12px;border-radius:20px;font-size:.75rem;font-weight:700;margin-bottom:6px;">
+                            ${pub.reportes} Reportes
+                        </div>
+                        <div style="font-size:.75rem;font-weight:600;" class="${pub.linkStatus}">${sText}</div>
+                    </div>
+                </div>
+                
+                <div style="background:#0a0a0a;padding:12px;border-radius:10px;margin-bottom:12px;">
+                    <div style="font-size:.75rem;color:#888;margin-bottom:8px;text-transform:uppercase;font-weight:600;">Motivos de Reporte:</div>
+                    <div style="display:flex;gap:15px;flex-wrap:wrap;">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <ion-icon name="link-outline" style="color:#ff4444;font-size:1.1rem;"></ion-icon>
+                            <span style="font-weight:700;color:#ff4444;font-size:1rem;">${d.caido||0}</span>
+                            <span style="font-size:.8rem;color:#666;">Link caído</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <ion-icon name="time-outline" style="color:#ffaa00;font-size:1.1rem;"></ion-icon>
+                            <span style="font-weight:700;color:#ffaa00;font-size:1rem;">${d.viejo||0}</span>
+                            <span style="font-size:.8rem;color:#666;">Obsoleto</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <ion-icon name="shield-outline" style="color:#ff00ff;font-size:1.1rem;"></ion-icon>
+                            <span style="font-weight:700;color:#ff00ff;font-size:1rem;">${d.malware||0}</span>
+                            <span style="font-size:.8rem;color:#666;">Malware</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="font-size:.8rem;color:#888;margin-bottom:12px;line-height:1.5;">
+                    💡 <strong>Consejo:</strong> Actualiza tu link para mantener tu reputación y tus ganancias.
+                </div>
+                
+                <button onclick="window.open('./biblioteca.html?id=${pub._id}', '_blank')" 
+                        style="width:100%;background:var(--primary);color:#000;border:none;padding:12px;border-radius:8px;font-weight:700;cursor:pointer;font-size:.9rem;transition:all .2s;">
+                    <ion-icon name="eye-outline" style="vertical-align:middle;"></ion-icon> Ver Publicación
+                </button>
+            </div>`;
+        }).join('');
+    } catch (e) {
+        console.error('Error cargando reportes:', e);
+        document.getElementById('reportesContent').innerHTML = '<p class="empty-msg" style="color:#ff4444;">Error al cargar reportes</p>';
+    }
 }
 
 // ⭐ CARGAR DATOS AL INICIAR

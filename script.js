@@ -544,39 +544,163 @@ function copiarConFallback(texto) {
 }
 
 // ==========================================
-// 7. SISTEMA DE REPORTES (MEJORADO)
+// 7. SISTEMA DE REPORTES MEJORADO (CON MODAL)
 // ==========================================
-async function report(id) {
-    if (confirm("⚠️ ¿Reportar error en este enlace?")) {
-        try {
-            const response = await fetch(`${API_URL}/items/report/${id}`, { method: 'PUT' });
-            const data = await response.json();
-            
-            if (response.ok) {
-                showMiniToast("✅ Reporte enviado. Gracias por tu colaboración.");
-                
-                // ⭐ Actualizar el estado visual inmediatamente en todas las cards con este ID
-                if (data.linkStatus === 'revision') {
-                    const cards = document.querySelectorAll(`[data-id="${id}"]`);
-                    cards.forEach(card => {
-                        const statusBadge = card.querySelector('.status-badge');
-                        if (statusBadge) {
-                            statusBadge.className = 'status-badge status-review';
-                            statusBadge.innerHTML = `
-                                <ion-icon name="alert-circle"></ion-icon>
-                                <span>Revisión</span>
-                            `;
-                        }
-                    });
-                }
-            } else {
-                showMiniToast("❌ Error al enviar reporte.");
-            }
-        } catch (e) {
-            console.error(e);
-            showMiniToast("❌ Error al enviar reporte.");
-        }
+
+// Variable global para el ID del item actual
+let reporteItemIdActual = null;
+
+// Crear modal de reportes (se crea una sola vez)
+function crearModalReporte() {
+    if (document.getElementById('modal-reporte')) return;
+    
+    const modal = document.createElement('div');
+    modal.id = 'modal-reporte';
+    modal.className = 'modal-reporte';
+    modal.innerHTML = `
+        <div class="modal-reporte-overlay" onclick="cerrarModalReporte()"></div>
+        <div class="modal-reporte-content">
+            <div class="modal-reporte-header">
+                <h3>⚠️ Reportar Contenido</h3>
+                <button class="modal-close-btn" onclick="cerrarModalReporte()">
+                    <ion-icon name="close-outline"></ion-icon>
+                </button>
+            </div>
+            <div class="modal-reporte-body">
+                <p class="modal-reporte-desc">Ayúdanos a mantener la calidad. ¿Cuál es el problema?</p>
+                <div class="reportes-opciones">
+                    <button class="reporte-opcion" data-motivo="caido">
+                        <ion-icon name="link-outline"></ion-icon>
+                        <div>
+                            <strong>Link caído</strong>
+                            <span>El enlace no funciona o está roto</span>
+                        </div>
+                    </button>
+                    <button class="reporte-opcion" data-motivo="viejo">
+                        <ion-icon name="time-outline"></ion-icon>
+                        <div>
+                            <strong>Contenido obsoleto</strong>
+                            <span>La versión está desactualizada</span>
+                        </div>
+                    </button>
+                    <button class="reporte-opcion" data-motivo="malware">
+                        <ion-icon name="shield-outline"></ion-icon>
+                        <div>
+                            <strong>Malware o engañoso</strong>
+                            <span>Contenido sospechoso</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Estilos del modal
+    if (!document.getElementById('modal-reporte-styles')) {
+        const styles = document.createElement('style');
+        styles.id = 'modal-reporte-styles';
+        styles.textContent = `
+            .modal-reporte{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:100000;}
+            .modal-reporte.active{display:flex;align-items:center;justify-content:center;}
+            .modal-reporte-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);backdrop-filter:blur(5px);}
+            .modal-reporte-content{position:relative;background:#0a0a0a;border:1px solid #333;border-radius:16px;max-width:500px;width:90%;max-height:90vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+            .modal-reporte-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #222;}
+            .modal-reporte-header h3{margin:0;font-size:1.2rem;color:#fff;display:flex;align-items:center;gap:8px;}
+            .modal-close-btn{background:transparent;border:none;color:#888;font-size:1.5rem;cursor:pointer;display:flex;padding:4px;transition:color .2s;}
+            .modal-close-btn:hover{color:#fff;}
+            .modal-reporte-body{padding:24px;}
+            .modal-reporte-desc{color:#999;font-size:.9rem;margin:0 0 20px;line-height:1.5;}
+            .reportes-opciones{display:flex;flex-direction:column;gap:12px;}
+            .reporte-opcion{display:flex;align-items:flex-start;gap:16px;padding:16px;background:#111;border:2px solid #222;border-radius:12px;cursor:pointer;transition:all .2s;text-align:left;}
+            .reporte-opcion:hover{background:#1a1a1a;border-color:#5EFF43;transform:translateX(4px);}
+            .reporte-opcion ion-icon{font-size:2rem;color:#5EFF43;flex-shrink:0;margin-top:2px;}
+            .reporte-opcion div{flex:1;}
+            .reporte-opcion strong{display:block;color:#fff;font-size:1rem;margin-bottom:4px;}
+            .reporte-opcion span{display:block;color:#888;font-size:.85rem;line-height:1.4;}
+        `;
+        document.head.appendChild(styles);
     }
+}
+
+// Abrir modal de reporte
+function abrirModalReporte(itemId) {
+    reporteItemIdActual = itemId;
+    crearModalReporte();
+    
+    const modal = document.getElementById('modal-reporte');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Event listeners a los botones
+    const opciones = modal.querySelectorAll('.reporte-opcion');
+    opciones.forEach(opcion => {
+        opcion.onclick = function() {
+            const motivo = this.getAttribute('data-motivo');
+            enviarReporte(reporteItemIdActual, motivo);
+        };
+    });
+}
+
+// Cerrar modal de reporte
+function cerrarModalReporte() {
+    const modal = document.getElementById('modal-reporte');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+        reporteItemIdActual = null;
+    }
+}
+
+// Enviar reporte al backend
+async function enviarReporte(itemId, motivo) {
+    cerrarModalReporte();
+    
+    try {
+        const usuario = localStorage.getItem("user_admin") || 'Anónimo';
+        
+        const response = await fetch(`${API_URL}/items/report/${itemId}`, { 
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ motivo, usuario })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            const motivoTexto = {
+                'caido': 'Link caído',
+                'viejo': 'Contenido obsoleto',
+                'malware': 'Malware/Engañoso'
+            };
+            showMiniToast(`✅ Reporte enviado: ${motivoTexto[motivo]}`);
+            
+            // Actualizar estado visual
+            if (data.linkStatus === 'revision') {
+                const cards = document.querySelectorAll(`[data-id="${itemId}"]`);
+                cards.forEach(card => {
+                    const statusBadge = card.querySelector('.status-badge');
+                    if (statusBadge) {
+                        statusBadge.className = 'status-badge status-review';
+                        statusBadge.innerHTML = `<ion-icon name="alert-circle"></ion-icon><span>Revisión</span>`;
+                    }
+                });
+            }
+        } else if (response.status === 429) {
+            showMiniToast("⏱️ Ya reportaste este contenido recientemente");
+        } else {
+            showMiniToast("❌ Error al enviar reporte");
+        }
+    } catch (e) {
+        console.error(e);
+        showMiniToast("❌ Error de conexión");
+    }
+}
+
+// Mantener la función report() por compatibilidad (ahora abre el modal)
+async function report(id) {
+    abrirModalReporte(id);
 }
 
 // ==========================================
