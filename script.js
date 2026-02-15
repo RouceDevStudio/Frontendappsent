@@ -12,7 +12,7 @@ let itemsRenderizados = [];
 let scrollInfinitoActivo = false;
 let cargandoMas = false;
 const ITEMS_POR_CARGA = 12; // Número de items a cargar por vez
-const MIN_ITEMS_PARA_REPETIR = 20; // Si hay menos de 20 items, activar repetición
+const MIN_ITEMS_PARA_REPETIR = 50; // Si hay menos de 20 items, activar repetición
 
 // 1. DESPERTADOR INMEDIATO
 (function despertar() {
