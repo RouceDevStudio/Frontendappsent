@@ -12,7 +12,7 @@ let itemsRenderizados = [];
 let scrollInfinitoActivo = false;
 let cargandoMas = false;
 const ITEMS_POR_CARGA = 12; // Número de items a cargar por vez
-const MIN_ITEMS_PARA_REPETIR = 50; // Si hay menos de 20 items, activar repetición
+const MIN_ITEMS_PARA_REPETIR = 20; // Si hay menos de 20 items, activar repetición
 
 // 1. DESPERTADOR INMEDIATO
 (function despertar() {
@@ -28,7 +28,7 @@ async function cargarContenido() {
     
     try {
         // PASO A: Obtener niveles de verificación de la ruta /auth/users
-        const resUsers = await fetch(`${API_URL}/auth/users`);
+        const resUsers = await fetch(`${API_URL}/auth/users/public`);
         const usuarios = await resUsers.json();
         usuarios.forEach(u => {
             mapaUsuarios[u.usuario] = u.verificadoNivel || 0;

@@ -98,7 +98,7 @@ async function mostrarUsuarioVerificado() {
     els.userLoggedDisplay.textContent = `@${usuarioLogueado}`;
     
     try {
-        const res = await fetch(`${API_URL}/auth/users`);
+        const res = await fetch(`${API_URL}/auth/users/public`);
         const data = await res.json();
         const usuarioData = data.find(u => u.usuario === usuarioLogueado);
         if (!usuarioData) return;
@@ -772,7 +772,7 @@ async function cargarEstadisticasAlternativo() {
     
     try {
         // Intentar obtener datos del usuario directamente
-        const userRes = await fetch(`${API_URL}/auth/users`);
+        const userRes = await fetch(`${API_URL}/auth/users/public`);
         if (userRes.ok) {
             const users = await userRes.json();
             const usuario = users.find(u => u.usuario === usuarioLogueado);
