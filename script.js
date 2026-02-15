@@ -419,36 +419,82 @@ async function fav(id) {
             return;
         }
 
-        let favs = JSON.parse(localStorage.getItem("favoritos") || "[]");
-        
-        if (favs.includes(id)) {
-            favs = favs.filter(f => f !== id);
-            localStorage.setItem("favoritos", JSON.stringify(favs));
-            showMiniToast("💔 Eliminado de favoritos");
+        console.log('🔥 fav() ejecutado - Usuario:', user, 'ItemID:', id);
+
+        // ✅ Verificar si ya está en favoritos (consultando el backend)
+        const checkRes = await fetch(`${API_URL}/favoritos/${user}`);
+        const favoritos = await checkRes.json();
+        const yaEsFavorito = Array.isArray(favoritos) && favoritos.some(f => f._id === id);
+
+        console.log('  Favoritos actuales:', favoritos.length, '¿Ya es favorito?', yaEsFavorito);
+
+        if (yaEsFavorito) {
+            // ❌ ELIMINAR del backend
+            console.log('  → Eliminando de favoritos en backend...');
+            const res = await fetch(`${API_URL}/favoritos/remove`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario: user, itemId: id })
+            });
+
+            const data = await res.json();
+            console.log('  Resultado eliminación:', data);
+
+            if (data.ok || data.success) {
+                showMiniToast("💔 Eliminado de favoritos");
+                
+                // Actualizar localStorage para mantener sincronía
+                let favs = JSON.parse(localStorage.getItem("favoritos") || "[]");
+                favs = favs.filter(f => f !== id);
+                localStorage.setItem("favoritos", JSON.stringify(favs));
+            } else {
+                throw new Error(data.error || 'Error al eliminar');
+            }
         } else {
-            favs.push(id);
-            localStorage.setItem("favoritos", JSON.stringify(favs));
-            showMiniToast("❤️ Añadido a favoritos");
-            
-            const item = todosLosItems.find(i => i._id === id);
-            if (item && item.usuario !== user) {
-                try {
-                    await fetch(`${API_URL}/notificaciones`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            usuario: item.usuario,
-                            tipo: 'sistema',
-                            mensaje: `@${user} agregó tu contenido a favoritos: "${item.title}"`
-                        })
-                    });
-                } catch (err) {
-                    console.log("No se pudo enviar notificación al autor");
+            // ✅ AGREGAR al backend
+            console.log('  → Agregando a favoritos en backend...');
+            const res = await fetch(`${API_URL}/favoritos/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario: user, itemId: id })
+            });
+
+            const data = await res.json();
+            console.log('  Resultado agregación:', data);
+
+            if (data.ok || data.success) {
+                showMiniToast("❤️ Añadido a favoritos");
+                
+                // Actualizar localStorage para mantener sincronía
+                let favs = JSON.parse(localStorage.getItem("favoritos") || "[]");
+                if (!favs.includes(id)) {
+                    favs.push(id);
+                    localStorage.setItem("favoritos", JSON.stringify(favs));
                 }
+
+                // Enviar notificación al autor
+                const item = todosLosItems.find(i => i._id === id);
+                if (item && item.usuario !== user) {
+                    try {
+                        await fetch(`${API_URL}/notificaciones`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                usuario: item.usuario,
+                                tipo: 'sistema',
+                                mensaje: `@${user} agregó tu contenido a favoritos: "${item.title}"`
+                            })
+                        });
+                    } catch (err) {
+                        console.log("No se pudo enviar notificación al autor");
+                    }
+                }
+            } else {
+                throw new Error(data.error || 'Error al agregar');
             }
         }
     } catch (e) {
-        console.error(e);
+        console.error('❌ Error completo en fav():', e);
         showMiniToast("❌ Error al guardar en favoritos.");
     }
 }
