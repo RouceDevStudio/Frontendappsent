@@ -7,6 +7,13 @@ const loadingState = document.getElementById("loading-state");
 let todosLosItems = [];
 let mapaUsuarios = {}; // Diccionario para cruzar @usuario con su nivel de verificación
 
+// ⭐ NUEVO: Variables para scroll infinito
+let itemsRenderizados = [];
+let scrollInfinitoActivo = false;
+let cargandoMas = false;
+const ITEMS_POR_CARGA = 12; // Número de items a cargar por vez
+const MIN_ITEMS_PARA_REPETIR = 20; // Si hay menos de 20 items, activar repetición
+
 // 1. DESPERTADOR INMEDIATO
 (function despertar() {
     fetch(`${API_URL}/items`, { mode: 'no-cors' }).catch(() => {});
@@ -34,7 +41,17 @@ async function cargarContenido() {
         if (loadingState) loadingState.style.display = "none";
         
         todosLosItems = data;
-        renderizar(todosLosItems);
+        
+        // ⭐ NUEVO: Determinar si activar scroll infinito
+        scrollInfinitoActivo = todosLosItems.length > 0 && todosLosItems.length < MIN_ITEMS_PARA_REPETIR;
+        
+        if (scrollInfinitoActivo) {
+            console.log(`🔄 Scroll infinito activado - Solo ${todosLosItems.length} items disponibles`);
+            inicializarScrollInfinito();
+        } else {
+            // Si hay suficientes items, renderizar todos normalmente
+            renderizar(todosLosItems);
+        }
         
         const sharedId = new URLSearchParams(window.location.search).get('id');
         if (sharedId) setTimeout(() => document.querySelector(`[data-id="${sharedId}"]`)?.click(), 500);
@@ -44,6 +61,272 @@ async function cargarContenido() {
         if (loadingState) loadingState.innerHTML = `<p style="color:red">ERROR DE NÚCLEO. REINTENTANDO...</p>`;
         setTimeout(cargarContenido, 3000);
     }
+}
+
+// ⭐ NUEVO: Inicializar scroll infinito
+function inicializarScrollInfinito() {
+    // Renderizar primera carga
+    itemsRenderizados = [];
+    cargarMasItems();
+    
+    // Configurar observer para detectar cuando llegar al final
+    const observerTarget = document.createElement('div');
+    observerTarget.id = 'scroll-trigger';
+    observerTarget.style.cssText = 'height: 1px; margin-top: 20px;';
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !cargandoMas) {
+                cargarMasItems();
+            }
+        });
+    }, {
+        rootMargin: '200px' // Cargar antes de llegar al final
+    });
+    
+    // Esperar a que el DOM esté listo
+    setTimeout(() => {
+        output.appendChild(observerTarget);
+        observer.observe(observerTarget);
+    }, 100);
+}
+
+// ⭐ NUEVO: Cargar más items (repitiendo si es necesario)
+function cargarMasItems() {
+    if (cargandoMas || todosLosItems.length === 0) return;
+    
+    cargandoMas = true;
+    
+    // Mostrar indicador de carga
+    mostrarCargando();
+    
+    setTimeout(() => {
+        const fragment = document.createDocumentFragment();
+        let itemsAgregados = 0;
+        
+        // Agregar items hasta completar ITEMS_POR_CARGA
+        while (itemsAgregados < ITEMS_POR_CARGA) {
+            // Obtener el siguiente item (circular)
+            const index = itemsRenderizados.length % todosLosItems.length;
+            const item = todosLosItems[index];
+            
+            // Crear la card
+            const card = crearCard(item, itemsRenderizados.length);
+            fragment.appendChild(card);
+            
+            itemsRenderizados.push(item);
+            itemsAgregados++;
+        }
+        
+        // Agregar al DOM (antes del trigger)
+        const scrollTrigger = document.getElementById('scroll-trigger');
+        if (scrollTrigger) {
+            output.insertBefore(fragment, scrollTrigger);
+        } else {
+            output.appendChild(fragment);
+        }
+        
+        ocultarCargando();
+        cargandoMas = false;
+        
+        // Log para debugging
+        console.log(`📦 Cargados ${itemsAgregados} items más (Total renderizado: ${itemsRenderizados.length})`);
+    }, 300); // Pequeño delay para simular carga natural
+}
+
+// ⭐ NUEVO: Mostrar indicador de carga
+function mostrarCargando() {
+    let loader = document.getElementById('infinite-loader');
+    if (!loader) {
+        loader = document.createElement('div');
+        loader.id = 'infinite-loader';
+        loader.style.cssText = `
+            text-align: center;
+            padding: 20px;
+            color: var(--primary, #5EFF43);
+            font-size: 0.9rem;
+            animation: pulse 1.5s ease-in-out infinite;
+        `;
+        loader.innerHTML = `
+            <ion-icon name="sync-outline" style="font-size: 2rem; animation: spin 1s linear infinite;"></ion-icon>
+            <p style="margin-top: 10px;">Cargando más contenido...</p>
+        `;
+        
+        // Agregar animación de spin
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    const scrollTrigger = document.getElementById('scroll-trigger');
+    if (scrollTrigger && !document.getElementById('infinite-loader')) {
+        output.insertBefore(loader, scrollTrigger);
+    }
+}
+
+// ⭐ NUEVO: Ocultar indicador de carga
+function ocultarCargando() {
+    const loader = document.getElementById('infinite-loader');
+    if (loader) {
+        loader.remove();
+    }
+}
+
+// ⭐ NUEVO: Crear una card (extraído de renderizar para reutilización)
+function crearCard(item, index) {
+    const card = document.createElement("div");
+    card.className = "juego-card";
+    card.setAttribute("data-id", item._id);
+    card.setAttribute("data-index", index); // Para debugging
+    
+    // ⭐ Usar linkStatus del backend
+    const linkStatus = item.linkStatus || (item.reportes >= 3 ? 'revision' : 'online');
+    const isOnline = linkStatus === 'online';
+    const statusText = linkStatus === 'online' ? 'Online' : 
+                      linkStatus === 'revision' ? 'Revisión' : 'Caído';
+    const statusIcon = linkStatus === 'online' ? 'checkmark-circle' : 
+                      linkStatus === 'revision' ? 'alert-circle' : 'close-circle';
+    
+    const media = /\.(mp4|webm|mov)$/i.test(item.image) ?
+        `<video src="${item.image}" class="juego-img" autoplay muted loop playsinline></video>` :
+        `<img src="${item.image}" class="juego-img" loading="lazy">`;
+    
+    const nivelAutor = mapaUsuarios[item.usuario] || 0;
+
+    // ⭐ Mostrar descargas efectivas
+    const descargasEfectivas = item.descargasEfectivas || 0;
+    const descargasTexto = descargasEfectivas > 0 ? 
+        `<div style="display:flex; align-items:center; gap:5px; color:#888; font-size:0.7rem; margin-top:5px;">
+            <ion-icon name="download-outline" style="font-size:0.9rem;"></ion-icon>
+            <span>${formatNumber(descargasEfectivas)} descargas</span>
+        </div>` : '';
+
+    card.innerHTML = `
+        <div class="status-badge ${isOnline ? 'status-online' : 'status-review'}">
+            <ion-icon name="${statusIcon}"></ion-icon>
+            <span>${statusText}</span>
+        </div>
+        <div class="close-btn"><ion-icon name="close-outline"></ion-icon></div>
+        ${media}
+        <div class="card-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span class="user-tag ${nivelAutor > 0 ? 'verificado' : ''}" 
+                      data-usuario="${item.usuario}"
+                      style="cursor: pointer;">
+                    @${item.usuario || 'Cloud User'}
+                    ${getVerificadoBadge(item.usuario)}
+                </span>
+                <span class="category-badge">${item.category || 'Gral'}</span>
+            </div>
+            <h4 class="juego-titulo">${item.title}</h4>
+            ${descargasTexto}
+            <div class="social-actions">
+                <button class="action-btn btn-fav" data-id="${item._id}"><ion-icon name="heart-sharp"></ion-icon></button>
+                <button class="action-btn btn-share" data-id="${item._id}"><ion-icon name="share-social-sharp"></ion-icon></button>
+                <button class="action-btn btn-report" data-id="${item._id}"><ion-icon name="flag-sharp"></ion-icon></button>
+            </div>
+            <p class="cloud-note">${item.description || 'Sin descripción.'}</p>
+            
+            <div class="boton-descargar-full" style="position:relative; cursor:pointer;">
+                <a href="puente.html?id=${item._id}" target="_blank" 
+                   style="position:absolute; top:0; left:0; width:100%; height:100%; text-decoration:none; color:inherit; display:flex; align-items:center; justify-content:center;"
+                   onclick="event.stopPropagation();">
+                   ACCEDER A LA NUBE
+                </a>
+                <span style="visibility:hidden">ACCEDER A LA NUBE</span>
+            </div>
+            
+            <div class="comentarios-section">
+                <h5 style="color:var(--primary); font-size:0.7rem; margin-bottom:10px;">OPINIONES</h5>
+                <div class="comentarios-list" id="list-${item._id}-${index}">Cargando...</div>
+                <div class="add-comment" style="display:flex; gap:5px; margin-top:10px;">
+                    <input type="text" id="input-${item._id}-${index}" class="input-comment" data-id="${item._id}" placeholder="Escribe...">
+                    <button class="btn-post-comment" data-id="${item._id}">OK</button>
+                </div>
+            </div>
+        </div>`;
+    
+    // ✅ EVENTO DE CLICK DIRECTO EN LA CARD (SIN DELEGACIÓN)
+    card.addEventListener('click', function(e) {
+        // No expandir si se clickeó en elementos interactivos
+        if (e.target.closest('.user-tag') || 
+            e.target.closest('.action-btn') || 
+            e.target.closest('.input-comment') || 
+            e.target.closest('.btn-post-comment') ||
+            e.target.closest('.close-btn') ||
+            e.target.closest('a')) {
+            return;
+        }
+        
+        if (!card.classList.contains("expandida")) {
+            card.classList.add("expandida");
+            overlay.style.display = "block";
+            document.body.style.overflow = "hidden";
+            cargarComm(item._id, index);
+        }
+    });
+    
+    // ✅ BOTÓN CERRAR CON EVENTO DIRECTO
+    const closeBtn = card.querySelector(".close-btn");
+    closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        card.classList.remove("expandida");
+        overlay.style.display = "none";
+        document.body.style.overflow = "auto";
+    });
+    
+    // ✅ EVENTO CLICK EN NOMBRE DE USUARIO
+    const userTag = card.querySelector('.user-tag');
+    userTag.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const usuario = userTag.dataset.usuario;
+        visitarPerfil(usuario);
+    });
+    
+    // ✅ EVENTOS DE BOTONES SOCIALES
+    const btnFav = card.querySelector('.btn-fav');
+    btnFav.addEventListener('click', function(e) {
+        e.stopPropagation();
+        fav(item._id);
+    });
+    
+    const btnShare = card.querySelector('.btn-share');
+    btnShare.addEventListener('click', function(e) {
+        e.stopPropagation();
+        share(item._id);
+    });
+    
+    const btnReport = card.querySelector('.btn-report');
+    btnReport.addEventListener('click', function(e) {
+        e.stopPropagation();
+        report(item._id);
+    });
+    
+    // ✅ EVENTO PARA ENVIAR COMENTARIO
+    const btnPostComment = card.querySelector('.btn-post-comment');
+    btnPostComment.addEventListener('click', function(e) {
+        e.stopPropagation();
+        postComm(item._id, index);
+    });
+    
+    const inputComment = card.querySelector('.input-comment');
+    inputComment.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.stopPropagation();
+            postComm(item._id, index);
+        }
+    });
+    
+    return card;
 }
 
 // Helper: Extrae el badge del mapa de usuarios cargado
@@ -75,148 +358,15 @@ function renderizar(lista) {
     
     const fragment = document.createDocumentFragment();
     
-    lista.forEach(item => {
-        const card = document.createElement("div");
-        card.className = "juego-card";
-        card.setAttribute("data-id", item._id);
-        
-        // ⭐ NUEVO: Usar linkStatus del backend
-        const linkStatus = item.linkStatus || (item.reportes >= 3 ? 'revision' : 'online');
-        const isOnline = linkStatus === 'online';
-        const statusText = linkStatus === 'online' ? 'Online' : 
-                          linkStatus === 'revision' ? 'Revisión' : 'Caído';
-        const statusIcon = linkStatus === 'online' ? 'checkmark-circle' : 
-                          linkStatus === 'revision' ? 'alert-circle' : 'close-circle';
-        
-        const media = /\.(mp4|webm|mov)$/i.test(item.image) ?
-            `<video src="${item.image}" class="juego-img" autoplay muted loop playsinline></video>` :
-            `<img src="${item.image}" class="juego-img" loading="lazy">`;
-        
-        const nivelAutor = mapaUsuarios[item.usuario] || 0;
-
-        // ⭐ NUEVO: Mostrar descargas efectivas
-        const descargasEfectivas = item.descargasEfectivas || 0;
-        const descargasTexto = descargasEfectivas > 0 ? 
-            `<div style="display:flex; align-items:center; gap:5px; color:#888; font-size:0.7rem; margin-top:5px;">
-                <ion-icon name="download-outline" style="font-size:0.9rem;"></ion-icon>
-                <span>${formatNumber(descargasEfectivas)} descargas</span>
-            </div>` : '';
-
-        card.innerHTML = `
-            <div class="status-badge ${isOnline ? 'status-online' : 'status-review'}">
-                <ion-icon name="${statusIcon}"></ion-icon>
-                <span>${statusText}</span>
-            </div>
-            <div class="close-btn"><ion-icon name="close-outline"></ion-icon></div>
-            ${media}
-            <div class="card-content">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span class="user-tag ${nivelAutor > 0 ? 'verificado' : ''}" 
-                          data-usuario="${item.usuario}"
-                          style="cursor: pointer;">
-                        @${item.usuario || 'Cloud User'}
-                        ${getVerificadoBadge(item.usuario)}
-                    </span>
-                    <span class="category-badge">${item.category || 'Gral'}</span>
-                </div>
-                <h4 class="juego-titulo">${item.title}</h4>
-                ${descargasTexto}
-                <div class="social-actions">
-                    <button class="action-btn btn-fav" data-id="${item._id}"><ion-icon name="heart-sharp"></ion-icon></button>
-                    <button class="action-btn btn-share" data-id="${item._id}"><ion-icon name="share-social-sharp"></ion-icon></button>
-                    <button class="action-btn btn-report" data-id="${item._id}"><ion-icon name="flag-sharp"></ion-icon></button>
-                </div>
-                <p class="cloud-note">${item.description || 'Sin descripción.'}</p>
-                
-                <div class="boton-descargar-full" style="position:relative; cursor:pointer;">
-                    <a href="puente.html?id=${item._id}" target="_blank" 
-                       style="position:absolute; top:0; left:0; width:100%; height:100%; text-decoration:none; color:inherit; display:flex; align-items:center; justify-content:center;"
-                       onclick="event.stopPropagation();">
-                       ACCEDER A LA NUBE
-                    </a>
-                    <span style="visibility:hidden">ACCEDER A LA NUBE</span>
-                </div>
-                
-                <div class="comentarios-section">
-                    <h5 style="color:var(--primary); font-size:0.7rem; margin-bottom:10px;">OPINIONES</h5>
-                    <div class="comentarios-list" id="list-${item._id}">Cargando...</div>
-                    <div class="add-comment" style="display:flex; gap:5px; margin-top:10px;">
-                        <input type="text" id="input-${item._id}" class="input-comment" data-id="${item._id}" placeholder="Escribe...">
-                        <button class="btn-post-comment" data-id="${item._id}">OK</button>
-                    </div>
-                </div>
-            </div>`;
-        
-        // ✅ EVENTO DE CLICK DIRECTO EN LA CARD (SIN DELEGACIÓN)
-        card.addEventListener('click', function(e) {
-            // No expandir si se clickeó en elementos interactivos
-            if (e.target.closest('.user-tag') || 
-                e.target.closest('.action-btn') || 
-                e.target.closest('.input-comment') || 
-                e.target.closest('.btn-post-comment') ||
-                e.target.closest('.close-btn') ||
-                e.target.closest('a')) {
-                return;
-            }
-            
-            if (!card.classList.contains("expandida")) {
-                card.classList.add("expandida");
-                overlay.style.display = "block";
-                document.body.style.overflow = "hidden";
-                cargarComm(item._id);
-            }
-        });
-        
-        // ✅ BOTÓN CERRAR CON EVENTO DIRECTO
-        const closeBtn = card.querySelector(".close-btn");
-        closeBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            card.classList.remove("expandida");
-            overlay.style.display = "none";
-            document.body.style.overflow = "auto";
-        });
-        
-        // ✅ EVENTO CLICK EN NOMBRE DE USUARIO
-        const userTag = card.querySelector('.user-tag');
-        userTag.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const usuario = userTag.dataset.usuario;
-            visitarPerfil(usuario);
-        });
-        
-        // ✅ EVENTOS DE BOTONES SOCIALES
-        const btnFav = card.querySelector('.btn-fav');
-        btnFav.addEventListener('click', function(e) {
-            e.stopPropagation();
-            fav(item._id);
-        });
-        
-        const btnShare = card.querySelector('.btn-share');
-        btnShare.addEventListener('click', function(e) {
-            e.stopPropagation();
-            share(item._id);
-        });
-        
-        const btnReport = card.querySelector('.btn-report');
-        btnReport.addEventListener('click', function(e) {
-            e.stopPropagation();
-            report(item._id);
-        });
-        
-        // ✅ EVENTO DEL BOTÓN DE COMENTARIOS
-        const btnPostComment = card.querySelector('.btn-post-comment');
-        btnPostComment.addEventListener('click', function(e) {
-            e.stopPropagation();
-            postComm(item._id);
-        });
-        
+    lista.forEach((item, index) => {
+        const card = crearCard(item, index);
         fragment.appendChild(card);
     });
     
     output.appendChild(fragment);
 }
 
-// ⭐ HELPER: Formatear números (ej: 1000 → 1K)
+// Helper: Formatear números grandes
 function formatNumber(num) {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
@@ -228,32 +378,33 @@ function formatNumber(num) {
 // ==========================================
 if (buscador) {
     buscador.addEventListener("input", (e) => {
-        const busqueda = e.target.value.toLowerCase().trim();
+        const termino = e.target.value.toLowerCase().trim();
         
-        if (!busqueda) {
-            renderizar(todosLosItems);
-            return;
+        // ⭐ NUEVO: Desactivar scroll infinito durante búsqueda
+        if (termino) {
+            // Remover scroll trigger si existe
+            const scrollTrigger = document.getElementById('scroll-trigger');
+            if (scrollTrigger) scrollTrigger.remove();
+            
+            const filtrados = todosLosItems.filter(item =>
+                item.title.toLowerCase().includes(termino) ||
+                (item.description && item.description.toLowerCase().includes(termino)) ||
+                item.usuario.toLowerCase().includes(termino) ||
+                (item.category && item.category.toLowerCase().includes(termino)) ||
+                (item.tags && item.tags.some(tag => tag.toLowerCase().includes(termino)))
+            );
+            
+            renderizar(filtrados);
+        } else {
+            // Restaurar vista original
+            if (scrollInfinitoActivo) {
+                itemsRenderizados = [];
+                output.innerHTML = '';
+                inicializarScrollInfinito();
+            } else {
+                renderizar(todosLosItems);
+            }
         }
-        
-        const filtrados = todosLosItems.filter(i => 
-            i.title?.toLowerCase().includes(busqueda) ||
-            i.description?.toLowerCase().includes(busqueda) ||
-            i.category?.toLowerCase().includes(busqueda) ||
-            i.usuario?.toLowerCase().includes(busqueda)
-        );
-        
-        renderizar(filtrados);
-    });
-}
-
-// Cerrar cards expandidas al hacer clic en overlay
-if (overlay) {
-    overlay.addEventListener('click', () => {
-        document.querySelectorAll('.juego-card.expandida').forEach(card => {
-            card.classList.remove('expandida');
-        });
-        overlay.style.display = 'none';
-        document.body.style.overflow = 'auto';
     });
 }
 
@@ -261,41 +412,39 @@ if (overlay) {
 // 5. SISTEMA DE FAVORITOS
 // ==========================================
 async function fav(id) {
-    const user = localStorage.getItem("user_admin");
-    if (!user) {
-        showMiniToast("⚠️ Debes iniciar sesión para guardar favoritos");
-        return;
-    }
-
     try {
-        const existe = await fetch(`${API_URL}/favoritos/${user}`);
-        const favs = await existe.json();
-        const yaExiste = favs.some(f => f._id === id);
+        const user = localStorage.getItem("user_admin");
+        if (!user) {
+            showMiniToast("⚠️ Debes iniciar sesión");
+            return;
+        }
 
-        if (yaExiste) {
-            const response = await fetch(`${API_URL}/favoritos/remove`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ usuario: user, itemId: id })
-            });
-
-            if (response.ok) {
-                showMiniToast("💔 Eliminado de favoritos");
-            }
+        let favs = JSON.parse(localStorage.getItem("favoritos") || "[]");
+        
+        if (favs.includes(id)) {
+            favs = favs.filter(f => f !== id);
+            localStorage.setItem("favoritos", JSON.stringify(favs));
+            showMiniToast("💔 Eliminado de favoritos");
         } else {
-            const response = await fetch(`${API_URL}/favoritos/add`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ usuario: user, itemId: id })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                showMiniToast("💚 Guardado en favoritos");
-            } else if (response.status === 400) {
-                showMiniToast("Ya está en tus favoritos");
-            } else {
-                showMiniToast("Error al guardar");
+            favs.push(id);
+            localStorage.setItem("favoritos", JSON.stringify(favs));
+            showMiniToast("❤️ Añadido a favoritos");
+            
+            const item = todosLosItems.find(i => i._id === id);
+            if (item && item.usuario !== user) {
+                try {
+                    await fetch(`${API_URL}/notificaciones`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            usuario: item.usuario,
+                            tipo: 'sistema',
+                            mensaje: `@${user} agregó tu contenido a favoritos: "${item.title}"`
+                        })
+                    });
+                } catch (err) {
+                    console.log("No se pudo enviar notificación al autor");
+                }
             }
         }
     } catch (e) {
@@ -360,10 +509,10 @@ async function report(id) {
             if (response.ok) {
                 showMiniToast("✅ Reporte enviado. Gracias por tu colaboración.");
                 
-                // ⭐ Actualizar el estado visual inmediatamente
+                // ⭐ Actualizar el estado visual inmediatamente en todas las cards con este ID
                 if (data.linkStatus === 'revision') {
-                    const card = document.querySelector(`[data-id="${id}"]`);
-                    if (card) {
+                    const cards = document.querySelectorAll(`[data-id="${id}"]`);
+                    cards.forEach(card => {
                         const statusBadge = card.querySelector('.status-badge');
                         if (statusBadge) {
                             statusBadge.className = 'status-badge status-review';
@@ -372,7 +521,7 @@ async function report(id) {
                                 <span>Revisión</span>
                             `;
                         }
-                    }
+                    });
                 }
             } else {
                 showMiniToast("❌ Error al enviar reporte.");
@@ -385,10 +534,10 @@ async function report(id) {
 }
 
 // ==========================================
-// 8. SISTEMA DE COMENTARIOS
+// 8. SISTEMA DE COMENTARIOS (Actualizado para scroll infinito)
 // ==========================================
-async function cargarComm(id) {
-    const box = document.getElementById(`list-${id}`);
+async function cargarComm(id, index = '') {
+    const box = document.getElementById(`list-${id}-${index}`);
     if (!box) return;
     
     try {
@@ -416,9 +565,9 @@ async function cargarComm(id) {
     }
 }
 
-async function postComm(id) {
+async function postComm(id, index = '') {
     const user = localStorage.getItem("user_admin");
-    const input = document.getElementById(`input-${id}`);
+    const input = document.getElementById(`input-${id}-${index}`);
     
     if (!user) {
         showMiniToast("⚠️ Debes iniciar sesión para comentar");
@@ -437,7 +586,7 @@ async function postComm(id) {
         
         if (r.ok) {
             input.value = "";
-            cargarComm(id);
+            cargarComm(id, index);
             showMiniToast("✅ Comentario publicado");
         }
     } catch (e) {
@@ -492,6 +641,20 @@ function visitarPerfil(usuario) {
 }
 
 // ==========================================
-// 12. INICIALIZACIÓN
+// 12. CERRAR CARD EXPANDIDA AL HACER CLICK EN OVERLAY
+// ==========================================
+if (overlay) {
+    overlay.addEventListener('click', function() {
+        const expandida = document.querySelector('.juego-card.expandida');
+        if (expandida) {
+            expandida.classList.remove('expandida');
+            overlay.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    });
+}
+
+// ==========================================
+// 13. INICIALIZACIÓN
 // ==========================================
 window.addEventListener("load", cargarContenido);
