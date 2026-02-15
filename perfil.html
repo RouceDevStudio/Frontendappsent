@@ -1838,37 +1838,6 @@ function formatNumber(num) {
     return num.toString();
 }
 
-// ⭐ CARGAR BÓVEDA (publicaciones aprobadas)
-async function cargarBoveda() {
-    const user = localStorage.getItem("user_admin");
-    if (!user) return;
-    
-    try {
-        const res = await fetch(`${API_URL}/items/user/${user}`);
-        const items = await res.json();
-        const aprobados = items.filter(i => i.status === 'aprobado');
-        
-        const content = document.getElementById('vaultContent');
-        if (aprobados.length === 0) {
-            content.innerHTML = '<p class="empty-msg">No tienes publicaciones aprobadas aún</p>';
-            return;
-        }
-        
-        content.innerHTML = aprobados.map(i => `
-            <div class="item-card">
-                <img src="${i.image}" alt="${i.title}">
-                <div class="item-info">
-                    <h4>${i.title}</h4>
-                    <div style="font-size:.75rem;color:#888;margin-top:5px;">
-                        ${i.descargasEfectivas || 0} descargas
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    } catch (e) {
-        console.error('Error cargando bóveda:', e);
-    }
-}
 
 // ⭐ CARGAR MIS REPORTES
 async function cargarMisReportes() {
