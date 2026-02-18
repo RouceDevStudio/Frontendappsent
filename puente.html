@@ -23,9 +23,6 @@
     </style>
 </head>
 <body>
-    
-    
-    
     <div class="container">
         <ion-icon name="shield-checkmark-outline" style="font-size: 48px; color: var(--neon-green);"></ion-icon>
         <h1>Saliendo de UpGames</h1>
@@ -291,9 +288,247 @@
         // ⭐ LOG FINAL DE INICIALIZACIÓN
         log("Puente.html inicializado completamente");
     </script>
-    
-    
-    <script src="https://pl28710944.effectivegatecpm.com/3b/d4/b6/3bd4b68842c2959a8afb8ce3fedc3a87.js"></script>
+
+<!-- ══════════════════════════════════════════════
+     🎓 TUTORIAL PUENTE — Primera vez
+     REGLAS: 
+     ✅ Solo aparece 1 vez (localStorage)
+     ✅ NO bloquea el countdown ni los anuncios
+     ✅ NO toca ninguna variable/función existente
+     ✅ Se descarta al tocar el botón principal
+     ✅ Mobile-first
+══════════════════════════════════════════════ -->
+<style>
+/* ── CARD TUTORIAL FLOTANTE ──────────────────────────────────
+   Se muestra encima del contenido SIN bloquear nada.
+   El usuario puede interactuar con la página normalmente.
+─────────────────────────────────────────────────────────── */
+#bridge-tut {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    width: min(340px, calc(100vw - 24px));
+    background: #0f0f0f;
+    border: 1.5px solid #39FF14;
+    border-radius: 18px;
+    padding: 16px 18px 14px;
+    box-shadow: 0 8px 40px rgba(57,255,20,0.18), 0 2px 16px rgba(0,0,0,0.85);
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    box-sizing: border-box;
+    animation: btgSlideUp .4s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+@keyframes btgSlideUp {
+    from { opacity:0; transform:translateX(-50%) translateY(24px); }
+    to   { opacity:1; transform:translateX(-50%) translateY(0); }
+}
+#bridge-tut.closing {
+    animation: btgSlideDown .3s ease forwards;
+}
+@keyframes btgSlideDown {
+    to { opacity:0; transform:translateX(-50%) translateY(30px); }
+}
+
+/* Header */
+#bridge-tut .bt-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+#bridge-tut .bt-badge {
+    font-size: .6rem; font-weight: 900; letter-spacing: 1.5px;
+    color: #39FF14;
+    background: rgba(57,255,20,.1);
+    border: 1px solid rgba(57,255,20,.3);
+    border-radius: 20px;
+    padding: 3px 10px;
+    text-transform: uppercase;
+}
+#bridge-tut .bt-step {
+    font-size: .65rem; font-weight: 700;
+    color: rgba(57,255,20,.5);
+    letter-spacing: .5px;
+}
+/* Contenido */
+#bridge-tut .bt-title {
+    font-size: .92rem; font-weight: 800;
+    color: #fff;
+    margin-bottom: 7px;
+    line-height: 1.3;
+}
+#bridge-tut .bt-body {
+    font-size: .78rem; color: #aaa;
+    line-height: 1.6;
+    margin-bottom: 14px;
+}
+#bridge-tut .bt-body strong { color: #39FF14; }
+
+/* Footer */
+#bridge-tut .bt-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+#bridge-tut .bt-dots {
+    display: flex; gap: 5px; align-items: center;
+}
+#bridge-tut .bt-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #2a2a2a;
+    transition: background .3s, transform .3s;
+}
+#bridge-tut .bt-dot.on { background: #39FF14; transform: scale(1.3); }
+
+#bridge-tut .bt-nav { display: flex; gap: 8px; }
+#bridge-tut .bt-btn {
+    padding: 8px 16px; border-radius: 9px;
+    font-size: .72rem; font-weight: 800;
+    letter-spacing: .5px; cursor: pointer;
+    border: none; text-transform: uppercase;
+    min-height: 36px; transition: all .18s;
+}
+#bridge-tut .bt-prev { background: transparent; color: #555; border: 1px solid #2a2a2a; }
+#bridge-tut .bt-prev:hover { color: #fff; border-color: #555; }
+#bridge-tut .bt-next { background: #39FF14; color: #000; }
+#bridge-tut .bt-next:hover { filter: brightness(1.1); }
+
+/* Botón cerrar esquina */
+#bridge-tut .bt-close {
+    position: absolute;
+    top: 12px; right: 14px;
+    background: none; border: none;
+    color: #555; cursor: pointer;
+    font-size: .95rem; line-height: 1;
+    padding: 4px; border-radius: 6px;
+    min-width: 28px; min-height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    transition: color .2s;
+}
+#bridge-tut .bt-close:hover { color: #ff4343; }
+</style>
+
+<!-- La tarjeta del tutorial — flota sobre la página sin bloquear nada -->
+<div id="bridge-tut">
+    <button class="bt-close" id="btg-close" aria-label="Cerrar">✕</button>
+    <div class="bt-head">
+        <span class="bt-badge">Cómo funciona</span>
+        <span class="bt-step" id="btg-step">1 / 4</span>
+    </div>
+    <div class="bt-title" id="btg-title"></div>
+    <div class="bt-body"  id="btg-body"></div>
+    <div class="bt-foot">
+        <div class="bt-dots" id="btg-dots"></div>
+        <div class="bt-nav">
+            <button class="bt-btn bt-prev" id="btg-prev">← Atrás</button>
+            <button class="bt-btn bt-next" id="btg-next">Siguiente →</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ── REGLA PRINCIPAL: no tocar nada del scope global existente ──
+   Todas las variables son locales a este IIFE.
+─────────────────────────────────────────────────────────────── */
+
+const DONE_KEY = 'upgames_puente_tutorial_done';
+if (localStorage.getItem(DONE_KEY) === '1') return; // ya lo vio, salir
+
+/* ── PASOS ─────────────────────────────────────────────────── */
+const STEPS = [
+    {
+        ttl: "🔒 Página de Acceso Seguro",
+        bod: "Esta página es el <strong>puente de seguridad</strong> de UpGames. Antes de darte el enlace de descarga, el sistema verifica que todo esté en orden y registra la descarga para que el autor gane su comisión."
+    },
+    {
+        ttl: "⏱️ El Contador de 30 Segundos",
+        bod: "El contador es <strong>obligatorio</strong> — no se puede saltar. Durante ese tiempo el sistema consulta el servidor y valida el enlace. Cuando llegue a 0, aparecerá el botón de descarga automáticamente."
+    },
+    {
+        ttl: "🚀 El Botón \"Obtener Enlace\"",
+        bod: "Cuando el botón aparezca en verde, tócalo una sola vez. <strong>Se abrirá el enlace en una nueva pestaña</strong>. Si el navegador bloquea la ventana emergente, toca el aviso que aparece arriba y permite las ventanas de este sitio."
+    },
+    {
+        ttl: "⚠️ Mensajes Importantes",
+        bod: "<strong>Verde ✅</strong> = descarga validada correctamente.\n<strong>Amarillo ⚠️</strong> = ya descargaste este archivo 2 veces hoy (sigue funcionando).\n<strong>Rojo ❌</strong> = hubo un error, recarga la página e intenta de nuevo.\n\n<strong>Recuerda:</strong> UpGames no almacena archivos, solo indexa los enlaces."
+    }
+];
+
+/* ── REFS ───────────────────────────────────────────────────── */
+const card  = document.getElementById('bridge-tut');
+const stepE = document.getElementById('btg-step');
+const ttlE  = document.getElementById('btg-title');
+const bodE  = document.getElementById('btg-body');
+const dotsE = document.getElementById('btg-dots');
+const prevB = document.getElementById('btg-prev');
+const nextB = document.getElementById('btg-next');
+const closeB= document.getElementById('btg-close');
+
+let idx = 0;
+
+/* ── RENDER ─────────────────────────────────────────────────── */
+function render() {
+    const s = STEPS[idx], total = STEPS.length;
+    stepE.textContent  = `${idx+1} / ${total}`;
+    ttlE.textContent   = s.ttl;
+    bodE.innerHTML     = s.bod.replace(/\n/g, '<br>');
+    prevB.style.visibility = idx === 0 ? 'hidden' : 'visible';
+    nextB.textContent  = idx === total-1 ? 'Entendido ✓' : 'Siguiente →';
+
+    dotsE.innerHTML = '';
+    STEPS.forEach((_,i) => {
+        const d = document.createElement('span');
+        d.className = 'bt-dot' + (i===idx?' on':'');
+        dotsE.appendChild(d);
+    });
+}
+
+function dismiss() {
+    localStorage.setItem(DONE_KEY, '1');
+    card.classList.add('closing');
+    setTimeout(() => { card.style.display = 'none'; }, 320);
+}
+
+/* ── EVENTOS ────────────────────────────────────────────────── */
+nextB.addEventListener('click', () => {
+    if (idx < STEPS.length-1) { idx++; render(); }
+    else dismiss();
+});
+prevB.addEventListener('click', () => {
+    if (idx > 0) { idx--; render(); }
+});
+closeB.addEventListener('click', dismiss);
+
+/* Al tocar el botón principal de la página, cerrar el tutorial */
+const mainBtn = document.getElementById('btn');
+if (mainBtn) {
+    mainBtn.addEventListener('click', () => {
+        if (card.style.display !== 'none') dismiss();
+    }, { once: true });
+}
+
+/* ── MOSTRAR (con pequeño delay para no competir con los scripts de ads) ── */
+function show() {
+    render();
+    card.style.display = 'block';
+}
+
+// Esperar a que todo cargue antes de mostrar el tutorial
+if (document.readyState === 'complete') {
+    setTimeout(show, 1200);
+} else {
+    window.addEventListener('load', () => setTimeout(show, 1200));
+}
+
+})();
+</script>
+<!-- FIN TUTORIAL PUENTE -->
 
 </body>
 </html>

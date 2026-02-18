@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Metadata Index - Librería Digital</title>
+    <title>UpGames - Librería Digital</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://unpkg.com">
     <link rel="stylesheet" href="./styles.css">
@@ -285,6 +285,7 @@
                         <li><strong>Seguridad 24/7:</strong> Navega tranquilo gracias a nuestros bots que filtran malware y contenido +18.</li>
                         <li><strong>Comunidad Activa:</strong> Indexa y encuentra metadatos de software que no hallarás en tiendas oficiales.</li>
                         <li><strong>Estatus de Trusted Indexer:</strong> Sube de nivel y obtén prioridad en el feed principal.</li>
+                        <li><strong>NEXUS IA Integrada:</strong> Accede a nuestra inteligencia artificial exclusiva para encontrar contenido, resolver dudas y recibir recomendaciones personalizadas — sin salir de la plataforma.</li>
                     </ul>
                 </div>
 
@@ -467,16 +468,48 @@
         (function() {
             const modal = document.getElementById('modal-terminos');
             const btnAceptar = document.getElementById('btn-aceptar-terminos');
+            const modalBody = modal.querySelector('.custom-modal-body');
 
-            if (localStorage.getItem("upgames_terms_version") !== "2026.C") {
+            // Solo mostrar si es la primera vez (nunca completó el onboarding)
+            const esPrimeraVez = localStorage.getItem("upgames_onboarding_done") !== "1";
+
+            if (esPrimeraVez) {
                 modal.style.display = 'block';
                 document.body.style.overflow = 'hidden';
+
+                // Bloquear botón hasta que el usuario haga scroll hasta el fondo
+                btnAceptar.disabled = true;
+                btnAceptar.style.opacity = '0.4';
+                btnAceptar.style.cursor = 'not-allowed';
+                btnAceptar.textContent = '📖 Desplázate para leer los términos...';
+
+                let leido = false;
+                modalBody.addEventListener('scroll', function() {
+                    if (!leido) {
+                        const scrolled = modalBody.scrollTop + modalBody.clientHeight;
+                        const total = modalBody.scrollHeight;
+                        if (scrolled >= total - 30) {
+                            leido = true;
+                            btnAceptar.disabled = false;
+                            btnAceptar.style.opacity = '1';
+                            btnAceptar.style.cursor = 'pointer';
+                            btnAceptar.textContent = '✓ ACEPTAR Y EMPEZAR A GANAR';
+                        }
+                    }
+                });
             }
 
             btnAceptar.addEventListener('click', () => {
+                if (btnAceptar.disabled) return;
                 localStorage.setItem("upgames_terms_version", "2026.C");
                 modal.style.display = 'none';
                 document.body.style.overflow = 'auto';
+                // Disparar tutorial solo la primera vez
+                if (esPrimeraVez) {
+                    setTimeout(() => {
+                        if (typeof startBibliotecaTutorial === 'function') startBibliotecaTutorial();
+                    }, 600);
+                }
             });
         })();
     </script>
@@ -1011,6 +1044,522 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&open)nxToggle();});
 })();
 </script>
 <!-- FIN NEXUS WIDGET v5 -->
+
+<!-- ══════════════════════════════════════════════
+     🎓 TUTORIAL BIBLIOTECA UPGAMES v2
+     - Overlay bloqueante (usuario no puede interactuar)
+     - Mobile-first responsive
+     - Tooltip siempre visible en pantalla
+══════════════════════════════════════════════ -->
+<style>
+/* ── OVERLAY BLOQUEANTE ────────────────────────────────────── */
+#btut-lock {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 19990;
+    /* bloquea todos los clics salvo los del tooltip */
+    pointer-events: all;
+    /* fondo semi-transparente oscuro */
+    background: rgba(0, 0, 0, 0.0);
+    touch-action: none;
+}
+#btut-lock.on { display: block; }
+
+/* ── SPOTLIGHT (encima del lock, recorte visual) ───────────── */
+#btut-spotlight {
+    display: none;
+    position: fixed;
+    border-radius: 14px;
+    /* sombra que crea el "agujero" visual */
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.80);
+    transition: top    0.4s cubic-bezier(0.4,0,0.2,1),
+                left   0.4s cubic-bezier(0.4,0,0.2,1),
+                width  0.4s cubic-bezier(0.4,0,0.2,1),
+                height 0.4s cubic-bezier(0.4,0,0.2,1);
+    z-index: 19995;
+    pointer-events: none;
+}
+
+/* ── TOOLTIP ───────────────────────────────────────────────── */
+#btut-tooltip {
+    display: none;
+    position: fixed;
+    z-index: 20000;
+    background: #0f0f0f;
+    border: 1.5px solid #5EFF43;
+    border-radius: 18px;
+    padding: 18px 18px 16px;
+    box-shadow: 0 10px 50px rgba(94,255,67,0.2), 0 2px 16px rgba(0,0,0,0.8);
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    pointer-events: all;
+    /* Mobile: ancho basado en viewport */
+    width: min(320px, calc(100vw - 24px));
+    box-sizing: border-box;
+}
+
+/* Flecha del tooltip */
+#btut-tooltip::before {
+    content: '';
+    position: absolute;
+    width: 13px; height: 13px;
+    background: #0f0f0f;
+    border: 1.5px solid #5EFF43;
+    transform: rotate(45deg);
+    z-index: 1;
+}
+#btut-tooltip.arr-top::before    { top: -8px;    left: 26px;  border-right: none; border-bottom: none; }
+#btut-tooltip.arr-bottom::before { bottom: -8px; left: 26px;  border-left: none;  border-top: none;    }
+#btut-tooltip.arr-left::before   { left: -8px;   top: 20px;   border-right: none; border-top: none;    }
+#btut-tooltip.arr-right::before  { right: -8px;  top: 20px;   border-left: none;  border-bottom: none; }
+#btut-tooltip.arr-none::before   { display: none; }
+
+/* Contenido del tooltip */
+.btut-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 8px;
+}
+.btut-badge {
+    font-size: 0.6rem; font-weight: 900; letter-spacing: 1.5px;
+    color: #5EFF43;
+    background: rgba(94,255,67,0.1);
+    border: 1px solid rgba(94,255,67,0.3);
+    border-radius: 20px;
+    padding: 3px 10px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.btut-close-btn {
+    background: none; border: none;
+    color: #555; cursor: pointer;
+    font-size: 1rem; line-height: 1;
+    padding: 4px; border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    flex-shrink: 0;
+    /* tap target más grande en mobile */
+    min-width: 32px; min-height: 32px;
+    display: flex; align-items: center; justify-content: center;
+}
+.btut-close-btn:hover, .btut-close-btn:active { color: #ff4343; background: rgba(255,67,67,0.1); }
+
+.btut-title {
+    font-size: 0.95rem; font-weight: 800;
+    color: #fff; margin-bottom: 8px; line-height: 1.35;
+}
+.btut-body {
+    font-size: 0.80rem; color: #aaa;
+    line-height: 1.65; margin-bottom: 16px;
+}
+.btut-body strong { color: #5EFF43; }
+
+.btut-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+.btut-dots { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+.btut-dot  {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #2a2a2a;
+    transition: background 0.3s, transform 0.3s;
+}
+.btut-dot.on { background: #5EFF43; transform: scale(1.3); }
+
+.btut-nav { display: flex; gap: 8px; flex-shrink: 0; }
+.btut-btn {
+    padding: 9px 16px;
+    border-radius: 9px;
+    font-size: 0.72rem; font-weight: 800;
+    letter-spacing: 0.5px;
+    cursor: pointer; border: none;
+    text-transform: uppercase;
+    transition: all 0.18s;
+    /* tap target ok en mobile */
+    min-height: 38px;
+}
+.btut-btn-p { background: transparent; color: #555; border: 1px solid #2a2a2a; }
+.btut-btn-p:hover, .btut-btn-p:active { color: #fff; border-color: #555; }
+.btut-btn-n { background: #5EFF43; color: #000; }
+.btut-btn-n:hover, .btut-btn-n:active { filter: brightness(1.1); transform: scale(0.97); }
+
+/* ── BOTÓN DE AYUDA FLOTANTE ───────────────────────────────── */
+#btut-fab {
+    position: fixed;
+    bottom: 24px; left: 20px;
+    z-index: 9500;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 50%;
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: #5EFF43;
+    font-size: 1.35rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+#btut-fab:hover, #btut-fab:active {
+    border-color: #5EFF43;
+    box-shadow: 0 4px 20px rgba(94,255,67,0.25);
+    transform: scale(1.07);
+}
+
+/* ── ANIMACIÓN ENTRADA ─────────────────────────────────────── */
+.btut-in { animation: btutSlideIn 0.3s ease forwards; }
+@keyframes btutSlideIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* ── PULSE EN ELEMENTO RESALTADO ───────────────────────────── */
+.btut-pulse {
+    outline: 2px solid rgba(94,255,67,0.7) !important;
+    outline-offset: 3px !important;
+    animation: btutPulseRing 1.5s ease-in-out infinite;
+}
+@keyframes btutPulseRing {
+    0%,100% { outline-color: rgba(94,255,67,0.7); }
+    50%      { outline-color: rgba(94,255,67,0.2); }
+}
+
+/* ── MOBILE: tooltip siempre en la mitad baja ──────────────── */
+@media (max-width: 600px) {
+    #btut-tooltip {
+        width: calc(100vw - 20px);
+        left: 10px !important;
+        right: 10px;
+        /* en mobile siempre abajo de la pantalla si no hay espacio */
+    }
+    #btut-tooltip.arr-top::before,
+    #btut-tooltip.arr-bottom::before,
+    #btut-tooltip.arr-left::before,
+    #btut-tooltip.arr-right::before {
+        left: 22px;
+    }
+}
+</style>
+
+<!-- OVERLAY DE BLOQUEO -->
+<div id="btut-lock"></div>
+<!-- SPOTLIGHT -->
+<div id="btut-spotlight"></div>
+<!-- TOOLTIP -->
+<div id="btut-tooltip">
+    <div class="btut-head">
+        <span class="btut-badge" id="btut-badge">Tutorial</span>
+        <button class="btut-close-btn" id="btut-close" aria-label="Cerrar tutorial">✕</button>
+    </div>
+    <div class="btut-title" id="btut-title"></div>
+    <div class="btut-body"  id="btut-body"></div>
+    <div class="btut-foot">
+        <div class="btut-dots" id="btut-dots"></div>
+        <div class="btut-nav">
+            <button class="btut-btn btut-btn-p" id="btut-prev">← Atrás</button>
+            <button class="btut-btn btut-btn-n" id="btut-next">Siguiente →</button>
+        </div>
+    </div>
+</div>
+<!-- BOTÓN FAB DE AYUDA -->
+<button id="btut-fab" aria-label="Ver tutorial">
+    <ion-icon name="help-circle-outline"></ion-icon>
+</button>
+
+<script>
+(function(){
+'use strict';
+
+/* ── PASOS ───────────────────────────────────────────────────
+   pos valores:
+     center   → tooltip centrado, sin spotlight
+     below    → tooltip debajo del elemento
+     above    → tooltip encima del elemento
+     header-b → elemento en header, tooltip debajo
+     left     → tooltip a la izquierda del elemento
+   anchor: posición fija del tooltip en mobile cuando
+           el espacio es muy reducido
+──────────────────────────────────────────────────────────── */
+const STEPS = [
+    {
+        sel: null,
+        title: "🎮 ¡Bienvenido a UpGames!",
+        body:  "Aquí está <strong>todo el contenido</strong> de la comunidad: juegos, apps, mods y software. Este tutorial rápido te explica cómo funciona todo. ¡En menos de 2 minutos sabrás usarlo todo!",
+        pos:   "center"
+    },
+    {
+        sel:   ".buscador-wrapper",
+        title: "🔍 Paso 1: El Buscador",
+        body:  "Escribe aquí lo que buscas. Funciona por <strong>título, categoría, usuario o etiquetas</strong>. Los resultados se filtran automáticamente mientras escribes, sin necesidad de presionar Enter.",
+        pos:   "header-b"
+    },
+    {
+        sel:   ".juego-card",
+        title: "📦 Paso 2: Las Cards",
+        body:  "Cada tarjeta es un aporte de la comunidad. Muestra imagen, título, quién lo subió y las descargas. <strong>Toca una card</strong> para expandirla y ver todos los detalles.",
+        pos:   "below"
+    },
+    {
+        sel:   ".juego-card",
+        title: "📦 Dentro de la Card",
+        body:  "Al expandir verás: descripción, el botón <strong>ACCEDER A LA NUBE</strong> para descargar, y los botones ❤️ <strong>favorito</strong> · 📤 <strong>compartir</strong> · 🚩 <strong>reportar link</strong>. También hay una sección de <strong>Opiniones</strong> para comentar.",
+        pos:   "below"
+    },
+    {
+        sel:   ".user-tag",
+        title: "👤 Paso 3: El Autor",
+        body:  "El <strong>@usuario</strong> es quien subió el contenido. Tócalo para ver su perfil público y todos sus aportes. El ✓ de colores indica su <strong>nivel de confianza</strong> dentro de la comunidad.",
+        pos:   "below"
+    },
+    {
+        sel:   ".status-badge",
+        title: "🟢 Estado del Enlace",
+        body:  "<strong>Online</strong> = funciona perfecto. <strong>Revisión</strong> = fue reportado por usuarios y el equipo lo está revisando. <strong>Caído</strong> = el enlace ya no funciona. Así sabes antes de intentar descargar.",
+        pos:   "below"
+    },
+    {
+        sel:   ".UpIcon",
+        title: "☁️ Paso 4: Subir Contenido",
+        body:  "¿Tienes algo para compartir? Toca este botón de nube para ir a tu <strong>perfil de publicador</strong>. Puedes subir juegos, apps o software y <strong>ganar $1 USD por cada 1,000 descargas</strong>.",
+        pos:   "header-b"
+    },
+    {
+        sel:   ".reportButton",
+        title: "🚨 Paso 5: Reportar Abuso",
+        body:  "Este botón (ⓘ) es para reportar contenido <strong>ilegal, peligroso o inapropiado</strong> directamente al equipo por email. Es distinto al 🚩 de las cards — ese es para links caídos.",
+        pos:   "header-b"
+    },
+    {
+        sel:   "#nxFab",
+        title: "🤖 Paso 6: NEXUS — Tu IA",
+        body:  "Este botón con el <strong>ojo brillante</strong> abre NEXUS, la inteligencia artificial integrada de UpGames. Está disponible en cualquier momento desde cualquier página.",
+        pos:   "left"
+    },
+    {
+        sel:   "#nxFab",
+        title: "🤖 ¿Qué hace NEXUS?",
+        body:  "Escríbele como si hablaras con una persona: <strong>\"Busco un mod de Minecraft\"</strong>, <strong>\"¿Cómo subo contenido?\"</strong>, <strong>\"Recomiéndame un juego de terror\"</strong>. NEXUS entiende lenguaje natural y responde al instante.",
+        pos:   "left"
+    },
+    {
+        sel:   null,
+        title: "🎉 ¡Listo, ya sabes todo!",
+        body:  "Ya conoces UpGames de punta a punta. Si en algún momento tienes dudas, toca el botón <strong>?</strong> en la esquina inferior izquierda para ver este tutorial de nuevo. ¡A disfrutar!",
+        pos:   "center"
+    }
+];
+
+/* ── REFS ───────────────────────────────────────────────────── */
+const lockEl  = document.getElementById('btut-lock');
+const spotEl  = document.getElementById('btut-spotlight');
+const tipEl   = document.getElementById('btut-tooltip');
+const badgeEl = document.getElementById('btut-badge');
+const titleEl = document.getElementById('btut-title');
+const bodyEl  = document.getElementById('btut-body');
+const dotsEl  = document.getElementById('btut-dots');
+const prevBtn = document.getElementById('btut-prev');
+const nextBtn = document.getElementById('btut-next');
+const closeB  = document.getElementById('btut-close');
+const fabBtn  = document.getElementById('btut-fab');
+
+let idx    = 0;
+let active = false;
+let lastEl = null;
+
+/* ── API PÚBLICA ─────────────────────────────────────────────── */
+window.startBibliotecaTutorial = start;
+
+function start() {
+    idx    = 0;
+    active = true;
+    lockEl.classList.add('on');
+    spotEl.style.display = 'block';
+    tipEl.style.display  = 'block';
+    document.body.style.overflow = 'hidden';
+    render();
+}
+
+function finish() {
+    active = false;
+    lockEl.classList.remove('on');
+    spotEl.style.display = 'none';
+    tipEl.style.display  = 'none';
+    document.body.style.overflow = '';
+    clearPulse();
+    localStorage.setItem('upgames_onboarding_done', '1');
+}
+
+/* ── RENDER ──────────────────────────────────────────────────── */
+function render() {
+    const s = STEPS[idx];
+    const total = STEPS.length;
+
+    /* Contenido */
+    badgeEl.textContent = `Tutorial · ${idx + 1}/${total}`;
+    titleEl.textContent  = s.title;
+    bodyEl.innerHTML     = s.body;
+
+    /* Dots */
+    dotsEl.innerHTML = '';
+    STEPS.forEach((_, i) => {
+        const d = document.createElement('span');
+        d.className = 'btut-dot' + (i === idx ? ' on' : '');
+        dotsEl.appendChild(d);
+    });
+
+    /* Botones */
+    prevBtn.style.visibility = idx === 0 ? 'hidden' : 'visible';
+    nextBtn.textContent = idx === total - 1 ? 'Finalizar ✓' : 'Siguiente →';
+
+    /* Limpiar highlight anterior */
+    clearPulse();
+
+    if (s.pos === 'center' || !s.sel) {
+        hideSpot();
+        placeCenter();
+    } else {
+        const el = document.querySelector(s.sel);
+        if (!el) { hideSpot(); placeCenter(); }
+        else      { spotOn(el, s); }
+    }
+
+    /* Animación */
+    tipEl.classList.remove('btut-in');
+    void tipEl.offsetWidth;
+    tipEl.classList.add('btut-in');
+}
+
+function spotOn(el, s) {
+    const PAD  = 8;
+    const rect = el.getBoundingClientRect();
+
+    spotEl.style.top    = (rect.top  - PAD) + 'px';
+    spotEl.style.left   = (rect.left - PAD) + 'px';
+    spotEl.style.width  = (rect.width  + PAD * 2) + 'px';
+    spotEl.style.height = (rect.height + PAD * 2) + 'px';
+    spotEl.style.display = 'block';
+
+    el.classList.add('btut-pulse');
+    lastEl = el;
+
+    placeTooltip(rect, s.pos);
+}
+
+function hideSpot() {
+    spotEl.style.display = 'none';
+}
+
+function clearPulse() {
+    if (lastEl) { lastEl.classList.remove('btut-pulse'); lastEl = null; }
+}
+
+/* ── POSICIONAMIENTO DEL TOOLTIP (Mobile-first) ─────────────── */
+function placeCenter() {
+    tipEl.className = 'btut-tooltip arr-none';
+    tipEl.style.transform = 'translate(-50%, -50%)';
+    tipEl.style.top  = '50%';
+    tipEl.style.left = '50%';
+}
+
+function placeTooltip(rect, pos) {
+    const isMobile = window.innerWidth <= 600;
+    const TW = tipEl.offsetWidth  || 310;
+    const TH = tipEl.offsetHeight || 230;
+    const VW = window.innerWidth;
+    const VH = window.innerHeight;
+    const GAP = 14;
+
+    tipEl.style.transform = '';
+
+    let top, left, arrClass = 'arr-top';
+
+    if (isMobile) {
+        /* En mobile: tooltip siempre centrado horizontalmente,
+           colocado en la mitad inferior si hay espacio,
+           o superior si el elemento está muy abajo */
+        left = 10;
+        const spaceBelow = VH - rect.bottom;
+        const spaceAbove = rect.top;
+
+        if (spaceBelow >= TH + GAP + 20) {
+            top = rect.bottom + GAP;
+            arrClass = 'arr-top';
+        } else if (spaceAbove >= TH + GAP + 20) {
+            top = rect.top - TH - GAP;
+            arrClass = 'arr-bottom';
+        } else {
+            /* Sin espacio ni arriba ni abajo: poner en zona segura */
+            top = VH * 0.55;
+            arrClass = 'arr-none';
+        }
+    } else {
+        /* Desktop: posicionamiento inteligente */
+        if (pos === 'below' || pos === 'header-b') {
+            top  = rect.bottom + GAP;
+            left = Math.max(10, rect.left);
+            arrClass = 'arr-top';
+        } else if (pos === 'above') {
+            top  = rect.top - TH - GAP;
+            left = Math.max(10, rect.left);
+            arrClass = 'arr-bottom';
+        } else if (pos === 'left') {
+            top  = Math.max(10, rect.top);
+            left = rect.left - TW - GAP;
+            arrClass = 'arr-right';
+            if (left < 10) { left = rect.right + GAP; arrClass = 'arr-left'; }
+        }
+
+        /* Evitar salir por la derecha */
+        if (left + TW > VW - 10) left = VW - TW - 10;
+        if (left < 10) left = 10;
+
+        /* Evitar salir por abajo */
+        if (top + TH > VH - 10) {
+            top = rect.top - TH - GAP;
+            arrClass = 'arr-bottom';
+        }
+        if (top < 10) top = 10;
+    }
+
+    tipEl.className = `btut-tooltip ${arrClass}`;
+    tipEl.style.top  = top + 'px';
+    tipEl.style.left = left + 'px';
+}
+
+/* ── EVENTOS ─────────────────────────────────────────────────── */
+nextBtn.addEventListener('click', () => {
+    if (idx < STEPS.length - 1) { idx++; render(); }
+    else finish();
+});
+prevBtn.addEventListener('click', () => {
+    if (idx > 0) { idx--; render(); }
+});
+closeB.addEventListener('click', finish);
+fabBtn.addEventListener('click', start);
+
+/* Bloquear cualquier toque/click en el overlay de bloqueo */
+lockEl.addEventListener('click',      e => e.stopPropagation(), true);
+lockEl.addEventListener('touchstart', e => e.preventDefault(),  { passive: false });
+lockEl.addEventListener('touchmove',  e => e.preventDefault(),  { passive: false });
+
+/* Teclas de navegación en desktop */
+document.addEventListener('keydown', e => {
+    if (!active) return;
+    if (e.key === 'ArrowRight' || e.key === 'Enter') nextBtn.click();
+    if (e.key === 'ArrowLeft')  prevBtn.click();
+    if (e.key === 'Escape')     finish();
+});
+
+/* Recalcular si rota el dispositivo */
+window.addEventListener('resize', () => { if (active) render(); });
+
+})();
+</script>
+<!-- FIN TUTORIAL BIBLIOTECA v2 -->
 
     
 </body>
