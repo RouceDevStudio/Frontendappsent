@@ -2,15 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UpGames - Librería Digital</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://unpkg.com">
     <link rel="stylesheet" href="./styles.css">
-    <style>
-        /* ✅ FIX PULL-TO-REFRESH — Aplicado lo antes posible para máxima efectividad */
-        html, body { overscroll-behavior-y: contain; }
-    </style>
 </head>
 <body>
     <!-- PRELOADER OPTIMIZADO -->
@@ -1167,7 +1163,6 @@
     setOvr();
     if (open && !ready) boot_run(() => { boot.classList.add('nx-done'); frm.src = frm.dataset.src; });
     if (!open && exp)   { exp = false; pan.classList.remove('nx-exp'); setOvr(); setExpIco(); }
-    /* Ocultar scroll-tooltip de UpGames mientras Nexus está abierto */
     const sc = document.getElementById('sc-tip');
     if (sc) sc.style.display = open ? 'none' : '';
   };
@@ -1190,37 +1185,34 @@
   window.addEventListener('resize', setOvr);
 
   /* ══════════════════════════════════════════════════════════════
-     ✅ FIX DEFINITIVO: BLOQUEO DE PULL-TO-REFRESH EN MÓVIL
+     ✅ FIX WEBVIEW ANDROID — Pull-to-refresh blocker
      
-     El problema: cuando el usuario hace scroll dentro del panel de
-     Nexus, Chrome Android intercepta el gesto y activa el pull-to-
-     refresh de la página, recargando todo.
-     
-     La solución: interceptar el evento touchmove en el panel y
-     llamar preventDefault() para que el navegador nunca vea el
-     gesto. El scroll interno del iframe sigue funcionando porque
-     el iframe maneja sus propios eventos internamente.
+     En WebView, overscroll-behavior CSS no tiene efecto.
+     La única forma es interceptar touchmove en el DOCUMENT
+     y bloquear el evento cuando el toque ocurre DENTRO del panel.
+     Esto le quita el gesto al sistema nativo antes de que
+     WebView lo interprete como pull-to-refresh.
   ══════════════════════════════════════════════════════════════ */
   let _startY = 0;
-  let _startX = 0;
+  let _insidePanel = false;
 
-  pan.addEventListener('touchstart', function(e) {
+  document.addEventListener('touchstart', function(e) {
     _startY = e.touches[0].clientY;
-    _startX = e.touches[0].clientX;
+    // Verificar si el toque comenzó dentro del panel de Nexus
+    _insidePanel = pan.contains(e.target) || fab.contains(e.target);
   }, { passive: true });
 
-  pan.addEventListener('touchmove', function(e) {
-    if (!open) return;
+  document.addEventListener('touchmove', function(e) {
+    if (!_insidePanel) return; // Solo actuar si el toque es en el panel
 
     const dy = e.touches[0].clientY - _startY;
-    const dx = e.touches[0].clientX - _startX;
 
-    // Solo bloquear gestos principalmente verticales (scroll/pull)
-    // Dejar pasar gestos horizontales (swipe lateral)
-    if (Math.abs(dy) > Math.abs(dx)) {
-      e.preventDefault();
-    }
-  }, { passive: false });
+    // Bloquear SIEMPRE cuando se está dentro del panel
+    // Esto evita que WebView interprete cualquier gesto vertical
+    // como pull-to-refresh
+    e.preventDefault();
+
+  }, { passive: false }); // passive: false es OBLIGATORIO para que preventDefault funcione
 
 })();
 </script>
