@@ -1,620 +1,1746 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>
-        // ✅ BLOQUEO TOTAL PULL-TO-REFRESH — debe ir lo más arriba posible
-        document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
-    </script>
-    <title>UpGames - Librería Digital</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://unpkg.com">
-    <link rel="stylesheet" href="./styles.css">
-    <style>
-        html, body { overscroll-behavior-y: none; }
-        /* Restaurar scroll en elementos que lo necesitan */
-        #output,
-        .juego-card.expandida,
-        .comentarios-list,
-        .custom-modal-body,
-        #nxPanel,
-        .nx-body { touch-action: pan-y; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#07070f">
+<title>UpGames — La Nube de Contenido</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════
+   TOKENS & RESET
+═══════════════════════════════════════════ */
+:root {
+  --g: #5EFF43;
+  --g-dim: rgba(94,255,67,.12);
+  --cy: #00f2ff;
+  --cy-dim: rgba(0,242,255,.1);
+  --bg: #07070f;
+  --bg1: #0d0d1a;
+  --bg2: #12121f;
+  --bg3: #191927;
+  --bd: rgba(255,255,255,.07);
+  --bd-g: rgba(94,255,67,.2);
+  --txt: #f0f0f8;
+  --txt2: #9090aa;
+  --txt3: #555570;
+  --card-r: 18px;
+  --ease: cubic-bezier(.4,0,.2,1);
+  --spring: cubic-bezier(.34,1.4,.64,1);
+  --nav-h: 68px;
+  --hdr-h: 56px;
+  --ff: 'Manrope', -apple-system, sans-serif;
+  --ff-mono: 'DM Mono', monospace;
+  --ff-disp: 'Bebas Neue', sans-serif;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--bg);
+  font-family: var(--ff);
+  color: var(--txt);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+img, video { display:block; width:100%; }
+button, a { cursor:pointer; }
+button { background:none; border:none; color:inherit; font-family:inherit; }
+a { text-decoration:none; color:inherit; }
+input, textarea { font-family:inherit; }
+::-webkit-scrollbar { display:none; }
+
+/* ═══════════════════════════════════════════
+   PRELOADER
+═══════════════════════════════════════════ */
+#preloader {
+  position:fixed; inset:0;
+  background: var(--bg);
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:32px;
+  transition: opacity .5s var(--ease), visibility .5s;
+}
+#preloader.hide { opacity:0; visibility:hidden; pointer-events:none; }
+.pl-logo {
+  font-family:var(--ff-disp);
+  font-size:3.2rem;
+  letter-spacing:6px;
+  display:flex; align-items:center; gap:4px;
+}
+.pl-logo .up { color:var(--g); text-shadow:0 0 30px rgba(94,255,67,.6); }
+.pl-logo .gm { color:var(--txt); }
+.pl-glow {
+  position:absolute;
+  width:300px; height:300px;
+  background:radial-gradient(circle, rgba(94,255,67,.08), transparent 70%);
+  border-radius:50%;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+@keyframes glowPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+.pl-track {
+  width:160px; height:2px;
+  background:var(--bg3);
+  border-radius:10px;
+  overflow:hidden;
+}
+.pl-fill {
+  height:100%;
+  width:0;
+  background:linear-gradient(90deg,var(--g),var(--cy));
+  border-radius:10px;
+  transition:width .3s var(--ease);
+  box-shadow:0 0 8px rgba(94,255,67,.6);
+}
+.pl-sub {
+  font-family:var(--ff-mono);
+  font-size:.6rem;
+  color:var(--txt3);
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+
+/* ═══════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════ */
+#app-header {
+  position:sticky; top:0;
+  height:var(--hdr-h);
+  background:rgba(7,7,15,.9);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--bd);
+  z-index:500;
+  display:flex;
+  align-items:center;
+  padding:0 16px;
+  gap:12px;
+}
+.hdr-logo {
+  font-family:var(--ff-disp);
+  font-size:1.5rem;
+  letter-spacing:3px;
+  flex-shrink:0;
+  display:flex; align-items:center; gap:2px;
+}
+.hdr-logo .up { color:var(--g); }
+.hdr-logo .gm { color:var(--txt); }
+.search-bar {
+  flex:1;
+  position:relative;
+  display:flex; align-items:center;
+}
+.search-bar svg {
+  position:absolute; left:12px;
+  color:var(--txt3); width:16px; height:16px;
+  pointer-events:none;
+  flex-shrink:0;
+}
+#buscador {
+  width:100%;
+  height:38px;
+  background:var(--bg2);
+  border:1.5px solid var(--bd);
+  border-radius:12px;
+  padding:0 14px 0 38px;
+  color:var(--txt);
+  font-size:.88rem;
+  outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+#buscador:focus {
+  border-color:var(--bd-g);
+  box-shadow:0 0 0 3px rgba(94,255,67,.08);
+}
+#buscador::placeholder { color:var(--txt3); }
+.hdr-actions { display:flex; gap:8px; flex-shrink:0; }
+.hdr-btn {
+  width:38px; height:38px;
+  border-radius:12px;
+  background:var(--bg2);
+  border:1.5px solid var(--bd);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem;
+  transition:border-color .2s, background .2s;
+  color:var(--txt2);
+}
+.hdr-btn:active, .hdr-btn:hover {
+  border-color:var(--bd-g);
+  color:var(--g);
+  background:var(--bg3);
+}
+.hdr-btn ion-icon { font-size:1.2rem; }
+
+/* ═══════════════════════════════════════════
+   CATEGORY CHIPS
+═══════════════════════════════════════════ */
+#category-row {
+  display:flex;
+  gap:8px;
+  padding:12px 16px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.chip {
+  flex-shrink:0;
+  padding:6px 16px;
+  border-radius:999px;
+  font-size:.78rem;
+  font-weight:700;
+  letter-spacing:.5px;
+  background:var(--bg2);
+  border:1.5px solid var(--bd);
+  color:var(--txt2);
+  transition:all .18s var(--ease);
+  white-space:nowrap;
+  text-transform:uppercase;
+}
+.chip.active, .chip:active {
+  background:var(--g-dim);
+  border-color:var(--g);
+  color:var(--g);
+}
+
+/* ═══════════════════════════════════════════
+   MAIN CONTENT AREA
+═══════════════════════════════════════════ */
+#output {
+  padding:4px 12px calc(var(--nav-h) + 20px);
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+/* ═══════════════════════════════════════════
+   GAME CARDS — COMPACT TILE
+═══════════════════════════════════════════ */
+.game-tile {
+  background:var(--bg1);
+  border-radius:var(--card-r);
+  border:1px solid var(--bd);
+  overflow:hidden;
+  cursor:pointer;
+  transition:transform .18s var(--spring), border-color .18s;
+  position:relative;
+  will-change:transform;
+}
+.game-tile:active { transform:scale(.96); border-color:var(--bd-g); }
+.game-tile .thumb-wrap {
+  position:relative;
+  aspect-ratio:16/9;
+  overflow:hidden;
+  background:var(--bg2);
+}
+.game-tile .thumb-wrap img,
+.game-tile .thumb-wrap video {
+  width:100%; height:100%;
+  object-fit:cover;
+  display:block;
+  transition:transform .3s var(--ease);
+}
+.tile-status {
+  position:absolute;
+  top:6px; right:6px;
+  padding:3px 8px;
+  border-radius:999px;
+  font-size:.6rem;
+  font-weight:800;
+  display:flex; align-items:center; gap:3px;
+  backdrop-filter:blur(8px);
+  letter-spacing:.5px;
+  text-transform:uppercase;
+}
+.tile-status.online {
+  background:rgba(94,255,67,.15);
+  color:var(--g);
+  border:1px solid rgba(94,255,67,.3);
+}
+.tile-status.revision {
+  background:rgba(255,204,0,.15);
+  color:#ffcc00;
+  border:1px solid rgba(255,204,0,.3);
+}
+.tile-status.caido {
+  background:rgba(255,67,67,.15);
+  color:#ff4343;
+  border:1px solid rgba(255,67,67,.3);
+}
+.tile-status-dot {
+  width:5px; height:5px;
+  border-radius:50%;
+  background:currentColor;
+  animation:blink 1.8s ease-in-out infinite;
+  flex-shrink:0;
+}
+@keyframes blink {0%,100%{opacity:1}50%{opacity:.3}}
+.tile-info {
+  padding:10px;
+  display:flex; flex-direction:column; gap:5px;
+}
+.tile-cat {
+  font-size:.6rem;
+  font-weight:700;
+  color:var(--cy);
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+.tile-title {
+  font-size:.83rem;
+  font-weight:700;
+  color:var(--txt);
+  line-height:1.25;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.tile-meta {
+  display:flex; align-items:center; gap:6px;
+  margin-top:2px;
+}
+.tile-avatar {
+  width:18px; height:18px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--g),var(--cy));
+  display:flex; align-items:center; justify-content:center;
+  font-size:.55rem;
+  font-weight:800;
+  color:#000;
+  flex-shrink:0;
+}
+.tile-user {
+  font-size:.68rem;
+  color:var(--txt3);
+  font-weight:500;
+  flex:1;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.tile-downloads {
+  font-size:.62rem;
+  color:var(--txt3);
+  display:flex; align-items:center; gap:2px;
+  flex-shrink:0;
+}
+.tile-downloads ion-icon { font-size:.75rem; }
+.tile-fav-quick {
+  position:absolute;
+  top:6px; left:6px;
+  width:28px; height:28px;
+  border-radius:50%;
+  background:rgba(7,7,15,.7);
+  backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.9rem;
+  border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.5);
+  transition:color .2s;
+  z-index:2;
+}
+.tile-fav-quick.active { color:#ff4d6a; }
+.verificado-badge { color:var(--cy); font-size:.75rem; vertical-align:middle; }
+.verificado-badge.lv1 { color:#cd7f32; }
+.verificado-badge.lv2 { color:#c0c0c0; }
+.verificado-badge.lv3 { color:#ffd700; }
+
+/* ═══════════════════════════════════════════
+   FEATURED BANNER (1 column full)
+═══════════════════════════════════════════ */
+.featured-tile {
+  grid-column:1/-1;
+  background:var(--bg1);
+  border-radius:var(--card-r);
+  border:1px solid var(--bd);
+  overflow:hidden;
+  cursor:pointer;
+  position:relative;
+  transition:transform .18s var(--spring);
+}
+.featured-tile:active { transform:scale(.98); }
+.featured-tile .thumb-wrap {
+  aspect-ratio:21/9;
+  position:relative;
+}
+.featured-tile .thumb-wrap::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to top, rgba(7,7,15,.95) 0%, transparent 60%);
+}
+.featured-tile .ft-info {
+  position:absolute;
+  bottom:0; left:0; right:0;
+  padding:16px;
+  z-index:2;
+}
+.featured-tile .ft-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  background:var(--g);
+  color:#000;
+  font-size:.62rem;
+  font-weight:800;
+  letter-spacing:1px;
+  padding:4px 10px;
+  border-radius:999px;
+  margin-bottom:8px;
+  text-transform:uppercase;
+}
+.featured-tile .ft-title {
+  font-size:1.2rem;
+  font-weight:800;
+  line-height:1.2;
+  color:#fff;
+}
+.featured-tile .ft-meta {
+  display:flex; align-items:center; gap:10px;
+  margin-top:6px;
+}
+.featured-tile .ft-user {
+  font-size:.75rem;
+  color:rgba(255,255,255,.6);
+}
+.featured-tile .ft-dl {
+  font-size:.72rem;
+  color:rgba(255,255,255,.5);
+  display:flex; align-items:center; gap:3px;
+}
+
+/* ═══════════════════════════════════════════
+   SECTION HEADERS
+═══════════════════════════════════════════ */
+.section-header {
+  grid-column:1/-1;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 0 4px;
+}
+.section-title {
+  font-size:.75rem;
+  font-weight:800;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--txt2);
+}
+.section-count {
+  font-size:.68rem;
+  color:var(--txt3);
+  font-family:var(--ff-mono);
+}
+
+/* ═══════════════════════════════════════════
+   DETAIL SHEET (bottom sheet / full modal)
+═══════════════════════════════════════════ */
+#detail-overlay {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.7);
+  backdrop-filter:blur(8px);
+  z-index:800;
+  opacity:0;
+  visibility:hidden;
+  transition:opacity .3s var(--ease), visibility .3s;
+}
+#detail-overlay.show { opacity:1; visibility:visible; }
+
+#detail-sheet {
+  position:fixed;
+  bottom:0; left:0; right:0;
+  max-height:95dvh;
+  background:var(--bg1);
+  border-radius:24px 24px 0 0;
+  z-index:801;
+  overflow:hidden;
+  transform:translateY(100%);
+  transition:transform .4s var(--spring);
+  display:flex;
+  flex-direction:column;
+}
+#detail-sheet.open { transform:translateY(0); }
+
+.sheet-handle {
+  width:36px; height:4px;
+  background:var(--bg3);
+  border-radius:999px;
+  margin:12px auto 0;
+  flex-shrink:0;
+}
+
+.sheet-media {
+  position:relative;
+  aspect-ratio:16/9;
+  flex-shrink:0;
+  background:var(--bg);
+  margin:12px 16px;
+  border-radius:16px;
+  overflow:hidden;
+}
+.sheet-media img, .sheet-media video {
+  width:100%; height:100%;
+  object-fit:cover;
+}
+.sheet-media-overlay {
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to bottom, transparent 50%, rgba(7,7,15,.8));
+}
+
+.sheet-scroll {
+  flex:1;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:0 16px 20px;
+}
+
+.sheet-header {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+.sheet-title-area { flex:1; }
+.sheet-cat {
+  font-size:.65rem;
+  font-weight:700;
+  color:var(--cy);
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+.sheet-title {
+  font-size:1.35rem;
+  font-weight:800;
+  line-height:1.2;
+  color:var(--txt);
+}
+.sheet-close {
+  width:32px; height:32px;
+  border-radius:50%;
+  background:var(--bg3);
+  display:flex; align-items:center; justify-content:center;
+  color:var(--txt2);
+  font-size:1rem;
+  flex-shrink:0;
+  border:1px solid var(--bd);
+}
+
+/* Author row */
+.sheet-author {
+  display:flex; align-items:center; gap:10px;
+  padding:12px;
+  background:var(--bg2);
+  border-radius:14px;
+  margin-bottom:12px;
+  cursor:pointer;
+  border:1px solid var(--bd);
+  transition:border-color .2s;
+}
+.sheet-author:active { border-color:var(--bd-g); }
+.author-avatar {
+  width:40px; height:40px;
+  border-radius:50%;
+  background:linear-gradient(135deg, var(--g), var(--cy));
+  display:flex; align-items:center; justify-content:center;
+  font-size:.9rem;
+  font-weight:800;
+  color:#000;
+  flex-shrink:0;
+}
+.author-info { flex:1; }
+.author-name {
+  font-size:.85rem;
+  font-weight:700;
+  display:flex; align-items:center; gap:5px;
+}
+.author-sub {
+  font-size:.7rem;
+  color:var(--txt3);
+  margin-top:2px;
+}
+.author-arrow {
+  color:var(--txt3);
+  font-size:1rem;
+}
+
+/* Stats row */
+.sheet-stats {
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+  margin-bottom:12px;
+}
+.stat-box {
+  background:var(--bg2);
+  border:1px solid var(--bd);
+  border-radius:14px;
+  padding:12px;
+  text-align:center;
+}
+.stat-val {
+  font-family:var(--ff-disp);
+  font-size:1.4rem;
+  letter-spacing:1px;
+  color:var(--txt);
+  line-height:1;
+}
+.stat-lbl {
+  font-size:.6rem;
+  color:var(--txt3);
+  font-weight:700;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  margin-top:3px;
+}
+
+/* Status */
+.sheet-status-bar {
+  display:flex; align-items:center; gap:8px;
+  padding:10px 14px;
+  border-radius:12px;
+  margin-bottom:12px;
+  font-size:.75rem;
+  font-weight:700;
+}
+.sheet-status-bar.online { background:rgba(94,255,67,.08); border:1px solid rgba(94,255,67,.2); color:var(--g); }
+.sheet-status-bar.revision { background:rgba(255,204,0,.08); border:1px solid rgba(255,204,0,.2); color:#ffcc00; }
+.sheet-status-bar.caido { background:rgba(255,67,67,.08); border:1px solid rgba(255,67,67,.2); color:#ff4343; }
+.sheet-status-bar ion-icon { font-size:1rem; }
+
+/* Description */
+.sheet-desc {
+  font-size:.85rem;
+  color:var(--txt2);
+  line-height:1.6;
+  margin-bottom:16px;
+}
+
+/* Action buttons row */
+.sheet-actions {
+  display:flex; gap:10px;
+  margin-bottom:16px;
+}
+.action-pill {
+  flex:1;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  height:44px;
+  border-radius:12px;
+  font-size:.78rem;
+  font-weight:700;
+  border:1.5px solid var(--bd);
+  background:var(--bg2);
+  color:var(--txt2);
+  transition:all .18s var(--ease);
+  letter-spacing:.3px;
+}
+.action-pill ion-icon { font-size:1.1rem; }
+.action-pill:active, .action-pill.active {
+  border-color:var(--g);
+  color:var(--g);
+  background:var(--g-dim);
+}
+.action-pill.fav-active {
+  border-color:#ff4d6a;
+  color:#ff4d6a;
+  background:rgba(255,77,106,.08);
+}
+
+/* Download button */
+.sheet-download {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  height:52px;
+  border-radius:16px;
+  background:var(--g);
+  color:#000;
+  font-size:.95rem;
+  font-weight:800;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  margin-bottom:20px;
+  transition:opacity .18s, transform .18s;
+  position:relative;
+  overflow:hidden;
+}
+.sheet-download::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg, rgba(255,255,255,.15), transparent);
+}
+.sheet-download:active { opacity:.85; transform:scale(.98); }
+.sheet-download ion-icon { font-size:1.2rem; }
+
+/* Comments section */
+.comments-section-title {
+  font-size:.72rem;
+  font-weight:800;
+  color:var(--txt2);
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-bottom:12px;
+  display:flex; align-items:center; gap:6px;
+}
+.comments-section-title ion-icon { color:var(--g); }
+
+.comment-input-area {
+  display:flex; gap:8px;
+  margin-bottom:16px;
+}
+.comment-input-area textarea {
+  flex:1;
+  background:var(--bg2);
+  border:1.5px solid var(--bd);
+  border-radius:14px;
+  padding:10px 14px;
+  color:var(--txt);
+  font-size:.82rem;
+  resize:none;
+  height:44px;
+  outline:none;
+  transition:border-color .2s;
+  line-height:1.5;
+  overflow:hidden;
+}
+.comment-input-area textarea:focus { border-color:var(--bd-g); }
+.comment-input-area textarea::placeholder { color:var(--txt3); }
+.btn-post {
+  width:44px; height:44px;
+  border-radius:12px;
+  background:var(--g);
+  color:#000;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem;
+  flex-shrink:0;
+  transition:opacity .2s;
+}
+.btn-post:active { opacity:.75; }
+
+.comment-item {
+  padding:12px;
+  background:var(--bg2);
+  border-radius:14px;
+  margin-bottom:8px;
+  border:1px solid var(--bd);
+}
+.comment-head {
+  display:flex; align-items:center; gap:8px;
+  margin-bottom:6px;
+}
+.comment-avatar {
+  width:24px; height:24px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--g),var(--cy));
+  display:flex; align-items:center; justify-content:center;
+  font-size:.55rem;
+  font-weight:800;
+  color:#000;
+  flex-shrink:0;
+}
+.comment-user {
+  font-size:.75rem;
+  font-weight:700;
+  color:var(--txt);
+  flex:1;
+}
+.comment-time {
+  font-size:.65rem;
+  color:var(--txt3);
+  font-family:var(--ff-mono);
+}
+.comment-text {
+  font-size:.82rem;
+  color:var(--txt2);
+  line-height:1.5;
+}
+
+.no-comments {
+  text-align:center;
+  padding:20px 0;
+  color:var(--txt3);
+  font-size:.8rem;
+}
+
+/* ═══════════════════════════════════════════
+   BOTTOM NAVIGATION
+═══════════════════════════════════════════ */
+#bottom-nav {
+  position:fixed;
+  bottom:0; left:0; right:0;
+  height:var(--nav-h);
+  background:rgba(13,13,26,.95);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border-top:1px solid var(--bd);
+  display:flex;
+  z-index:500;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.nav-tab {
+  flex:1;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px;
+  color:var(--txt3);
+  font-size:.6rem;
+  font-weight:700;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  transition:color .2s;
+  position:relative;
+}
+.nav-tab.active { color:var(--g); }
+.nav-tab ion-icon {
+  font-size:1.5rem;
+  transition:transform .2s var(--spring);
+}
+.nav-tab.active ion-icon { transform:scale(1.15); }
+.nav-dot {
+  position:absolute;
+  top:8px;
+  width:4px; height:4px;
+  border-radius:50%;
+  background:var(--g);
+  opacity:0;
+  transition:opacity .2s;
+}
+.nav-tab.active .nav-dot { opacity:1; }
+
+/* ═══════════════════════════════════════════
+   MODAL SYSTEM (Report, Terms, etc.)
+═══════════════════════════════════════════ */
+.modal-overlay {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.8);
+  backdrop-filter:blur(8px);
+  z-index:900;
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; visibility:hidden;
+  transition:opacity .3s, visibility .3s;
+}
+.modal-overlay.show { opacity:1; visibility:visible; }
+.modal-sheet {
+  width:100%; max-width:520px;
+  background:var(--bg1);
+  border-radius:24px 24px 0 0;
+  padding:0 0 env(safe-area-inset-bottom);
+  transform:translateY(100%);
+  transition:transform .4s var(--spring);
+  max-height:80dvh;
+  overflow-y:auto;
+}
+.modal-overlay.show .modal-sheet { transform:translateY(0); }
+.modal-handle {
+  width:36px; height:4px;
+  background:var(--bg3);
+  border-radius:999px;
+  margin:12px auto 0;
+}
+.modal-hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px 12px;
+}
+.modal-hdr-title {
+  font-size:1rem;
+  font-weight:800;
+  display:flex; align-items:center; gap:8px;
+}
+.modal-close {
+  width:30px; height:30px;
+  border-radius:50%;
+  background:var(--bg3);
+  display:flex; align-items:center; justify-content:center;
+  color:var(--txt2);
+  font-size:.9rem;
+}
+.modal-body { padding:0 20px 24px; }
+
+/* Report options */
+.report-options { display:flex; flex-direction:column; gap:8px; }
+.report-opt {
+  display:flex; align-items:center; gap:14px;
+  padding:14px 16px;
+  background:var(--bg2);
+  border:1.5px solid var(--bd);
+  border-radius:14px;
+  transition:all .18s;
+  text-align:left;
+}
+.report-opt:active { border-color:var(--g); background:var(--g-dim); }
+.report-opt-ico {
+  width:40px; height:40px;
+  border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.2rem;
+  flex-shrink:0;
+}
+.report-opt-ico.red { background:rgba(255,67,67,.1); color:#ff4343; }
+.report-opt-ico.yellow { background:rgba(255,204,0,.1); color:#ffcc00; }
+.report-opt-ico.blue { background:rgba(0,242,255,.1); color:var(--cy); }
+.report-opt-title {
+  font-size:.88rem;
+  font-weight:700;
+  color:var(--txt);
+  margin-bottom:2px;
+}
+.report-opt-sub {
+  font-size:.75rem;
+  color:var(--txt3);
+}
+
+/* ═══════════════════════════════════════════
+   TERMS MODAL
+═══════════════════════════════════════════ */
+#terms-modal {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.97);
+  z-index:99000;
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+  padding:0;
+}
+#terms-modal.show { display:flex; }
+.terms-sheet {
+  width:100%; max-width:520px;
+  background:var(--bg1);
+  border-radius:24px 24px 0 0;
+  max-height:95dvh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.terms-hdr {
+  padding:20px 20px 16px;
+  border-bottom:1px solid var(--bd);
+  text-align:center;
+  flex-shrink:0;
+}
+.terms-emoji { font-size:2.5rem; display:block; margin-bottom:8px; }
+.terms-h1 {
+  font-size:1.2rem;
+  font-weight:800;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+.terms-sub { font-size:.78rem; color:var(--txt3); margin-top:4px; }
+.terms-body {
+  flex:1;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:20px;
+}
+.terms-section-h {
+  font-size:.75rem;
+  font-weight:800;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--cy);
+  margin-bottom:12px;
+  margin-top:20px;
+}
+.terms-section-h:first-child { margin-top:0; }
+.terms-list { list-style:none; display:flex; flex-direction:column; gap:10px; }
+.terms-list li {
+  display:flex; align-items:flex-start; gap:10px;
+  font-size:.85rem;
+  color:var(--txt2);
+  line-height:1.55;
+}
+.terms-list li::before {
+  content:'✦';
+  color:var(--g);
+  font-size:.7rem;
+  flex-shrink:0;
+  margin-top:3px;
+}
+.terms-list.legal li::before { content:'•'; color:#ff4343; }
+.terms-footer {
+  padding:16px 20px;
+  border-top:1px solid var(--bd);
+  background:var(--bg2);
+  flex-shrink:0;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.terms-legal-link {
+  font-size:.75rem;
+  color:var(--cy);
+  text-align:center;
+  border-bottom:1px solid transparent;
+}
+.terms-legal-link:hover { border-bottom-color:var(--cy); }
+.btn-accept {
+  height:52px;
+  border-radius:16px;
+  background:var(--g);
+  color:#000;
+  font-size:.9rem;
+  font-weight:800;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  transition:opacity .2s;
+  width:100%;
+}
+.btn-accept:disabled { opacity:.35; cursor:not-allowed; }
+.btn-reject {
+  height:44px;
+  border-radius:14px;
+  background:transparent;
+  color:var(--txt3);
+  font-size:.8rem;
+  font-weight:600;
+  width:100%;
+  border:1.5px solid var(--bd);
+}
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+#toast-container {
+  position:fixed;
+  bottom:calc(var(--nav-h) + 16px);
+  left:50%;
+  transform:translateX(-50%);
+  z-index:99998;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  align-items:center;
+  pointer-events:none;
+}
+.toast {
+  background:var(--bg3);
+  color:var(--txt);
+  padding:10px 20px;
+  border-radius:999px;
+  font-size:.82rem;
+  font-weight:700;
+  border:1px solid var(--bd);
+  white-space:nowrap;
+  animation:toastIn .3s var(--spring);
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+}
+@keyframes toastIn {
+  from{opacity:0;transform:translateY(8px) scale(.95)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.toast.out { animation:toastOut .3s var(--ease) forwards; }
+@keyframes toastOut {
+  to{opacity:0;transform:translateY(4px) scale(.95)}
+}
+
+/* ═══════════════════════════════════════════
+   LOADING / EMPTY STATES
+═══════════════════════════════════════════ */
+.skeleton-grid {
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.skeleton-card {
+  background:var(--bg1);
+  border-radius:var(--card-r);
+  overflow:hidden;
+  border:1px solid var(--bd);
+}
+.skeleton-thumb {
+  aspect-ratio:16/9;
+  background:var(--bg2);
+  position:relative;
+  overflow:hidden;
+}
+.skeleton-thumb::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.04) 50%,transparent 100%);
+  animation:shimmer 1.5s ease-in-out infinite;
+}
+@keyframes shimmer {
+  from{transform:translateX(-100%)}
+  to{transform:translateX(100%)}
+}
+.skeleton-lines { padding:10px; display:flex; flex-direction:column; gap:6px; }
+.skeleton-line {
+  height:8px; border-radius:4px;
+  background:var(--bg2);
+}
+.skeleton-line.w60 { width:60%; }
+.skeleton-line.w80 { width:80%; }
+
+.empty-state {
+  grid-column:1/-1;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:60px 20px;
+  gap:12px;
+  text-align:center;
+}
+.empty-state ion-icon { font-size:3rem; color:var(--txt3); }
+.empty-state h3 { font-size:1rem; font-weight:700; color:var(--txt2); }
+.empty-state p { font-size:.82rem; color:var(--txt3); }
+.empty-action {
+  margin-top:8px;
+  padding:12px 24px;
+  background:var(--g);
+  color:#000;
+  border-radius:12px;
+  font-size:.82rem;
+  font-weight:800;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+}
+
+/* Infinite scroll loader */
+.scroll-loader {
+  grid-column:1/-1;
+  display:flex; align-items:center; justify-content:center;
+  gap:8px;
+  padding:16px;
+  color:var(--txt3);
+  font-size:.78rem;
+}
+.scroll-loader ion-icon { animation:spinAnim 1s linear infinite; }
+@keyframes spinAnim{to{transform:rotate(360deg)}}
+
+/* ═══════════════════════════════════════════
+   NEXUS AI FAB & PANEL
+═══════════════════════════════════════════ */
+#nxFab {
+  position:fixed;
+  right:16px;
+  bottom:calc(var(--nav-h) + 16px);
+  width:52px; height:52px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#0f1f0f,#0a1a1a);
+  border:1.5px solid rgba(94,255,67,.3);
+  display:flex; align-items:center; justify-content:center;
+  z-index:600;
+  box-shadow:0 4px 20px rgba(94,255,67,.2), 0 0 0 0 rgba(94,255,67,.3);
+  animation:fabPulse 3s ease-in-out infinite;
+  cursor:pointer;
+}
+@keyframes fabPulse {
+  0%,100%{box-shadow:0 4px 20px rgba(94,255,67,.2),0 0 0 0 rgba(94,255,67,.3)}
+  50%{box-shadow:0 4px 20px rgba(94,255,67,.3),0 0 0 8px rgba(94,255,67,0)}
+}
+#nxFab svg { width:26px; height:26px; }
+
+/* ═══════════════════════════════════════════
+   NEXUS PANEL (unchanged from original)
+═══════════════════════════════════════════ */
+#nxFab-r1, #nxFab-r2 { display:none; }
+#nxPanel {
+  position:fixed;
+  bottom:calc(var(--nav-h) + 76px);
+  right:12px;
+  width:min(360px, calc(100vw - 24px));
+  height:460px;
+  background:var(--bg1);
+  border-radius:20px;
+  border:1px solid var(--bd);
+  z-index:700;
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  transform:scale(.8) translateY(20px);
+  opacity:0;
+  visibility:hidden;
+  transition:transform .3s var(--spring), opacity .3s, visibility .3s;
+  box-shadow:0 20px 60px rgba(0,0,0,.7);
+}
+#nxPanel.open {
+  transform:scale(1) translateY(0);
+  opacity:1;
+  visibility:visible;
+}
+#nxPanel.expanded {
+  position:fixed;
+  inset:0;
+  right:0; bottom:0;
+  width:100%;
+  height:100%;
+  border-radius:0;
+}
+.nx-hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 14px;
+  border-bottom:1px solid var(--bd);
+  flex-shrink:0;
+}
+.nx-hdr-l { display:flex; align-items:center; gap:10px; }
+.nx-logo-box { position:relative; width:30px; height:30px; }
+.nx-lsvg { width:100%; height:100%; }
+.nx-live {
+  position:absolute;
+  top:-2px; right:-2px;
+  width:8px; height:8px;
+  border-radius:50%;
+  background:var(--g);
+  box-shadow:0 0 6px var(--g);
+  animation:blink 1.5s ease-in-out infinite;
+}
+.nx-titles { display:flex; flex-direction:column; }
+.nx-name { font-size:.88rem; font-weight:800; letter-spacing:1px; }
+.nx-name em { color:var(--g); font-style:normal; }
+.nx-sub { font-size:.6rem; color:var(--txt3); font-family:var(--ff-mono); }
+.nx-hdr-r { display:flex; align-items:center; gap:6px; }
+.nx-ibtn {
+  width:28px; height:28px;
+  border-radius:8px;
+  background:var(--bg2);
+  border:1px solid var(--bd);
+  display:flex; align-items:center; justify-content:center;
+  color:var(--txt2);
+  font-size:.78rem;
+  transition:all .2s;
+}
+.nx-ibtn:hover { border-color:var(--bd-g); color:var(--g); }
+.nx-ibtn svg { width:12px; height:12px; stroke:currentColor; }
+.nx-ibtn-x { font-size:.9rem; }
+.nx-div { height:1px; background:linear-gradient(90deg,transparent,var(--g),var(--cy),transparent); opacity:.3; flex-shrink:0; }
+.nx-body { flex:1; position:relative; overflow:hidden; }
+.nx-body iframe { position:absolute; inset:0; width:100%; height:100%; border:none; opacity:0; transition:opacity .5s; }
+.nx-body iframe.loaded { opacity:1; }
+#nxBoot {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:20px; padding:20px;
+}
+.nb-visual { position:relative; width:60px; height:60px; }
+.nb-ring {
+  position:absolute;
+  border-radius:50%;
+  border:1px solid transparent;
+}
+.nb-ra { inset:0; border-top-color:var(--g); border-right-color:rgba(94,255,67,.3); animation:plSpin 2s linear infinite; }
+.nb-rb { inset:8px; border-bottom-color:var(--cy); border-left-color:rgba(0,242,255,.3); animation:plSpin 2.5s linear infinite reverse; }
+.nb-rc { inset:18px; border-top-color:rgba(94,255,67,.5); animation:plSpin 1.5s linear infinite; }
+@keyframes plSpin{to{transform:rotate(360deg)}}
+.nb-ico { position:absolute; inset:0; margin:auto; width:24px; height:24px; }
+.nb-info { text-align:center; width:100%; }
+.nb-lbl { font-size:.65rem; font-weight:800; letter-spacing:3px; color:var(--txt3); margin-bottom:10px; }
+.nb-barwrap { display:flex; align-items:center; gap:10px; }
+.nb-bar { flex:1; height:2px; background:var(--bg3); border-radius:999px; overflow:hidden; }
+.nb-fill { height:100%; width:0; background:linear-gradient(90deg,var(--g),var(--cy)); border-radius:999px; transition:width .3s; }
+.nb-pct { font-size:.65rem; color:var(--txt3); font-family:var(--ff-mono); width:30px; }
+.nb-log { font-size:.6rem; color:var(--txt3); font-family:var(--ff-mono); margin-top:10px; min-height:14px; }
+.nx-foot {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 14px;
+  border-top:1px solid var(--bd);
+  flex-shrink:0;
+}
+.nx-fl { display:flex; align-items:center; gap:5px; font-size:.6rem; color:var(--txt3); font-family:var(--ff-mono); }
+.nx-fdot { width:5px; height:5px; border-radius:50%; background:var(--g); animation:blink 1.5s ease-in-out infinite; display:inline-block; }
+.nx-fr { font-size:.6rem; color:var(--txt3); font-family:var(--ff-mono); }
+
+/* ═══════════════════════════════════════════
+   TUTORIAL FAB
+═══════════════════════════════════════════ */
+#tut-fab {
+  position:fixed;
+  left:16px;
+  bottom:calc(var(--nav-h) + 16px);
+  width:38px; height:38px;
+  border-radius:50%;
+  background:var(--bg2);
+  border:1.5px solid var(--bd);
+  display:flex; align-items:center; justify-content:center;
+  z-index:600;
+  color:var(--txt3);
+  font-size:1rem;
+  font-weight:800;
+  transition:border-color .2s, color .2s;
+}
+#tut-fab:hover { border-color:var(--bd-g); color:var(--g); }
+
+/* Tutorial overlay */
+#btut-lock {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  z-index:9900;
+  pointer-events:none;
+}
+#btut-lock.on { display:block; pointer-events:auto; }
+#btut-spotlight {
+  display:none;
+  position:fixed;
+  border-radius:12px;
+  box-shadow:0 0 0 9999px rgba(0,0,0,.75);
+  z-index:9901;
+  pointer-events:none;
+  outline:2px solid var(--g);
+  animation:spotPulse 1.5s ease-in-out infinite;
+}
+@keyframes spotPulse{0%,100%{outline-color:var(--g)}50%{outline-color:var(--cy)}}
+#btut-tooltip {
+  display:none;
+  position:fixed;
+  width:min(300px,calc(100vw - 24px));
+  background:var(--bg1);
+  border-radius:16px;
+  border:1px solid var(--bd);
+  z-index:9902;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);
+  overflow:hidden;
+}
+.btut-inner { padding:16px; }
+.btut-badge {
+  font-size:.6rem;
+  font-weight:800;
+  color:var(--g);
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  margin-bottom:6px;
+  font-family:var(--ff-mono);
+}
+.btut-title { font-size:.95rem; font-weight:800; color:var(--txt); margin-bottom:6px; }
+.btut-body { font-size:.8rem; color:var(--txt2); line-height:1.5; }
+.btut-footer {
+  padding:12px 16px;
+  border-top:1px solid var(--bd);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.btut-dots { display:flex; gap:5px; }
+.btut-dot {
+  width:6px; height:6px;
+  border-radius:50%;
+  background:var(--bg3);
+  transition:background .2s, width .2s;
+}
+.btut-dot.on { background:var(--g); width:14px; border-radius:3px; }
+.btut-nav { display:flex; gap:8px; }
+.btut-btn {
+  height:32px;
+  padding:0 14px;
+  border-radius:8px;
+  font-size:.75rem;
+  font-weight:800;
+  background:var(--bg3);
+  color:var(--txt2);
+  border:1px solid var(--bd);
+  transition:all .18s;
+}
+.btut-btn.primary {
+  background:var(--g);
+  color:#000;
+  border:none;
+}
+.btut-close {
+  position:absolute;
+  top:10px; right:10px;
+  width:24px; height:24px;
+  border-radius:50%;
+  background:var(--bg3);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.75rem;
+  color:var(--txt3);
+  border:1px solid var(--bd);
+}
+.btut-in { animation:btutSlide .25s var(--spring); }
+@keyframes btutSlide{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.btut-pulse { outline:2px solid var(--g); outline-offset:3px; border-radius:12px; }
+
+/* ═══════════════════════════════════════════
+   PROFILE VIEW (Tab)
+═══════════════════════════════════════════ */
+#profile-view {
+  display:none;
+  padding:20px 16px calc(var(--nav-h) + 20px);
+}
+#profile-view.active { display:block; }
+.profile-card {
+  background:var(--bg1);
+  border-radius:20px;
+  border:1px solid var(--bd);
+  overflow:hidden;
+  margin-bottom:16px;
+}
+.profile-cover {
+  height:100px;
+  background:linear-gradient(135deg,var(--g-dim),var(--cy-dim));
+  position:relative;
+}
+.profile-avatar-wrap {
+  position:absolute;
+  bottom:-24px;
+  left:20px;
+}
+.profile-avatar {
+  width:56px; height:56px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--g),var(--cy));
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem;
+  font-weight:800;
+  color:#000;
+  border:3px solid var(--bg1);
+}
+.profile-info { padding:32px 20px 20px; }
+.profile-name { font-size:1.1rem; font-weight:800; }
+.profile-handle { font-size:.78rem; color:var(--txt3); font-family:var(--ff-mono); margin-top:2px; }
+.profile-not-logged {
+  text-align:center;
+  padding:40px 20px;
+  color:var(--txt3);
+}
+.profile-not-logged h3 { font-size:1rem; font-weight:700; color:var(--txt2); margin-top:12px; }
+.profile-not-logged p { font-size:.82rem; margin-top:6px; }
+.btn-login-action {
+  margin-top:16px;
+  display:inline-flex; align-items:center; gap:8px;
+  padding:12px 24px;
+  background:var(--g);
+  color:#000;
+  border-radius:12px;
+  font-size:.85rem;
+  font-weight:800;
+  letter-spacing:.3px;
+}
+
+/* ═══════════════════════════════════════════
+   FAVORITES VIEW (Tab)
+═══════════════════════════════════════════ */
+#favs-view {
+  display:none;
+  padding:20px 12px calc(var(--nav-h) + 20px);
+}
+#favs-view.active { display:block; }
+.favs-header {
+  font-size:.75rem;
+  font-weight:800;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--txt2);
+  margin-bottom:16px;
+  display:flex; align-items:center; gap:6px;
+}
+.favs-header ion-icon { color:#ff4d6a; }
+#favs-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+/* Responsive tweaks */
+@media (max-width:380px) {
+  .sheet-stats { grid-template-columns:1fr 1fr; }
+  .stat-box:last-child { grid-column:1/-1; }
+}
+@media (min-width:600px) {
+  #output { grid-template-columns:1fr 1fr 1fr; }
+  #favs-grid { grid-template-columns:1fr 1fr 1fr; }
+}
+</style>
 </head>
 <body>
-    <!-- PRELOADER OPTIMIZADO -->
-    <div id="upgames-preloader">
-        <div class="pl-bg-glow"></div>
-        <div class="pl-center">
-            <div class="pl-logo-wrap">
-                <div class="pl-logo-ring"></div>
-                <div class="pl-logo-ring pl-ring-2"></div>
-                <div class="pl-logo-text">
-                    <span class="pl-up">UP</span><span class="pl-gm">GAMES</span>
-                </div>
-            </div>
-            <div class="pl-particles">
-                <span class="pl-dot" style="--x:20%;--y:30%;--d:1.2s"></span>
-                <span class="pl-dot" style="--x:80%;--y:20%;--d:0.8s"></span>
-                <span class="pl-dot" style="--x:15%;--y:70%;--d:1.6s"></span>
-                <span class="pl-dot" style="--x:75%;--y:65%;--d:0.5s"></span>
-                <span class="pl-dot" style="--x:50%;--y:85%;--d:1.0s"></span>
-                <span class="pl-dot pl-dot-blue" style="--x:35%;--y:15%;--d:0.7s"></span>
-                <span class="pl-dot pl-dot-blue" style="--x:88%;--y:50%;--d:1.4s"></span>
-            </div>
-            <div class="pl-bar-track">
-                <div class="pl-bar-fill" id="pl-bar"></div>
-            </div>
-            <p class="pl-tagline" id="pl-tagline">LA NUBE DE CONTENIDO</p>
-        </div>
-    </div>
 
-    <!-- LOADING STATE -->
-    <div id="loading-state" style="display:none;
-        position: fixed; top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center; z-index: 9999;">
-        <div style="width:50px;height:50px;border:3px solid #222;
-            border-top-color:#5EFF43;border-radius:50%;
-            animation:spin 0.9s linear infinite;margin:0 auto 16px;"></div>
-        <p style="color:#5EFF43;font-size:0.8rem;font-weight:700;letter-spacing:2px;">
-            CARGANDO NUBE...
-        </p>
-    </div>
-
-    <style>
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* ━━━━━━━━━━━━━━━━━━━━ PRELOADER OPTIMIZADO ━━━━━━━━━━━━━━━━━━━━ */
-        #upgames-preloader {
-            position: fixed;
-            inset: 0;
-            background: #080808;
-            z-index: 99999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            transition: opacity 0.6s ease, visibility 0.6s ease;
-        }
-        #upgames-preloader.ocultar {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        .pl-bg-glow {
-            position: absolute;
-            width: 600px; height: 600px;
-            background: radial-gradient(circle, rgba(94,255,67,0.06) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: plGlowPulse 3s ease-in-out infinite;
-            pointer-events: none;
-        }
-        @keyframes plGlowPulse {
-            0%, 100% { transform: scale(1);   opacity: 0.6; }
-            50%       { transform: scale(1.15); opacity: 1;   }
-        }
-
-        .pl-center {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 36px;
-        }
-
-        .pl-logo-wrap {
-            position: relative;
-            width: 140px; height: 140px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .pl-logo-ring {
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            border: 1.5px solid transparent;
-            border-top-color: #5EFF43;
-            border-right-color: rgba(94,255,67,0.2);
-            animation: plSpin 2.2s linear infinite;
-        }
-        .pl-ring-2 {
-            inset: 14px;
-            border-top-color: transparent;
-            border-bottom-color: #00f2ff;
-            border-left-color: rgba(0,242,255,0.2);
-            animation: plSpinRev 3s linear infinite;
-        }
-        @keyframes plSpin    { to { transform: rotate(360deg);  } }
-        @keyframes plSpinRev { to { transform: rotate(-360deg); } }
-
-        .pl-logo-text {
-            font-size: 1.6rem;
-            font-weight: 900;
-            letter-spacing: 2px;
-            animation: plLogoPulse 2s ease-in-out infinite;
-            user-select: none;
-        }
-        .pl-up { color: #5EFF43; text-shadow: 0 0 18px rgba(94,255,67,0.7); }
-        .pl-gm { color: #fff; }
-        @keyframes plLogoPulse {
-            0%, 100% { opacity: 1;    transform: scale(1);    }
-            50%       { opacity: 0.85; transform: scale(0.97); }
-        }
-
-        .pl-particles { position: fixed; inset: 0; pointer-events: none; }
-        .pl-dot {
-            position: absolute;
-            left: var(--x);
-            top: var(--y);
-            width: 4px; height: 4px;
-            background: rgba(94,255,67,0.5);
-            border-radius: 50%;
-            animation: plFloat var(--d, 1s) ease-in-out infinite alternate;
-            box-shadow: 0 0 6px rgba(94,255,67,0.4);
-        }
-        .pl-dot-blue {
-            background: rgba(0,242,255,0.5);
-            box-shadow: 0 0 6px rgba(0,242,255,0.4);
-        }
-        @keyframes plFloat {
-            from { transform: translateY(0px)  scale(1);    opacity: 0.4; }
-            to   { transform: translateY(-14px) scale(1.3); opacity: 1;   }
-        }
-
-        .pl-bar-track {
-            width: 200px; height: 2px;
-            background: #1a1a1a;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        .pl-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #5EFF43, #00f2ff);
-            border-radius: 10px;
-            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 0 10px rgba(94,255,67,0.6);
-        }
-
-        .pl-tagline {
-            color: #2a2a2a;
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            animation: plTagFade 2s ease-in-out infinite alternate;
-        }
-        @keyframes plTagFade {
-            from { color: #222; }
-            to   { color: #444; }
-        }
-    </style>
-
-    <script>
-    // ═══════════════════════════════════════════
-    // LÓGICA DEL PRELOADER OPTIMIZADO
-    // Progresa rápido hasta 70% y espera al backend
-    // Si no responde en 3 segundos, cierra igual
-    // ═══════════════════════════════════════════
-    (function initPreloader() {
-        const preloader = document.getElementById('upgames-preloader');
-        const bar       = document.getElementById('pl-bar');
-        const tagline   = document.getElementById('pl-tagline');
-
-        let cerrado = false;
-        let backendCargado = false;
-
-        // Avance rápido hasta 70% en 600ms
-        const etapas = [
-            { pct: 30, delay: 200  },
-            { pct: 50, delay: 400  },
-            { pct: 70, delay: 600 }
-        ];
-
-        function avanzarBarra() {
-            let i = 0;
-            function siguiente() {
-                if (i >= etapas.length || cerrado) return;
-                bar.style.width = etapas[i].pct + '%';
-                i++;
-                if (i < etapas.length) {
-                    setTimeout(siguiente, etapas[i].delay - (etapas[i-1]?.delay || 0));
-                }
-            }
-            siguiente();
-        }
-
-        function cerrarPreloader() {
-            if (cerrado) return;
-            cerrado = true;
-            bar.style.width = '100%';
-            setTimeout(() => {
-                preloader.classList.add('ocultar');
-            }, 300);
-        }
-
-        // Iniciar progreso
-        avanzarBarra();
-
-        // Escuchar cuando el backend esté listo
-        window.addEventListener('backendReady', () => {
-            backendCargado = true;
-            cerrarPreloader();
-        });
-
-        // Timeout: si backend no responde en 3s, cerrar igual
-        setTimeout(() => {
-            if (!backendCargado) {
-                console.warn('Backend tardó más de 3s, cerrando preloader');
-                cerrarPreloader();
-            }
-        }, 3000);
-    })();
-    </script>
-
-    <!-- HEADER MEJORADO -->
-    <header>
-        <div class="buscador-wrapper">
-            <ion-icon name="search-outline" class="buscador-icon"></ion-icon>
-            <input type="text" id="buscador" placeholder="Buscar...">
-        </div>
-        
-        <div class="header-right-actions">
-            <button class="UpIcon" onclick="window.location.href='./perfil.html'" title="Subir archivo">
-                <ion-icon name="cloud-upload"></ion-icon>
-            </button>
-            
-            <a class="reportButton" id="reportButton" href="#" onclick="handleMail(event)">
-                <ion-icon name="information-circle"></ion-icon>
-            </a>
-        </div>
-    </header>
-
-    <!-- OVERLAY PARA MODAL -->
-    <div class="expandida-overlay" id="overlay"></div>
-
-    <!-- CONTENEDOR PRINCIPAL -->
-    <div id="output"></div>
-
-    <!-- MODAL DE TÉRMINOS -->
-    <div id="modal-terminos" class="custom-modal-wrapper">
-        <div class="custom-modal-card">
-            <div class="custom-modal-header">
-                <span class="emoji-header">🚀</span>
-                <h1>BIENVENIDO A UPGAMES</h1>
-                <p style="color: #888; font-size: 0.8rem; margin-top: 5px;">La evolución de las librerías digitales</p>
-            </div>
-            
-            <div class="custom-modal-body">
-                <div class="benefits-section">
-                    <h3>💎 BENEFICIOS EXCLUSIVOS</h3>
-                    <ul class="benefits-list">
-                        <li><strong>Monetización Real:</strong> Gana $1.00 USD por cada 1,000 descargas de tus aportes.</li>
-                        <li><strong>Lanzadera Indie:</strong> Publica tus propios juegos, apps o mods con visibilidad global gratuita.</li>
-                        <li><strong>Seguridad 24/7:</strong> Navega tranquilo gracias a nuestros bots que filtran malware y contenido +18.</li>
-                        <li><strong>Comunidad Activa:</strong> Indexa y encuentra metadatos de software que no hallarás en tiendas oficiales.</li>
-                        <li><strong>Estatus de Trusted Indexer:</strong> Sube de nivel y obtén prioridad en el feed principal.</li>
-                        <li><strong>NEXUS IA Integrada:</strong> Accede a nuestra inteligencia artificial exclusiva para encontrar contenido, resolver dudas y recibir recomendaciones personalizadas — sin salir de la plataforma.</li>
-                    </ul>
-                </div>
-
-                <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
-
-                <h3>⚖️ BREVE RESUMEN LEGAL</h3>
-                <p>Para mantener este ecosistema seguro y gratuito, operamos bajo estas reglas:</p>
-                <ul class="legal-summary">
-                    <li><strong>Intermediación:</strong> Somos una librería de metadatos; no almacenamos archivos.</li>
-                    <li><strong>Responsabilidad:</strong> El contenido es responsabilidad de quien lo publica y lo descarga.</li>
-                    <li><strong>Filtros Activos:</strong> Prohibido el contenido ilegal, piratería o material sensible.</li>
-                    <li><strong>Neutralidad:</strong> No podemos revisar miles de links manualmente, pero atendemos reportes en 24-72h.</li>
-                </ul>
-            </div>
-
-            <div class="custom-modal-footer">
-                <a href="./terminos&condiciones.html" class="legal-link">Conoce nuestro contrato legal completo (v.2026.C)</a>
-                
-                <div class="button-group">
-                    <button id="btn-aceptar-terminos" class="btn-confirm">✓ ACEPTAR Y EMPEZAR A GANAR</button>
-                    <button onclick="window.location.href='https://google.com'" class="btn-cancel">RECHAZAR</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <style>
-        :root {
-            --neon-green: #39ff14;
-            --neon-blue: #00f2ff;
-            --glass-bg: #0d0d0d;
-            --text-gray: #bbb;
-        }
-
-        .custom-modal-wrapper {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(15px);
-            z-index: 10000;
-            padding: 15px;
-            font-family: 'Segoe UI', Roboto, sans-serif;
-        }
-
-        .custom-modal-card {
-            position: relative;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--glass-bg);
-            border: 1px solid #222;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 480px;
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 0 50px rgba(0, 242, 255, 0.15);
-        }
-
-        .custom-modal-header {
-            padding: 25px 20px 15px;
-            text-align: center;
-            border-bottom: 1px solid #222;
-        }
-
-        .emoji-header { font-size: 2.5rem; filter: drop-shadow(0 0 10px var(--neon-blue)); }
-
-        .custom-modal-header h1 {
-            color: #fff;
-            font-size: 1.4rem;
-            margin: 10px 0 0;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .custom-modal-body {
-            padding: 25px;
-            overflow-y: auto;
-            color: var(--text-gray);
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-
-        .custom-modal-body h3 {
-            color: var(--neon-blue);
-            font-size: 0.9rem;
-            margin-bottom: 12px;
-            letter-spacing: 1px;
-        }
-
-        .benefits-list, .legal-summary {
-            padding-left: 15px;
-            list-style: none;
-        }
-
-        .benefits-list li::before {
-            content: "✦";
-            color: var(--neon-green);
-            margin-right: 10px;
-            font-weight: bold;
-        }
-
-        .legal-summary li::before {
-            content: "•";
-            color: #ff003c;
-            margin-right: 10px;
-        }
-
-        .benefits-list li, .legal-summary li {
-            margin-bottom: 10px;
-        }
-
-        .custom-modal-footer {
-            padding: 20px;
-            background: rgba(0,0,0,0.4);
-            border-top: 1px solid #222;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .legal-link {
-            color: var(--neon-blue);
-            font-size: 0.8rem;
-            text-align: center;
-            text-decoration: none;
-            border-bottom: 1px solid transparent;
-            transition: 0.3s;
-        }
-
-        .legal-link:hover { border-bottom: 1px solid var(--neon-blue); }
-
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .btn-confirm {
-            background: var(--neon-green);
-            color: #000;
-            border: none;
-            padding: 16px;
-            border-radius: 10px;
-            font-weight: 900;
-            cursor: pointer;
-            width: 100%;
-            text-transform: uppercase;
-            transition: 0.3s;
-        }
-
-        .btn-confirm:hover {
-            background: #fff;
-            box-shadow: 0 0 20px var(--neon-green);
-        }
-
-        .btn-cancel {
-            background: transparent;
-            color: #666;
-            border: 1px solid #333;
-            padding: 10px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-
-        @media (min-width: 600px) {
-            .button-group { flex-direction: row; }
-            .btn-confirm { flex: 2; }
-            .btn-cancel { flex: 1; }
-        }
-
-        .custom-modal-body::-webkit-scrollbar { width: 5px; }
-        .custom-modal-body::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-    </style>
-
-    <script>
-        (function() {
-            const modal = document.getElementById('modal-terminos');
-            const btnAceptar = document.getElementById('btn-aceptar-terminos');
-            const modalBody = modal.querySelector('.custom-modal-body');
-
-            // Solo mostrar si es la primera vez (nunca completó el onboarding)
-            const esPrimeraVez = localStorage.getItem("upgames_onboarding_done") !== "1";
-
-            if (esPrimeraVez) {
-                modal.style.display = 'block';
-                document.body.style.overflow = 'hidden';
-
-                // Bloquear botón hasta que el usuario haga scroll hasta el fondo
-                btnAceptar.disabled = true;
-                btnAceptar.style.opacity = '0.4';
-                btnAceptar.style.cursor = 'not-allowed';
-                btnAceptar.textContent = '📖 Desplázate para leer los términos...';
-
-                let leido = false;
-                modalBody.addEventListener('scroll', function() {
-                    if (!leido) {
-                        const scrolled = modalBody.scrollTop + modalBody.clientHeight;
-                        const total = modalBody.scrollHeight;
-                        if (scrolled >= total - 30) {
-                            leido = true;
-                            btnAceptar.disabled = false;
-                            btnAceptar.style.opacity = '1';
-                            btnAceptar.style.cursor = 'pointer';
-                            btnAceptar.textContent = '✓ ACEPTAR Y EMPEZAR A GANAR';
-                        }
-                    }
-                });
-            }
-
-            btnAceptar.addEventListener('click', () => {
-                if (btnAceptar.disabled) return;
-                localStorage.setItem("upgames_terms_version", "2026.C");
-                modal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-                // Disparar tutorial solo la primera vez
-                if (esPrimeraVez) {
-                    setTimeout(() => {
-                        if (typeof startBibliotecaTutorial === 'function') startBibliotecaTutorial();
-                    }, 600);
-                }
-            });
-        })();
-    </script>
-
-    <!-- IONICONS -->
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-
-    <!-- SCRIPT PRINCIPAL -->
-    <script src="./script.js"></script>
-    
-    <!-- FUNCIÓN DE SOPORTE -->
-    <script>
-        function handleMail(event) {
-            event.preventDefault();
-            const email = 'mr.m0onster@protonmail.com';
-            const subject = encodeURIComponent('Soporte - UP GAMES');
-            const body = encodeURIComponent('Hola, necesito ayuda con...\n\n[Describe tu problema aquí]');
-            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-        }
-    </script>
-    
-    
-    <!-- ══════════════════════════════════════════════════════
-     NEXUS IA WIDGET — UpGames
-     Archivo standalone · Pega este bloque antes de </body>
-     Paleta: #5EFF43 (verde) · #00f2ff (cyan) · #000/#0f0f0f/#1a1a1a
-══════════════════════════════════════════════════════ -->
-
-<!-- ── FAB ── -->
-<button id="nxFab" onclick="nxToggle()" aria-label="Abrir Nexus IA">
-  <span class="nxf-r1"></span>
-  <span class="nxf-r2"></span>
-  <div class="nxf-inner">
-    <!-- Icono: hexágono IA -->
-    <svg viewBox="0 0 40 40" fill="none" class="nxf-ico">
-      <path d="M20 3L35.59 12V28L20 37L4.41 28V12L20 3Z"
-            stroke="url(#fabG)" stroke-width="1.1" fill="none" opacity=".45"/>
-      <path d="M20 9.5L30 15.5V25.5L20 31.5L10 25.5V15.5L20 9.5Z"
-            stroke="url(#fabG)" stroke-width=".8" fill="none" opacity=".7"/>
-      <line x1="20" y1="14" x2="20" y2="26"
-            stroke="url(#fabG)" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="14" y1="20" x2="26" y2="20"
-            stroke="url(#fabG)" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="20" cy="20" r="2.8" fill="url(#fabG)"/>
-      <circle cx="20" cy="3"    r="1.3" fill="#5EFF43" opacity=".9"/>
-      <circle cx="35.59" cy="12" r="1"  fill="#00f2ff" opacity=".7"/>
-      <circle cx="35.59" cy="28" r="1"  fill="#00f2ff" opacity=".7"/>
-      <circle cx="20" cy="37"   r="1.3" fill="#5EFF43" opacity=".9"/>
-      <circle cx="4.41" cy="28" r="1"   fill="#00f2ff" opacity=".7"/>
-      <circle cx="4.41" cy="12" r="1"   fill="#00f2ff" opacity=".7"/>
-      <defs>
-        <linearGradient id="fabG" x1="4" y1="4" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stop-color="#5EFF43"/>
-          <stop offset="100%" stop-color="#00f2ff"/>
-        </linearGradient>
-      </defs>
-    </svg>
-    <span class="nxf-tag">IA</span>
+<!-- ══════════════════════════════════
+  PRELOADER
+══════════════════════════════════ -->
+<div id="preloader">
+  <div class="pl-glow"></div>
+  <div class="pl-logo">
+    <span class="up">UP</span><span class="gm">GAMES</span>
   </div>
+  <div class="pl-track"><div class="pl-fill" id="pl-fill"></div></div>
+  <div class="pl-sub">La Nube de Contenido</div>
+</div>
+
+<!-- ══════════════════════════════════
+  HEADER
+══════════════════════════════════ -->
+<header id="app-header">
+  <div class="hdr-logo"><span class="up">UP</span><span class="gm">GAMES</span></div>
+  <div class="search-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="buscador" placeholder="Buscar juegos, mods, apps..." autocomplete="off">
+  </div>
+  <div class="hdr-actions">
+    <button class="hdr-btn" onclick="window.location.href='./perfil.html'" title="Subir contenido">
+      <ion-icon name="cloud-upload-outline"></ion-icon>
+    </button>
+    <button class="hdr-btn" onclick="handleMail()" title="Reportar abuso">
+      <ion-icon name="information-circle-outline"></ion-icon>
+    </button>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════
+  CATEGORY CHIPS
+══════════════════════════════════ -->
+<div id="category-row">
+  <button class="chip active" data-cat="">Todos</button>
+  <button class="chip" data-cat="Juegos">Juegos</button>
+  <button class="chip" data-cat="Mods">Mods</button>
+  <button class="chip" data-cat="Apps">Apps</button>
+  <button class="chip" data-cat="Indie">Indie</button>
+  <button class="chip" data-cat="Herramientas">Herramientas</button>
+  <button class="chip" data-cat="Música">Música</button>
+  <button class="chip" data-cat="Video">Video</button>
+</div>
+
+<!-- ══════════════════════════════════
+  MAIN OUTPUT GRID
+══════════════════════════════════ -->
+<main id="main-view">
+  <div id="output">
+    <!-- Skeleton while loading -->
+    <div class="skeleton-grid" id="skeleton">
+      ${Array(6).fill(0).map(()=>`
+      <div class="skeleton-card">
+        <div class="skeleton-thumb"></div>
+        <div class="skeleton-lines">
+          <div class="skeleton-line w60"></div>
+          <div class="skeleton-line w80"></div>
+          <div class="skeleton-line w60"></div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>
+</main>
+
+<!-- ══════════════════════════════════
+  FAVORITES VIEW
+══════════════════════════════════ -->
+<div id="favs-view">
+  <div class="favs-header"><ion-icon name="heart"></ion-icon> Mis Favoritos</div>
+  <div id="favs-grid">
+    <div class="empty-state">
+      <ion-icon name="heart-outline"></ion-icon>
+      <h3>Sin favoritos aún</h3>
+      <p>Guarda contenido que te guste pulsando ❤️</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  PROFILE VIEW
+══════════════════════════════════ -->
+<div id="profile-view">
+  <div id="profile-content"></div>
+</div>
+
+<!-- ══════════════════════════════════
+  DETAIL SHEET (expanded card)
+══════════════════════════════════ -->
+<div id="detail-overlay"></div>
+<div id="detail-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-media">
+    <img id="ds-media-img" src="" alt="" loading="lazy">
+    <video id="ds-media-vid" autoplay muted loop playsinline style="display:none"></video>
+    <div class="sheet-media-overlay"></div>
+  </div>
+  <div class="sheet-scroll">
+    <!-- Header -->
+    <div class="sheet-header">
+      <div class="sheet-title-area">
+        <div class="sheet-cat" id="ds-cat"></div>
+        <h2 class="sheet-title" id="ds-title"></h2>
+      </div>
+      <button class="sheet-close" id="ds-close"><ion-icon name="close-outline"></ion-icon></button>
+    </div>
+    <!-- Author -->
+    <div class="sheet-author" id="ds-author">
+      <div class="author-avatar" id="ds-av-letter"></div>
+      <div class="author-info">
+        <div class="author-name" id="ds-author-name"></div>
+        <div class="author-sub">Ver perfil completo</div>
+      </div>
+      <ion-icon class="author-arrow" name="chevron-forward-outline"></ion-icon>
+    </div>
+    <!-- Stats -->
+    <div class="sheet-stats">
+      <div class="stat-box">
+        <div class="stat-val" id="ds-dl">0</div>
+        <div class="stat-lbl">Descargas</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="ds-rep">0</div>
+        <div class="stat-lbl">Reportes</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="ds-favs">❤️</div>
+        <div class="stat-lbl">Favs</div>
+      </div>
+    </div>
+    <!-- Status -->
+    <div class="sheet-status-bar" id="ds-status">
+      <ion-icon name="checkmark-circle"></ion-icon>
+      <span id="ds-status-text">Online</span>
+    </div>
+    <!-- Description -->
+    <p class="sheet-desc" id="ds-desc"></p>
+    <!-- Social Actions -->
+    <div class="sheet-actions">
+      <button class="action-pill" id="ds-btn-fav">
+        <ion-icon name="heart-outline"></ion-icon> Favorito
+      </button>
+      <button class="action-pill" id="ds-btn-share">
+        <ion-icon name="share-social-outline"></ion-icon> Compartir
+      </button>
+      <button class="action-pill" id="ds-btn-report">
+        <ion-icon name="flag-outline"></ion-icon> Reportar
+      </button>
+    </div>
+    <!-- Download -->
+    <a id="ds-download" href="#" target="_blank" class="sheet-download" onclick="event.stopPropagation()">
+      <ion-icon name="cloud-download-outline"></ion-icon>
+      ACCEDER A LA NUBE
+    </a>
+    <!-- Comments -->
+    <div class="comments-section-title">
+      <ion-icon name="chatbubbles"></ion-icon>
+      Comentarios
+    </div>
+    <div class="comment-input-area">
+      <textarea id="ds-comment-input" placeholder="Escribe una opinión..."></textarea>
+      <button class="btn-post" id="ds-comment-post">
+        <ion-icon name="send"></ion-icon>
+      </button>
+    </div>
+    <div id="ds-comments-list"><div class="no-comments">Cargando comentarios...</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  REPORT MODAL
+══════════════════════════════════ -->
+<div class="modal-overlay" id="report-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr">
+      <div class="modal-hdr-title"><span>⚠️</span> Reportar Contenido</div>
+      <button class="modal-close" onclick="closeReportModal()"><ion-icon name="close-outline"></ion-icon></button>
+    </div>
+    <div class="modal-body">
+      <div class="report-options">
+        <button class="report-opt" data-motivo="caido">
+          <div class="report-opt-ico red"><ion-icon name="link-outline"></ion-icon></div>
+          <div>
+            <div class="report-opt-title">Link caído</div>
+            <div class="report-opt-sub">El enlace no funciona o está roto</div>
+          </div>
+        </button>
+        <button class="report-opt" data-motivo="viejo">
+          <div class="report-opt-ico yellow"><ion-icon name="time-outline"></ion-icon></div>
+          <div>
+            <div class="report-opt-title">Contenido obsoleto</div>
+            <div class="report-opt-sub">La versión está desactualizada</div>
+          </div>
+        </button>
+        <button class="report-opt" data-motivo="malware">
+          <div class="report-opt-ico blue"><ion-icon name="shield-outline"></ion-icon></div>
+          <div>
+            <div class="report-opt-title">Malware o engañoso</div>
+            <div class="report-opt-sub">Contenido sospechoso o peligroso</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  TERMS MODAL
+══════════════════════════════════ -->
+<div id="terms-modal">
+  <div class="terms-sheet">
+    <div class="terms-hdr">
+      <span class="terms-emoji">🚀</span>
+      <h1 class="terms-h1">Bienvenido a UpGames</h1>
+      <p class="terms-sub">La evolución de las librerías digitales</p>
+    </div>
+    <div class="terms-body" id="terms-body">
+      <p class="terms-section-h">💎 Beneficios Exclusivos</p>
+      <ul class="terms-list">
+        <li><strong>Monetización Real:</strong> Gana $1.00 USD por cada 1,000 descargas de tus aportes.</li>
+        <li><strong>Lanzadera Indie:</strong> Publica tus propios juegos, apps o mods con visibilidad global gratuita.</li>
+        <li><strong>Seguridad 24/7:</strong> Navega tranquilo gracias a nuestros bots que filtran malware y contenido +18.</li>
+        <li><strong>Comunidad Activa:</strong> Indexa y encuentra metadatos de software exclusivos.</li>
+        <li><strong>Trusted Indexer:</strong> Sube de nivel y obtén prioridad en el feed principal.</li>
+        <li><strong>NEXUS IA Integrada:</strong> IA exclusiva para recomendaciones personalizadas sin salir de la plataforma.</li>
+      </ul>
+      <p class="terms-section-h">⚖️ Resumen Legal</p>
+      <ul class="terms-list legal">
+        <li><strong>Intermediación:</strong> Somos una librería de metadatos; no almacenamos archivos.</li>
+        <li><strong>Responsabilidad:</strong> El contenido es responsabilidad de quien lo publica y descarga.</li>
+        <li><strong>Filtros Activos:</strong> Prohibido el contenido ilegal, piratería o material sensible.</li>
+        <li><strong>Neutralidad:</strong> Atendemos reportes en 24-72h.</li>
+      </ul>
+    </div>
+    <div class="terms-footer">
+      <a href="./terminos&condiciones.html" class="terms-legal-link">Ver contrato legal completo (v.2026.C)</a>
+      <button id="btn-accept-terms" class="btn-accept" disabled>✓ Aceptar y Empezar a Ganar</button>
+      <button onclick="window.location.href='https://google.com'" class="btn-reject">Rechazar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  BOTTOM NAVIGATION
+══════════════════════════════════ -->
+<nav id="bottom-nav">
+  <button class="nav-tab active" data-tab="main">
+    <div class="nav-dot"></div>
+    <ion-icon name="grid"></ion-icon>
+    <span>Explorar</span>
+  </button>
+  <button class="nav-tab" data-tab="favs">
+    <div class="nav-dot"></div>
+    <ion-icon name="heart"></ion-icon>
+    <span>Favoritos</span>
+  </button>
+  <button class="nav-tab" data-tab="upload" onclick="window.location.href='./perfil.html'">
+    <ion-icon name="add-circle"></ion-icon>
+    <span>Subir</span>
+  </button>
+  <button class="nav-tab" data-tab="profile">
+    <div class="nav-dot"></div>
+    <ion-icon name="person-circle"></ion-icon>
+    <span>Perfil</span>
+  </button>
+</nav>
+
+<!-- ══════════════════════════════════
+  TOAST CONTAINER
+══════════════════════════════════ -->
+<div id="toast-container"></div>
+
+<!-- ══════════════════════════════════
+  NEXUS AI FAB + PANEL
+══════════════════════════════════ -->
+<button id="nxFab" onclick="nxToggle()" aria-label="Abrir Nexus IA">
+  <svg viewBox="0 0 40 40" fill="none">
+    <path d="M20 3L35.59 12V28L20 37L4.41 28V12L20 3Z" stroke="url(#fg)" stroke-width="1.1" fill="none" opacity=".45"/>
+    <path d="M20 9.5L30 15.5V25.5L20 31.5L10 25.5V15.5L20 9.5Z" stroke="url(#fg)" stroke-width=".8" fill="none" opacity=".7"/>
+    <line x1="20" y1="14" x2="20" y2="26" stroke="url(#fg)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="14" y1="20" x2="26" y2="20" stroke="url(#fg)" stroke-width="1.5" stroke-linecap="round"/>
+    <circle cx="20" cy="20" r="2.8" fill="url(#fg)"/>
+    <defs>
+      <linearGradient id="fg" x1="4" y1="4" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#5EFF43"/><stop offset="1" stop-color="#00f2ff"/>
+      </linearGradient>
+    </defs>
+  </svg>
 </button>
 
-<!-- ── PANEL ── -->
 <div id="nxPanel" role="dialog" aria-label="Nexus IA">
-
-  <!-- Esquinas HUD (solo en modo expandido) -->
-  <b class="nx-c nx-c-tl"></b>
-  <b class="nx-c nx-c-tr"></b>
-  <b class="nx-c nx-c-bl"></b>
-  <b class="nx-c nx-c-br"></b>
-
-  <!-- Header -->
   <header class="nx-hdr">
     <div class="nx-hdr-l">
       <div class="nx-logo-box">
         <svg viewBox="0 0 24 24" fill="none" class="nx-lsvg">
-          <path d="M12 2L22 12L12 22L2 12Z"
-                stroke="url(#hdrG)" stroke-width=".9" opacity=".4"/>
-          <path d="M12 7L17 12L12 17L7 12Z"
-                stroke="url(#hdrG)" stroke-width=".7" opacity=".7"/>
-          <line x1="12" y1="9"  x2="12" y2="15"
-                stroke="#00f2ff" stroke-width="1.3" stroke-linecap="round"/>
-          <line x1="9"  y1="12" x2="15" y2="12"
-                stroke="#00f2ff" stroke-width="1.3" stroke-linecap="round"/>
+          <path d="M12 2L22 12L12 22L2 12Z" stroke="url(#hg)" stroke-width=".9" opacity=".4"/>
+          <path d="M12 7L17 12L12 17L7 12Z" stroke="url(#hg)" stroke-width=".7" opacity=".7"/>
+          <line x1="12" y1="9" x2="12" y2="15" stroke="#00f2ff" stroke-width="1.3" stroke-linecap="round"/>
+          <line x1="9" y1="12" x2="15" y2="12" stroke="#00f2ff" stroke-width="1.3" stroke-linecap="round"/>
           <circle cx="12" cy="12" r="2" fill="#5EFF43"/>
-          <defs>
-            <linearGradient id="hdrG" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#5EFF43"/>
-              <stop offset="1" stop-color="#00f2ff"/>
-            </linearGradient>
-          </defs>
+          <defs><linearGradient id="hg" x1="2" y1="2" x2="22" y2="22"><stop stop-color="#5EFF43"/><stop offset="1" stop-color="#00f2ff"/></linearGradient></defs>
         </svg>
         <span class="nx-live"></span>
       </div>
@@ -625,49 +1751,27 @@
     </div>
     <div class="nx-hdr-r">
       <button class="nx-ibtn" id="nxExpBtn" onclick="nxExpand()" title="Expandir">
-        <svg id="nxExpIco" viewBox="0 0 16 16" fill="none"
-             stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
           <path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/>
         </svg>
       </button>
-      <button class="nx-ibtn nx-ibtn-x" onclick="nxToggle()" title="Cerrar">✕</button>
+      <button class="nx-ibtn nx-ibtn-x" onclick="nxToggle()">✕</button>
     </div>
   </header>
-
-  <!-- Divisor gradiente -->
   <div class="nx-div"></div>
-
-  <!-- Body: iframe + boot -->
   <div class="nx-body">
-    <iframe
-      id="nxFrame"
-      src=""
-      data-src="https://backendbuscador.onrender.com"
-      allow="microphone; clipboard-read; clipboard-write"
-      title="Nexus IA"
-      loading="lazy">
-    </iframe>
-
-    <!-- Pantalla de arranque -->
+    <iframe id="nxFrame" src="" data-src="https://backendbuscador.onrender.com" allow="microphone;clipboard-read;clipboard-write" title="Nexus IA" loading="lazy"></iframe>
     <div id="nxBoot">
       <div class="nb-visual">
         <span class="nb-ring nb-ra"></span>
         <span class="nb-ring nb-rb"></span>
         <span class="nb-ring nb-rc"></span>
         <svg viewBox="0 0 52 52" fill="none" class="nb-ico">
-          <path d="M26 2L50 26L26 50L2 26Z"
-                stroke="#5EFF43" stroke-width=".9" opacity=".25"/>
-          <path d="M26 10L42 26L26 42L10 26Z"
-                stroke="#00f2ff" stroke-width=".7" opacity=".45"/>
-          <line x1="26" y1="18" x2="26" y2="34"
-                stroke="#5EFF43" stroke-width="1.8" stroke-linecap="round"/>
-          <line x1="18" y1="26" x2="34" y2="26"
-                stroke="#5EFF43" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M26 2L50 26L26 50L2 26Z" stroke="#5EFF43" stroke-width=".9" opacity=".25"/>
+          <path d="M26 10L42 26L26 42L10 26Z" stroke="#00f2ff" stroke-width=".7" opacity=".45"/>
+          <line x1="26" y1="18" x2="26" y2="34" stroke="#5EFF43" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="18" y1="26" x2="34" y2="26" stroke="#5EFF43" stroke-width="1.8" stroke-linecap="round"/>
           <circle cx="26" cy="26" r="3.5" fill="#5EFF43" opacity=".9"/>
-          <circle cx="26" cy="2"  r="1.4" fill="#5EFF43"/>
-          <circle cx="50" cy="26" r="1.1" fill="#00f2ff"/>
-          <circle cx="26" cy="50" r="1.4" fill="#5EFF43"/>
-          <circle cx="2"  cy="26" r="1.1" fill="#00f2ff"/>
         </svg>
       </div>
       <div class="nb-info">
@@ -680,1047 +1784,879 @@
       </div>
     </div>
   </div>
-
-  <!-- Footer -->
   <footer class="nx-foot">
     <span class="nx-fl"><i class="nx-fdot"></i>EN LÍNEA</span>
     <span class="nx-fr">NEXUS v4.0</span>
   </footer>
 </div>
 
-<!-- Overlay -->
-<div id="nxOvr" onclick="nxClose()"></div>
+<!-- ══════════════════════════════════
+  TUTORIAL FAB
+══════════════════════════════════ -->
+<button id="tut-fab" onclick="startTutorial()" title="Tutorial">?</button>
 
-
-<!-- ════════════ CSS ════════════ -->
-<style>
-/* Tokens de color de UpGames, scope local */
-#nxFab, #nxPanel, #nxBoot, #nxOvr {
-  --g:   #5EFF43;
-  --g1:  rgba(94,255,67,.07);
-  --g2:  rgba(94,255,67,.14);
-  --cy:  #00f2ff;
-  --cy1: rgba(0,242,255,.08);
-  --bk0: #000000;
-  --bk1: #080808;
-  --bk2: #0f0f0f;
-  --bd:  #1a1a1a;
-  --ts:  #555;
-  --ff:  -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --mo:  cubic-bezier(.4,0,.2,1);
-  --sp:  cubic-bezier(.34,1.4,.64,1);
-}
-
-/* ─── FAB ─── */
-#nxFab {
-  position: fixed;
-  bottom: 90px;
-  right: 20px;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: var(--bk1);
-  border: 1px solid var(--bd);
-  padding: 0;
-  cursor: pointer;
-  z-index: 9990;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 6px 24px rgba(0,0,0,.8);
-  transition:
-    transform .28s var(--sp),
-    border-color .22s var(--mo),
-    box-shadow .22s var(--mo);
-}
-#nxFab:hover {
-  border-color: rgba(94,255,67,.3);
-  box-shadow: 0 0 0 1px rgba(94,255,67,.08), 0 0 18px rgba(94,255,67,.1), 0 10px 36px rgba(0,0,0,.9);
-  transform: translateY(-2px);
-}
-#nxFab.nx-open {
-  border-color: rgba(94,255,67,.25);
-  box-shadow: 0 0 0 1px rgba(94,255,67,.1), 0 0 22px rgba(94,255,67,.12), 0 14px 44px rgba(0,0,0,.9);
-  transform: translateY(-1px) scale(.97);
-}
-
-/* Anillos del FAB */
-.nxf-r1, .nxf-r2 {
-  position: absolute;
-  border-radius: 18px;
-  pointer-events: none;
-}
-.nxf-r1 {
-  inset: -2px;
-  border: 1px solid rgba(94,255,67,.2);
-  animation: nxfPulse 2.6s ease-in-out infinite;
-}
-.nxf-r2 {
-  inset: -6px;
-  border: 1px solid rgba(0,242,255,.09);
-  border-radius: 22px;
-  animation: nxfPulse 2.6s ease-in-out infinite .5s;
-}
-@keyframes nxfPulse {
-  0%,100% { opacity:.6; transform:scale(1); }
-  50%     { opacity:1;  transform:scale(1.04); }
-}
-
-.nxf-inner {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-}
-.nxf-ico {
-  width: 28px;
-  height: 28px;
-}
-.nxf-tag {
-  font-family: var(--ff);
-  font-size: .37rem;
-  font-weight: 900;
-  letter-spacing: 3px;
-  color: rgba(94,255,67,.45);
-  line-height: 1;
-}
-
-/* ─── PANEL ─── */
-#nxPanel {
-  position: fixed;
-  bottom: calc(90px + 56px + 12px);
-  right: 20px;
-  width: 355px;
-  height: 548px;
-  max-height: calc(100svh - 195px);
-  background: var(--bk1);
-  border: 1px solid var(--bd);
-  border-radius: 20px;
-  z-index: 9991;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  opacity: 0;
-  transform: scale(.88) translateY(18px);
-  transform-origin: bottom right;
-  pointer-events: none;
-  transition: opacity .3s var(--mo), transform .38s var(--sp);
-  box-shadow:
-    0 0 0 .5px rgba(94,255,67,.04),
-    0 24px 70px rgba(0,0,0,.97),
-    0 48px 100px rgba(0,0,0,.7);
-}
-#nxPanel.nx-open {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-  pointer-events: all;
-}
-#nxPanel.nx-exp {
-  top: 16px; left: 16px; right: 16px; bottom: 16px;
-  width: auto; height: auto; max-height: none;
-  border-radius: 18px;
-  border-color: rgba(94,255,67,.12);
-}
-#nxPanel.nx-exp .nx-c { opacity: 1; }
-
-/* Esquinas HUD */
-.nx-c {
-  position: absolute;
-  width: 13px; height: 13px;
-  z-index: 20;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .3s var(--mo);
-  display: block;
-}
-.nx-c-tl { top:-1px; left:-1px;  border-top:2px solid var(--g);  border-left:2px solid var(--g);  border-radius:18px 0 0 0; }
-.nx-c-tr { top:-1px; right:-1px; border-top:2px solid var(--cy); border-right:2px solid var(--cy); border-radius:0 18px 0 0; }
-.nx-c-bl { bottom:-1px; left:-1px;  border-bottom:2px solid var(--cy); border-left:2px solid var(--cy);  border-radius:0 0 0 18px; }
-.nx-c-br { bottom:-1px; right:-1px; border-bottom:2px solid var(--g);  border-right:2px solid var(--g);  border-radius:0 0 18px 0; }
-
-/* ─── HEADER ─── */
-.nx-hdr {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 13px 9px;
-  flex-shrink: 0;
-}
-.nx-hdr-l, .nx-hdr-r {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.nx-logo-box {
-  position: relative;
-  width: 30px; height: 30px;
-  background: var(--g1);
-  border: 1px solid rgba(94,255,67,.18);
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.nx-lsvg { width: 16px; height: 16px; }
-
-.nx-live {
-  position: absolute;
-  top: -2.5px; right: -2.5px;
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--g);
-  border: 1.5px solid var(--bk1);
-  box-shadow: 0 0 5px var(--g);
-  animation: nxBlink 2s step-end infinite;
-}
-@keyframes nxBlink { 0%,100%{opacity:1} 50%{opacity:.1} }
-
-.nx-titles { display: flex; flex-direction: column; gap: 2px; }
-.nx-name {
-  font-family: var(--ff);
-  font-size: .78rem;
-  font-weight: 900;
-  letter-spacing: 3.5px;
-  color: var(--g);
-  line-height: 1;
-}
-.nx-name em {
-  font-style: normal;
-  color: var(--cy);
-  letter-spacing: 2px;
-}
-.nx-sub {
-  font-family: 'Courier New', monospace;
-  font-size: .44rem;
-  letter-spacing: 1.5px;
-  color: var(--ts);
-  line-height: 1;
-}
-
-.nx-ibtn {
-  width: 28px; height: 28px;
-  background: rgba(255,255,255,.02);
-  border: 1px solid var(--bd);
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #444;
-  font-size: .78rem;
-  line-height: 1;
-  transition: border-color .18s, color .18s, background .18s;
-  -webkit-tap-highlight-color: transparent;
-}
-.nx-ibtn svg { width: 11px; height: 11px; }
-.nx-ibtn:hover {
-  border-color: rgba(94,255,67,.25);
-  color: var(--g);
-  background: var(--g1);
-}
-.nx-ibtn-x:hover {
-  border-color: rgba(255,60,75,.3);
-  color: #ff3c4b;
-  background: rgba(255,60,75,.05);
-}
-
-/* Divisor */
-.nx-div {
-  height: 1px;
-  flex-shrink: 0;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(94,255,67,.16) 25%,
-    rgba(0,242,255,.1)  65%,
-    transparent 100%);
-}
-
-/* ─── BODY ─── */
-.nx-body {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  background: #030304;
-}
-#nxFrame {
-  width: 100%; height: 100%;
-  border: none; display: block;
-  opacity: 0;
-  transition: opacity .55s var(--mo);
-}
-#nxFrame.nx-on { opacity: 1; }
-
-/* ─── BOOT ─── */
-#nxBoot {
-  position: absolute; inset: 0;
-  background: var(--bk1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 26px;
-  z-index: 10;
-  transition: opacity .5s var(--mo);
-}
-#nxBoot.nx-done { opacity: 0; pointer-events: none; }
-
-.nb-visual {
-  position: relative;
-  width: 88px; height: 88px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.nb-ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px solid transparent;
-  display: block;
-}
-.nb-ra {
-  inset: 0;
-  border-color: rgba(94,255,67,.22) transparent rgba(94,255,67,.22) transparent;
-  animation: nbSpin 2.2s linear infinite;
-}
-.nb-rb {
-  inset: 10px;
-  border-color: transparent rgba(0,242,255,.18) transparent rgba(0,242,255,.18);
-  animation: nbSpin 1.7s linear infinite reverse;
-}
-.nb-rc {
-  inset: 20px;
-  border-color: rgba(94,255,67,.1) transparent rgba(94,255,67,.1) transparent;
-  animation: nbSpin 3.1s linear infinite;
-}
-@keyframes nbSpin { to { transform: rotate(360deg); } }
-
-.nb-ico {
-  width: 42px; height: 42px;
-  position: relative; z-index: 2;
-}
-
-.nb-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  width: 185px;
-}
-.nb-lbl {
-  font-family: var(--ff);
-  font-size: .57rem;
-  font-weight: 900;
-  letter-spacing: 5px;
-  color: var(--g);
-  margin: 0;
-  text-align: center;
-}
-.nb-barwrap {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  width: 100%;
-}
-.nb-bar {
-  flex: 1;
-  height: 2px;
-  background: rgba(94,255,67,.07);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.nb-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--g), var(--cy));
-  border-radius: 2px;
-  transition: width .4s var(--mo);
-}
-.nb-pct {
-  font-family: 'Courier New', monospace;
-  font-size: .44rem;
-  font-weight: 700;
-  color: rgba(94,255,67,.4);
-  min-width: 26px;
-  text-align: right;
-}
-.nb-log {
-  font-family: 'Courier New', monospace;
-  font-size: .47rem;
-  color: rgba(94,255,67,.2);
-  width: 100%;
-  line-height: 1.9;
-  min-height: 46px;
-  text-align: left;
-}
-.nb-ln { display: block; animation: nbLnIn .18s ease; }
-@keyframes nbLnIn {
-  from { opacity:0; transform:translateX(-5px); }
-  to   { opacity:1; transform:translateX(0);    }
-}
-
-/* ─── FOOTER ─── */
-.nx-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 13px;
-  flex-shrink: 0;
-  border-top: 1px solid rgba(94,255,67,.035);
-}
-.nx-fl, .nx-fr {
-  font-family: 'Courier New', monospace;
-  font-size: .44rem;
-  letter-spacing: 2px;
-  color: rgba(255,255,255,.1);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.nx-fdot {
-  display: inline-block;
-  width: 4px; height: 4px;
-  border-radius: 50%;
-  background: var(--g);
-  box-shadow: 0 0 4px var(--g);
-  animation: nxBlink 2s step-end infinite;
-}
-
-/* ─── OVERLAY ─── */
-#nxOvr {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.5);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  z-index: 9989;
-}
-#nxOvr.nx-on { display: block; }
-
-/* ─── MOBILE ─── */
-@media (max-width: 480px) {
-  #nxFab { bottom: 82px; right: 16px; }
-  #nxPanel {
-    right: 10px; left: 10px; width: auto;
-    height: 65svh;
-    bottom: calc(82px + 56px + 10px);
-    border-radius: 18px;
-  }
-  #nxPanel.nx-exp {
-    top: 10px; left: 10px; right: 10px; bottom: 10px;
-    width: auto; height: auto;
-  }
-}
-</style>
-
-
-<!-- ════════════ JS ════════════ -->
-<script>
-(function () {
-  'use strict';
-
-  const $    = id => document.getElementById(id);
-  const fab  = $('nxFab'),   pan  = $('nxPanel'), ovr  = $('nxOvr');
-  const frm  = $('nxFrame'), boot = $('nxBoot'),  fill = $('nbFill');
-  const pct  = $('nbPct'),   lbl  = $('nbLbl'),   log  = $('nbLog');
-  const clk  = $('nxClk'),   ico  = $('nxExpIco');
-
-  let open = false, exp = false, ready = false;
-
-  /* Reloj */
-  (function tick() {
-    const d = new Date(), z = n => String(n).padStart(2,'0');
-    clk.textContent = `${z(d.getHours())}:${z(d.getMinutes())}`;
-    setTimeout(tick, 10000);
-  })();
-
-  /* Boot */
-  const LINES = ['> KERNEL OK','> MODELO v4.0 ✓','> CONTEXTO CARGADO','> SEGURIDAD ACTIVA','> LISTO'];
-  function boot_run(cb) {
-    log.innerHTML = ''; let i = 0;
-    (function step() {
-      if (i >= LINES.length) {
-        fill.style.width = '100%'; pct.textContent = '100%';
-        lbl.textContent = 'NEXUS LISTO'; setTimeout(cb, 460); return;
-      }
-      const p = Math.round((i + 1) / LINES.length * 100);
-      fill.style.width = p + '%'; pct.textContent = p + '%';
-      lbl.textContent = LINES[i];
-      const el = document.createElement('span');
-      el.className = 'nb-ln'; el.textContent = LINES[i];
-      log.appendChild(el); i++; setTimeout(step, 345);
-    })();
-  }
-
-  frm.addEventListener('load', () => {
-    if (frm.src && frm.src !== location.href) { frm.classList.add('nx-on'); ready = true; }
-  });
-
-  function setOvr() {
-    ovr.classList.toggle('nx-on', exp || (open && innerWidth <= 480));
-  }
-  function setExpIco() {
-    ico.innerHTML = exp
-      ? '<path d="M6 2h4v4M14 2h-4v4M10 14H6v-4M14 10v4h-4"/>'
-      : '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/>';
-  }
-
-  window.nxToggle = function () {
-    open = !open;
-    fab.classList.toggle('nx-open', open);
-    pan.classList.toggle('nx-open', open);
-    setOvr();
-    if (open && !ready) boot_run(() => { boot.classList.add('nx-done'); frm.src = frm.dataset.src; });
-    if (!open && exp)   { exp = false; pan.classList.remove('nx-exp'); setOvr(); setExpIco(); }
-    /* Ocultar scroll-tooltip de UpGames mientras Nexus está abierto */
-    const sc = document.getElementById('sc-tip');
-    if (sc) sc.style.display = open ? 'none' : '';
-  };
-
-  window.nxClose = function () {
-    if (exp) { exp = false; pan.classList.remove('nx-exp'); setOvr(); setExpIco(); }
-    else nxToggle();
-  };
-
-  window.nxExpand = function () {
-    exp = !exp;
-    pan.classList.toggle('nx-exp', exp);
-    setOvr(); setExpIco();
-  };
-
-  document.addEventListener('keydown', e => {
-    if (e.key !== 'Escape') return;
-    if (exp) nxExpand(); else if (open) nxToggle();
-  });
-  window.addEventListener('resize', setOvr);
-
-})();
-</script>
-<!-- ── FIN NEXUS WIDGET ── -->
-
-  
-
-<!-- ══════════════════════════════════════════════
-     🎓 TUTORIAL BIBLIOTECA UPGAMES v2
-     - Overlay bloqueante (usuario no puede interactuar)
-     - Mobile-first responsive
-     - Tooltip siempre visible en pantalla
-══════════════════════════════════════════════ -->
-<style>
-/* ── OVERLAY BLOQUEANTE ────────────────────────────────────── */
-#btut-lock {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 19990;
-    /* bloquea todos los clics salvo los del tooltip */
-    pointer-events: all;
-    /* fondo semi-transparente oscuro */
-    background: rgba(0, 0, 0, 0.0);
-    touch-action: none;
-}
-#btut-lock.on { display: block; }
-
-/* ── SPOTLIGHT (encima del lock, recorte visual) ───────────── */
-#btut-spotlight {
-    display: none;
-    position: fixed;
-    border-radius: 14px;
-    /* sombra que crea el "agujero" visual */
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.80);
-    transition: top    0.4s cubic-bezier(0.4,0,0.2,1),
-                left   0.4s cubic-bezier(0.4,0,0.2,1),
-                width  0.4s cubic-bezier(0.4,0,0.2,1),
-                height 0.4s cubic-bezier(0.4,0,0.2,1);
-    z-index: 19995;
-    pointer-events: none;
-}
-
-/* ── TOOLTIP ───────────────────────────────────────────────── */
-#btut-tooltip {
-    display: none;
-    position: fixed;
-    z-index: 20000;
-    background: #0f0f0f;
-    border: 1.5px solid #5EFF43;
-    border-radius: 18px;
-    padding: 18px 18px 16px;
-    box-shadow: 0 10px 50px rgba(94,255,67,0.2), 0 2px 16px rgba(0,0,0,0.8);
-    font-family: 'Segoe UI', Roboto, sans-serif;
-    pointer-events: all;
-    /* Mobile: ancho basado en viewport */
-    width: min(320px, calc(100vw - 24px));
-    box-sizing: border-box;
-}
-
-/* Flecha del tooltip */
-#btut-tooltip::before {
-    content: '';
-    position: absolute;
-    width: 13px; height: 13px;
-    background: #0f0f0f;
-    border: 1.5px solid #5EFF43;
-    transform: rotate(45deg);
-    z-index: 1;
-}
-#btut-tooltip.arr-top::before    { top: -8px;    left: 26px;  border-right: none; border-bottom: none; }
-#btut-tooltip.arr-bottom::before { bottom: -8px; left: 26px;  border-left: none;  border-top: none;    }
-#btut-tooltip.arr-left::before   { left: -8px;   top: 20px;   border-right: none; border-top: none;    }
-#btut-tooltip.arr-right::before  { right: -8px;  top: 20px;   border-left: none;  border-bottom: none; }
-#btut-tooltip.arr-none::before   { display: none; }
-
-/* Contenido del tooltip */
-.btut-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    gap: 8px;
-}
-.btut-badge {
-    font-size: 0.6rem; font-weight: 900; letter-spacing: 1.5px;
-    color: #5EFF43;
-    background: rgba(94,255,67,0.1);
-    border: 1px solid rgba(94,255,67,0.3);
-    border-radius: 20px;
-    padding: 3px 10px;
-    text-transform: uppercase;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-.btut-close-btn {
-    background: none; border: none;
-    color: #555; cursor: pointer;
-    font-size: 1rem; line-height: 1;
-    padding: 4px; border-radius: 6px;
-    transition: color 0.2s, background 0.2s;
-    flex-shrink: 0;
-    /* tap target más grande en mobile */
-    min-width: 32px; min-height: 32px;
-    display: flex; align-items: center; justify-content: center;
-}
-.btut-close-btn:hover, .btut-close-btn:active { color: #ff4343; background: rgba(255,67,67,0.1); }
-
-.btut-title {
-    font-size: 0.95rem; font-weight: 800;
-    color: #fff; margin-bottom: 8px; line-height: 1.35;
-}
-.btut-body {
-    font-size: 0.80rem; color: #aaa;
-    line-height: 1.65; margin-bottom: 16px;
-}
-.btut-body strong { color: #5EFF43; }
-
-.btut-foot {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-}
-.btut-dots { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
-.btut-dot  {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: #2a2a2a;
-    transition: background 0.3s, transform 0.3s;
-}
-.btut-dot.on { background: #5EFF43; transform: scale(1.3); }
-
-.btut-nav { display: flex; gap: 8px; flex-shrink: 0; }
-.btut-btn {
-    padding: 9px 16px;
-    border-radius: 9px;
-    font-size: 0.72rem; font-weight: 800;
-    letter-spacing: 0.5px;
-    cursor: pointer; border: none;
-    text-transform: uppercase;
-    transition: all 0.18s;
-    /* tap target ok en mobile */
-    min-height: 38px;
-}
-.btut-btn-p { background: transparent; color: #555; border: 1px solid #2a2a2a; }
-.btut-btn-p:hover, .btut-btn-p:active { color: #fff; border-color: #555; }
-.btut-btn-n { background: #5EFF43; color: #000; }
-.btut-btn-n:hover, .btut-btn-n:active { filter: brightness(1.1); transform: scale(0.97); }
-
-/* ── BOTÓN DE AYUDA FLOTANTE ───────────────────────────────── */
-#btut-fab {
-    position: fixed;
-    bottom: 24px; left: 20px;
-    z-index: 9500;
-    background: #111;
-    border: 1px solid #2a2a2a;
-    border-radius: 50%;
-    width: 48px; height: 48px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    color: #5EFF43;
-    font-size: 1.35rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
-    -webkit-tap-highlight-color: transparent;
-}
-#btut-fab:hover, #btut-fab:active {
-    border-color: #5EFF43;
-    box-shadow: 0 4px 20px rgba(94,255,67,0.25);
-    transform: scale(1.07);
-}
-
-/* ── ANIMACIÓN ENTRADA ─────────────────────────────────────── */
-.btut-in { animation: btutSlideIn 0.3s ease forwards; }
-@keyframes btutSlideIn {
-    from { opacity: 0; transform: translateY(10px) scale(0.97); }
-    to   { opacity: 1; transform: translateY(0)    scale(1);    }
-}
-
-/* ── PULSE EN ELEMENTO RESALTADO ───────────────────────────── */
-.btut-pulse {
-    outline: 2px solid rgba(94,255,67,0.7) !important;
-    outline-offset: 3px !important;
-    animation: btutPulseRing 1.5s ease-in-out infinite;
-}
-@keyframes btutPulseRing {
-    0%,100% { outline-color: rgba(94,255,67,0.7); }
-    50%      { outline-color: rgba(94,255,67,0.2); }
-}
-
-/* ── MOBILE: tooltip siempre en la mitad baja ──────────────── */
-@media (max-width: 600px) {
-    #btut-tooltip {
-        width: calc(100vw - 20px);
-        left: 10px !important;
-        right: 10px;
-        /* en mobile siempre abajo de la pantalla si no hay espacio */
-    }
-    #btut-tooltip.arr-top::before,
-    #btut-tooltip.arr-bottom::before,
-    #btut-tooltip.arr-left::before,
-    #btut-tooltip.arr-right::before {
-        left: 22px;
-    }
-}
-</style>
-
-<!-- OVERLAY DE BLOQUEO -->
+<!-- Tutorial overlay elements -->
 <div id="btut-lock"></div>
-<!-- SPOTLIGHT -->
 <div id="btut-spotlight"></div>
-<!-- TOOLTIP -->
-<div id="btut-tooltip">
-    <div class="btut-head">
-        <span class="btut-badge" id="btut-badge">Tutorial</span>
-        <button class="btut-close-btn" id="btut-close" aria-label="Cerrar tutorial">✕</button>
-    </div>
+<div id="btut-tooltip" style="display:none">
+  <button class="btut-close" id="btut-close">✕</button>
+  <div class="btut-inner">
+    <div class="btut-badge" id="btut-badge"></div>
     <div class="btut-title" id="btut-title"></div>
-    <div class="btut-body"  id="btut-body"></div>
-    <div class="btut-foot">
-        <div class="btut-dots" id="btut-dots"></div>
-        <div class="btut-nav">
-            <button class="btut-btn btut-btn-p" id="btut-prev">← Atrás</button>
-            <button class="btut-btn btut-btn-n" id="btut-next">Siguiente →</button>
-        </div>
+    <div class="btut-body" id="btut-body"></div>
+  </div>
+  <div class="btut-footer">
+    <div class="btut-dots" id="btut-dots"></div>
+    <div class="btut-nav">
+      <button class="btut-btn" id="btut-prev">← Atrás</button>
+      <button class="btut-btn primary" id="btut-next">Siguiente →</button>
     </div>
+  </div>
 </div>
-<!-- BOTÓN FAB DE AYUDA -->
-<button id="btut-fab" aria-label="Ver tutorial">
-    <ion-icon name="help-circle-outline"></ion-icon>
-</button>
+
+<!-- ION ICONS -->
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 
 <script>
-(function(){
-'use strict';
+// ═══════════════════════════════════════════════════════════
+// UPGAMES — BIBLIOTECA REDESIGN v3.0
+// Mobile-first · App Store style
+// ═══════════════════════════════════════════════════════════
 
-/* ── PASOS ───────────────────────────────────────────────────
-   pos valores:
-     center   → tooltip centrado, sin spotlight
-     below    → tooltip debajo del elemento
-     above    → tooltip encima del elemento
-     header-b → elemento en header, tooltip debajo
-     left     → tooltip a la izquierda del elemento
-   anchor: posición fija del tooltip en mobile cuando
-           el espacio es muy reducido
-──────────────────────────────────────────────────────────── */
-const STEPS = [
-    {
-        sel: null,
-        title: "🎮 ¡Bienvenido a UpGames!",
-        body:  "Aquí está <strong>todo el contenido</strong> de la comunidad: juegos, apps, mods y software. Este tutorial rápido te explica cómo funciona todo. ¡En menos de 2 minutos sabrás usarlo todo!",
-        pos:   "center"
-    },
-    {
-        sel:   ".buscador-wrapper",
-        title: "🔍 Paso 1: El Buscador",
-        body:  "Escribe aquí lo que buscas. Funciona por <strong>título, categoría, usuario o etiquetas</strong>. Los resultados se filtran automáticamente mientras escribes, sin necesidad de presionar Enter.",
-        pos:   "header-b"
-    },
-    {
-        sel:   ".juego-card",
-        title: "📦 Paso 2: Las Cards",
-        body:  "Cada tarjeta es un aporte de la comunidad. Muestra imagen, título, quién lo subió y las descargas. <strong>Toca una card</strong> para expandirla y ver todos los detalles.",
-        pos:   "below"
-    },
-    {
-        sel:   ".juego-card",
-        title: "📦 Dentro de la Card",
-        body:  "Al expandir verás: descripción, el botón <strong>ACCEDER A LA NUBE</strong> para descargar, y los botones ❤️ <strong>favorito</strong> · 📤 <strong>compartir</strong> · 🚩 <strong>reportar link</strong>. También hay una sección de <strong>Opiniones</strong> para comentar.",
-        pos:   "below"
-    },
-    {
-        sel:   ".user-tag",
-        title: "👤 Paso 3: El Autor",
-        body:  "El <strong>@usuario</strong> es quien subió el contenido. Tócalo para ver su perfil público y todos sus aportes. El ✓ de colores indica su <strong>nivel de confianza</strong> dentro de la comunidad.",
-        pos:   "below"
-    },
-    {
-        sel:   ".status-badge",
-        title: "🟢 Estado del Enlace",
-        body:  "<strong>Online</strong> = funciona perfecto. <strong>Revisión</strong> = fue reportado por usuarios y el equipo lo está revisando. <strong>Caído</strong> = el enlace ya no funciona. Así sabes antes de intentar descargar.",
-        pos:   "below"
-    },
-    {
-        sel:   ".UpIcon",
-        title: "☁️ Paso 4: Subir Contenido",
-        body:  "¿Tienes algo para compartir? Toca este botón de nube para ir a tu <strong>perfil de publicador</strong>. Puedes subir juegos, apps o software y <strong>ganar $1 USD por cada 1,000 descargas</strong>.",
-        pos:   "header-b"
-    },
-    {
-        sel:   ".reportButton",
-        title: "🚨 Paso 5: Reportar Abuso",
-        body:  "Este botón (ⓘ) es para reportar contenido <strong>ilegal, peligroso o inapropiado</strong> directamente al equipo por email. Es distinto al 🚩 de las cards — ese es para links caídos.",
-        pos:   "header-b"
-    },
-    {
-        sel:   "#nxFab",
-        title: "🤖 Paso 6: NEXUS — Tu IA",
-        body:  "Este botón con el <strong>ojo brillante</strong> abre NEXUS, la inteligencia artificial integrada de UpGames. Está disponible en cualquier momento desde cualquier página.",
-        pos:   "left"
-    },
-    {
-        sel:   "#nxFab",
-        title: "🤖 ¿Qué hace NEXUS?",
-        body:  "Escríbele como si hablaras con una persona: <strong>\"Busco un mod de Minecraft\"</strong>, <strong>\"¿Cómo subo contenido?\"</strong>, <strong>\"Recomiéndame un juego de terror\"</strong>. NEXUS entiende lenguaje natural y responde al instante.",
-        pos:   "left"
-    },
-    {
-        sel:   null,
-        title: "🎉 ¡Listo, ya sabes todo!",
-        body:  "Ya conoces UpGames de punta a punta. Si en algún momento tienes dudas, toca el botón <strong>?</strong> en la esquina inferior izquierda para ver este tutorial de nuevo. ¡A disfrutar!",
-        pos:   "center"
-    }
-];
+const API_URL = "https://backendapp-037y.onrender.com";
 
-/* ── REFS ───────────────────────────────────────────────────── */
-const lockEl  = document.getElementById('btut-lock');
-const spotEl  = document.getElementById('btut-spotlight');
-const tipEl   = document.getElementById('btut-tooltip');
-const badgeEl = document.getElementById('btut-badge');
-const titleEl = document.getElementById('btut-title');
-const bodyEl  = document.getElementById('btut-body');
-const dotsEl  = document.getElementById('btut-dots');
-const prevBtn = document.getElementById('btut-prev');
-const nextBtn = document.getElementById('btut-next');
-const closeB  = document.getElementById('btut-close');
-const fabBtn  = document.getElementById('btut-fab');
+// State
+let todosLosItems = [];
+let filteredItems = [];
+let mapaUsuarios = {};
+let currentItem = null;
+let currentTab = 'main';
+let activeCategory = '';
+let itemsRendered = 0;
+let isLoadingMore = false;
+let reportItemId = null;
+const ITEMS_BATCH = 12;
 
-let idx    = 0;
-let active = false;
-let lastEl = null;
-
-/* ── API PÚBLICA ─────────────────────────────────────────────── */
-window.startBibliotecaTutorial = start;
-
-function start() {
-    idx    = 0;
-    active = true;
-    lockEl.classList.add('on');
-    spotEl.style.display = 'block';
-    tipEl.style.display  = 'block';
-    document.body.style.overflow = 'hidden';
-    render();
-}
-
-function finish() {
-    active = false;
-    lockEl.classList.remove('on');
-    spotEl.style.display = 'none';
-    tipEl.style.display  = 'none';
-    document.body.style.overflow = '';
-    clearPulse();
-    localStorage.setItem('upgames_onboarding_done', '1');
-}
-
-/* ── RENDER ──────────────────────────────────────────────────── */
-function render() {
-    const s = STEPS[idx];
-    const total = STEPS.length;
-
-    /* Contenido */
-    badgeEl.textContent = `Tutorial · ${idx + 1}/${total}`;
-    titleEl.textContent  = s.title;
-    bodyEl.innerHTML     = s.body;
-
-    /* Dots */
-    dotsEl.innerHTML = '';
-    STEPS.forEach((_, i) => {
-        const d = document.createElement('span');
-        d.className = 'btut-dot' + (i === idx ? ' on' : '');
-        dotsEl.appendChild(d);
-    });
-
-    /* Botones */
-    prevBtn.style.visibility = idx === 0 ? 'hidden' : 'visible';
-    nextBtn.textContent = idx === total - 1 ? 'Finalizar ✓' : 'Siguiente →';
-
-    /* Limpiar highlight anterior */
-    clearPulse();
-
-    if (s.pos === 'center' || !s.sel) {
-        hideSpot();
-        placeCenter();
-    } else {
-        const el = document.querySelector(s.sel);
-        if (!el) { hideSpot(); placeCenter(); }
-        else      { spotOn(el, s); }
-    }
-
-    /* Animación */
-    tipEl.classList.remove('btut-in');
-    void tipEl.offsetWidth;
-    tipEl.classList.add('btut-in');
-}
-
-function spotOn(el, s) {
-    const PAD  = 8;
-    const rect = el.getBoundingClientRect();
-
-    spotEl.style.top    = (rect.top  - PAD) + 'px';
-    spotEl.style.left   = (rect.left - PAD) + 'px';
-    spotEl.style.width  = (rect.width  + PAD * 2) + 'px';
-    spotEl.style.height = (rect.height + PAD * 2) + 'px';
-    spotEl.style.display = 'block';
-
-    el.classList.add('btut-pulse');
-    lastEl = el;
-
-    placeTooltip(rect, s.pos);
-}
-
-function hideSpot() {
-    spotEl.style.display = 'none';
-}
-
-function clearPulse() {
-    if (lastEl) { lastEl.classList.remove('btut-pulse'); lastEl = null; }
-}
-
-/* ── POSICIONAMIENTO DEL TOOLTIP (Mobile-first) ─────────────── */
-function placeCenter() {
-    tipEl.className = 'btut-tooltip arr-none';
-    tipEl.style.transform = 'translate(-50%, -50%)';
-    tipEl.style.top  = '50%';
-    tipEl.style.left = '50%';
-}
-
-function placeTooltip(rect, pos) {
-    const isMobile = window.innerWidth <= 600;
-    const TW = tipEl.offsetWidth  || 310;
-    const TH = tipEl.offsetHeight || 230;
-    const VW = window.innerWidth;
-    const VH = window.innerHeight;
-    const GAP = 14;
-
-    tipEl.style.transform = '';
-
-    let top, left, arrClass = 'arr-top';
-
-    if (isMobile) {
-        /* En mobile: tooltip siempre centrado horizontalmente,
-           colocado en la mitad inferior si hay espacio,
-           o superior si el elemento está muy abajo */
-        left = 10;
-        const spaceBelow = VH - rect.bottom;
-        const spaceAbove = rect.top;
-
-        if (spaceBelow >= TH + GAP + 20) {
-            top = rect.bottom + GAP;
-            arrClass = 'arr-top';
-        } else if (spaceAbove >= TH + GAP + 20) {
-            top = rect.top - TH - GAP;
-            arrClass = 'arr-bottom';
-        } else {
-            /* Sin espacio ni arriba ni abajo: poner en zona segura */
-            top = VH * 0.55;
-            arrClass = 'arr-none';
-        }
-    } else {
-        /* Desktop: posicionamiento inteligente */
-        if (pos === 'below' || pos === 'header-b') {
-            top  = rect.bottom + GAP;
-            left = Math.max(10, rect.left);
-            arrClass = 'arr-top';
-        } else if (pos === 'above') {
-            top  = rect.top - TH - GAP;
-            left = Math.max(10, rect.left);
-            arrClass = 'arr-bottom';
-        } else if (pos === 'left') {
-            top  = Math.max(10, rect.top);
-            left = rect.left - TW - GAP;
-            arrClass = 'arr-right';
-            if (left < 10) { left = rect.right + GAP; arrClass = 'arr-left'; }
-        }
-
-        /* Evitar salir por la derecha */
-        if (left + TW > VW - 10) left = VW - TW - 10;
-        if (left < 10) left = 10;
-
-        /* Evitar salir por abajo */
-        if (top + TH > VH - 10) {
-            top = rect.top - TH - GAP;
-            arrClass = 'arr-bottom';
-        }
-        if (top < 10) top = 10;
-    }
-
-    tipEl.className = `btut-tooltip ${arrClass}`;
-    tipEl.style.top  = top + 'px';
-    tipEl.style.left = left + 'px';
-}
-
-/* ── EVENTOS ─────────────────────────────────────────────────── */
-nextBtn.addEventListener('click', () => {
-    if (idx < STEPS.length - 1) { idx++; render(); }
-    else finish();
-});
-prevBtn.addEventListener('click', () => {
-    if (idx > 0) { idx--; render(); }
-});
-closeB.addEventListener('click', finish);
-fabBtn.addEventListener('click', start);
-
-/* Bloquear cualquier toque/click en el overlay de bloqueo */
-lockEl.addEventListener('click',      e => e.stopPropagation(), true);
-lockEl.addEventListener('touchstart', e => e.preventDefault(),  { passive: false });
-lockEl.addEventListener('touchmove',  e => e.preventDefault(),  { passive: false });
-
-/* Teclas de navegación en desktop */
-document.addEventListener('keydown', e => {
-    if (!active) return;
-    if (e.key === 'ArrowRight' || e.key === 'Enter') nextBtn.click();
-    if (e.key === 'ArrowLeft')  prevBtn.click();
-    if (e.key === 'Escape')     finish();
-});
-
-/* Recalcular si rota el dispositivo */
-window.addEventListener('resize', () => { if (active) render(); });
-
+// ── PRELOADER ─────────────────────────────────────────────
+(function initPreloader() {
+  const fill = document.getElementById('pl-fill');
+  const preloader = document.getElementById('preloader');
+  const steps = [
+    {p:30,d:200},{p:55,d:400},{p:75,d:650}
+  ];
+  let i=0;
+  (function next() {
+    if (i>=steps.length) return;
+    fill.style.width = steps[i].p+'%';
+    i++;
+    if(i<steps.length) setTimeout(next, steps[i].d-(steps[i-1]?.d||0));
+  })();
+  window.closePreloader = function() {
+    fill.style.width='100%';
+    setTimeout(()=>preloader.classList.add('hide'), 350);
+  };
+  // Fail-safe
+  setTimeout(()=>preloader.classList.add('hide'), 5000);
 })();
-</script>
-<!-- FIN TUTORIAL BIBLIOTECA v2 -->
 
-    
+// ── WAKE UP BACKEND ───────────────────────────────────────
+fetch(`${API_URL}/items`,{mode:'no-cors'}).catch(()=>{});
+
+// ── TOAST ─────────────────────────────────────────────────
+function toast(msg, dur=2500) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className='toast'; t.textContent=msg;
+  c.appendChild(t);
+  setTimeout(()=>{
+    t.classList.add('out');
+    setTimeout(()=>t.remove(), 320);
+  }, dur);
+}
+
+// ── FORMAT NUMBER ─────────────────────────────────────────
+function fmt(n) {
+  if(n>=1e6) return (n/1e6).toFixed(1)+'M';
+  if(n>=1e3) return (n/1e3).toFixed(1)+'K';
+  return n||'0';
+}
+
+// ── TIME AGO ──────────────────────────────────────────────
+function timeAgo(d) {
+  const diff = Date.now()-new Date(d).getTime();
+  const m=Math.floor(diff/60000), h=Math.floor(m/60), days=Math.floor(h/24);
+  if(m<1) return 'Ahora';
+  if(m<60) return m+'m';
+  if(h<24) return h+'h';
+  if(days<7) return days+'d';
+  return new Date(d).toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+}
+
+// ── VERIFICATION BADGE ────────────────────────────────────
+function getBadge(usuario) {
+  const n = mapaUsuarios[usuario]||0;
+  if(!n) return '';
+  const cls = ['','lv1','lv2','lv3'][n]||'lv3';
+  return `<ion-icon name="checkmark-circle" class="verificado-badge ${cls}" title="Verificado nivel ${n}"></ion-icon>`;
+}
+
+// ── AVATAR LETTER ─────────────────────────────────────────
+function avatarLetter(str) {
+  return (str||'?')[0].toUpperCase();
+}
+
+// ── CREATE TILE ───────────────────────────────────────────
+function createTile(item, isFeatured=false) {
+  const ls = item.linkStatus || (item.reportes>=3?'revision':'online');
+  const isOnline = ls==='online';
+  const statusLabel = ls==='online'?'Online':ls==='revision'?'Revisión':'Caído';
+  const isVid = /\.(mp4|webm|mov)$/i.test(item.image);
+  const media = isVid
+    ? `<video src="${item.image}" autoplay muted loop playsinline></video>`
+    : `<img src="${item.image}" alt="${item.title}" loading="lazy">`;
+
+  const favIds = JSON.parse(localStorage.getItem('favoritos')||'[]');
+  const isFav = favIds.includes(item._id);
+  const dl = item.descargasEfectivas||0;
+
+  if(isFeatured) {
+    const el = document.createElement('div');
+    el.className='featured-tile';
+    el.dataset.id=item._id;
+    el.innerHTML=`
+      <div class="thumb-wrap">${media}</div>
+      <div class="ft-info">
+        <div class="ft-badge">⭐ Destacado</div>
+        <div class="ft-title">${item.title}</div>
+        <div class="ft-meta">
+          <div class="ft-user">@${item.usuario||'Cloud'}${getBadge(item.usuario)}</div>
+          ${dl?`<div class="ft-dl"><ion-icon name="download-outline"></ion-icon>${fmt(dl)}</div>`:''}
+        </div>
+      </div>`;
+    el.addEventListener('click',()=>openDetail(item));
+    return el;
+  }
+
+  const el = document.createElement('div');
+  el.className='game-tile';
+  el.dataset.id=item._id;
+  el.innerHTML=`
+    <div class="thumb-wrap">
+      ${media}
+      <div class="tile-status ${ls}">
+        <span class="tile-status-dot"></span>${statusLabel}
+      </div>
+      <button class="tile-fav-quick ${isFav?'active':''}" data-id="${item._id}" title="Favorito">
+        <ion-icon name="${isFav?'heart':'heart-outline'}"></ion-icon>
+      </button>
+    </div>
+    <div class="tile-info">
+      <div class="tile-cat">${item.category||'General'}</div>
+      <div class="tile-title">${item.title}</div>
+      <div class="tile-meta">
+        <div class="tile-avatar">${avatarLetter(item.usuario)}</div>
+        <div class="tile-user">@${item.usuario||'Cloud'}</div>
+        ${dl?`<div class="tile-downloads"><ion-icon name="download-outline"></ion-icon>${fmt(dl)}</div>`:''}
+      </div>
+    </div>`;
+  el.addEventListener('click',(e)=>{
+    if(e.target.closest('.tile-fav-quick')) return;
+    openDetail(item);
+  });
+  el.querySelector('.tile-fav-quick').addEventListener('click',(e)=>{
+    e.stopPropagation();
+    fav(item._id);
+  });
+  return el;
+}
+
+// ── RENDER ────────────────────────────────────────────────
+function render(list, reset=true) {
+  const out = document.getElementById('output');
+  const skel = document.getElementById('skeleton');
+  if(skel) skel.remove();
+
+  // Remove old scroll trigger
+  const old = document.getElementById('scroll-trigger');
+  if(old) old.remove();
+
+  if(reset) {
+    out.innerHTML='';
+    itemsRendered=0;
+  }
+
+  if(!list.length && reset) {
+    out.innerHTML=`<div class="empty-state">
+      <ion-icon name="cloud-offline-outline"></ion-icon>
+      <h3>Sin resultados</h3>
+      <p>No hay coincidencias en la nube.</p>
+      <a href="./perfil.html" class="empty-action">Subir Ahora</a>
+    </div>`;
+    return;
+  }
+
+  const batch = list.slice(itemsRendered, itemsRendered+ITEMS_BATCH);
+  const frag = document.createDocumentFragment();
+
+  batch.forEach((item, idx) => {
+    const globalIdx = itemsRendered+idx;
+    // First item as featured
+    if(globalIdx===0 && reset) {
+      frag.appendChild(createTile(item, true));
+    } else {
+      // Section headers every 12 items
+      if(globalIdx>0 && globalIdx%12===0 && reset===false) {
+        const sh = document.createElement('div');
+        sh.className='section-header';
+        sh.innerHTML=`<span class="section-title">Más Contenido</span><span class="section-count">${list.length} items</span>`;
+        frag.appendChild(sh);
+      }
+      frag.appendChild(createTile(item, false));
+    }
+  });
+
+  out.appendChild(frag);
+  itemsRendered+=batch.length;
+
+  // Attach scroll trigger if more items
+  if(itemsRendered<list.length) {
+    const trigger = document.createElement('div');
+    trigger.id='scroll-trigger';
+    trigger.style.height='1px';
+    out.appendChild(trigger);
+    const obs = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting && !isLoadingMore) loadMore(list);
+      });
+    },{rootMargin:'300px'});
+    obs.observe(trigger);
+  }
+}
+
+function loadMore(list) {
+  if(isLoadingMore || itemsRendered>=list.length) return;
+  isLoadingMore=true;
+  const loader = document.createElement('div');
+  loader.className='scroll-loader';
+  loader.id='inf-loader';
+  loader.innerHTML='<ion-icon name="sync-outline"></ion-icon> Cargando más...';
+  document.getElementById('output').appendChild(loader);
+  setTimeout(()=>{
+    loader.remove();
+    render(list, false);
+    isLoadingMore=false;
+  }, 400);
+}
+
+// ── LOAD DATA ─────────────────────────────────────────────
+async function loadContent() {
+  try {
+    // Get users map
+    try {
+      const ru = await fetch(`${API_URL}/auth/users/public`);
+      const users = await ru.json();
+      users.forEach(u=>{ mapaUsuarios[u.usuario]=u.verificadoNivel||0; });
+    } catch(_){}
+
+    const r = await fetch(`${API_URL}/items`);
+    const data = await r.json();
+    todosLosItems = data;
+    filteredItems = data;
+
+    window.closePreloader && window.closePreloader();
+    render(filteredItems);
+
+    // Deep link
+    const sid = new URLSearchParams(window.location.search).get('id');
+    if(sid) {
+      setTimeout(()=>{
+        const item = todosLosItems.find(i=>i._id===sid);
+        if(item) openDetail(item);
+      }, 600);
+    }
+
+  } catch(e) {
+    console.error(e);
+    window.closePreloader && window.closePreloader();
+    setTimeout(loadContent, 3000);
+  }
+}
+
+// ── SEARCH ────────────────────────────────────────────────
+document.getElementById('buscador').addEventListener('input', function(e) {
+  const q = e.target.value.toLowerCase().trim();
+  if(q) {
+    filteredItems = todosLosItems.filter(i=>
+      i.title.toLowerCase().includes(q) ||
+      (i.description&&i.description.toLowerCase().includes(q)) ||
+      i.usuario.toLowerCase().includes(q) ||
+      (i.category&&i.category.toLowerCase().includes(q)) ||
+      (i.tags&&i.tags.some(t=>t.toLowerCase().includes(q)))
+    );
+  } else {
+    filteredItems = activeCategory
+      ? todosLosItems.filter(i=>i.category===activeCategory)
+      : todosLosItems;
+  }
+  render(filteredItems);
+});
+
+// ── CATEGORY CHIPS ────────────────────────────────────────
+document.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click',function() {
+    document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+    this.classList.add('active');
+    activeCategory = this.dataset.cat;
+    filteredItems = activeCategory
+      ? todosLosItems.filter(i=>i.category===activeCategory)
+      : todosLosItems;
+    const q = document.getElementById('buscador').value.toLowerCase().trim();
+    if(q) {
+      filteredItems = filteredItems.filter(i=>
+        i.title.toLowerCase().includes(q)||
+        i.usuario.toLowerCase().includes(q)
+      );
+    }
+    render(filteredItems);
+  });
+});
+
+// ── OPEN DETAIL SHEET ─────────────────────────────────────
+function openDetail(item) {
+  currentItem = item;
+  const ls = item.linkStatus||(item.reportes>=3?'revision':'online');
+  const isVid = /\.(mp4|webm|mov)$/i.test(item.image);
+
+  // Media
+  const img = document.getElementById('ds-media-img');
+  const vid = document.getElementById('ds-media-vid');
+  if(isVid) {
+    img.style.display='none';
+    vid.style.display='block';
+    vid.src=item.image;
+  } else {
+    vid.style.display='none';
+    vid.src='';
+    img.style.display='block';
+    img.src=item.image;
+  }
+
+  document.getElementById('ds-cat').textContent=item.category||'General';
+  document.getElementById('ds-title').textContent=item.title;
+  document.getElementById('ds-dl').textContent=fmt(item.descargasEfectivas||0);
+  document.getElementById('ds-rep').textContent=item.reportes||0;
+  document.getElementById('ds-desc').textContent=item.description||'Sin descripción.';
+
+  // Author
+  document.getElementById('ds-av-letter').textContent=avatarLetter(item.usuario);
+  document.getElementById('ds-author-name').innerHTML=`@${item.usuario||'Cloud'} ${getBadge(item.usuario)}`;
+  document.getElementById('ds-author').onclick=()=>visitarPerfil(item.usuario);
+
+  // Status
+  const sb = document.getElementById('ds-status');
+  const st = document.getElementById('ds-status-text');
+  sb.className='sheet-status-bar '+ls;
+  st.textContent=ls==='online'?'✓ Link Activo':ls==='revision'?'⚠️ En Revisión':'✗ Link Caído';
+
+  // Download
+  document.getElementById('ds-download').href=`puente.html?id=${item._id}`;
+
+  // Fav button
+  const favIds = JSON.parse(localStorage.getItem('favoritos')||'[]');
+  const isFav = favIds.includes(item._id);
+  const btnFav = document.getElementById('ds-btn-fav');
+  btnFav.className='action-pill'+(isFav?' fav-active':'');
+  btnFav.innerHTML=`<ion-icon name="${isFav?'heart':'heart-outline'}"></ion-icon> ${isFav?'Guardado':'Favorito'}`;
+  btnFav.onclick=()=>{ fav(item._id); closeDetail(); };
+
+  document.getElementById('ds-btn-share').onclick=()=>share(item._id);
+  document.getElementById('ds-btn-report').onclick=()=>openReportModal(item._id);
+
+  // Comments
+  document.getElementById('ds-comments-list').innerHTML='<div class="no-comments">Cargando...</div>';
+  loadComments(item._id);
+  document.getElementById('ds-comment-post').onclick=()=>postComment(item._id);
+  document.getElementById('ds-comment-input').onkeypress=e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();postComment(item._id);}
+  };
+
+  // Open sheet
+  document.getElementById('detail-overlay').classList.add('show');
+  document.getElementById('detail-sheet').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeDetail() {
+  document.getElementById('detail-overlay').classList.remove('show');
+  document.getElementById('detail-sheet').classList.remove('open');
+  document.body.style.overflow='';
+  currentItem=null;
+  // Stop video
+  const vid=document.getElementById('ds-media-vid');
+  vid.src='';
+}
+
+document.getElementById('ds-close').addEventListener('click', closeDetail);
+document.getElementById('detail-overlay').addEventListener('click', closeDetail);
+
+// ── COMMENTS ─────────────────────────────────────────────
+async function loadComments(id) {
+  const list = document.getElementById('ds-comments-list');
+  try {
+    const r = await fetch(`${API_URL}/comentarios/${id}`);
+    const comms = await r.json();
+    if(!comms.length) {
+      list.innerHTML='<div class="no-comments">Sé el primero en comentar</div>';
+      return;
+    }
+    list.innerHTML=comms.map(c=>`
+      <div class="comment-item">
+        <div class="comment-head">
+          <div class="comment-avatar">${avatarLetter(c.usuario)}</div>
+          <div class="comment-user">@${c.usuario}${getBadge(c.usuario)}</div>
+          <div class="comment-time">${timeAgo(c.fecha)}</div>
+        </div>
+        <div class="comment-text">${c.texto}</div>
+      </div>`).join('');
+  } catch(e) {
+    list.innerHTML='<div class="no-comments" style="color:#ff4343">Error al cargar</div>';
+  }
+}
+
+async function postComment(id) {
+  const user = localStorage.getItem('user_admin');
+  if(!user) { toast('⚠️ Debes iniciar sesión para comentar'); return; }
+  const input = document.getElementById('ds-comment-input');
+  const texto = input.value.trim();
+  if(!texto) return;
+  try {
+    const r = await fetch(`${API_URL}/comentarios`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({itemId:id,usuario:user,texto})
+    });
+    if(r.ok) {
+      input.value='';
+      loadComments(id);
+      toast('✅ Comentario publicado');
+    }
+  } catch(e) { toast('❌ Error al comentar'); }
+}
+
+// ── FAVORITES ────────────────────────────────────────────
+async function fav(id) {
+  const user = localStorage.getItem('user_admin');
+  if(!user) { toast('⚠️ Inicia sesión para guardar favoritos'); return; }
+  try {
+    const cr = await fetch(`${API_URL}/favoritos/${user}`);
+    const favs = await cr.json();
+    const isFav = Array.isArray(favs) && favs.some(f=>f._id===id);
+    if(isFav) {
+      await fetch(`${API_URL}/favoritos/remove`,{
+        method:'DELETE',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({usuario:user,itemId:id})
+      });
+      toast('💔 Eliminado de favoritos');
+      let local=JSON.parse(localStorage.getItem('favoritos')||'[]');
+      local=local.filter(f=>f!==id);
+      localStorage.setItem('favoritos',JSON.stringify(local));
+    } else {
+      await fetch(`${API_URL}/favoritos/add`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({usuario:user,itemId:id})
+      });
+      toast('❤️ Añadido a favoritos');
+      let local=JSON.parse(localStorage.getItem('favoritos')||'[]');
+      if(!local.includes(id)){local.push(id); localStorage.setItem('favoritos',JSON.stringify(local));}
+      // Notify author
+      const item=todosLosItems.find(i=>i._id===id);
+      if(item&&item.usuario!==user) {
+        fetch(`${API_URL}/notificaciones`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({usuario:item.usuario,tipo:'sistema',mensaje:`@${user} guardó tu contenido: "${item.title}"`})
+        }).catch(()=>{});
+      }
+    }
+    // Update all heart buttons for this id
+    document.querySelectorAll(`[data-id="${id}"] .tile-fav-quick`).forEach(b=>{
+      const newFav=!isFav;
+      b.className='tile-fav-quick'+(newFav?' active':'');
+      b.innerHTML=`<ion-icon name="${newFav?'heart':'heart-outline'}"></ion-icon>`;
+    });
+  } catch(e) { toast('❌ Error al guardar'); }
+}
+
+// ── SHARE ─────────────────────────────────────────────────
+async function share(id) {
+  const url=`${location.origin}${location.pathname}?id=${id}`;
+  if(navigator.share) {
+    try {
+      await navigator.share({url,title:'Mira este contenido en UpGames',text:'Compartido desde UpGames'});
+      toast('✅ Enlace compartido');
+    } catch(_){ copyToClipboard(url); }
+  } else {
+    copyToClipboard(url);
+  }
+}
+function copyToClipboard(t) {
+  if(navigator.clipboard) {
+    navigator.clipboard.writeText(t).then(()=>toast('📋 Enlace copiado')).catch(()=>fallbackCopy(t));
+  } else { fallbackCopy(t); }
+}
+function fallbackCopy(t) {
+  const inp=document.createElement('input');
+  inp.value=t; document.body.appendChild(inp);
+  inp.select(); inp.setSelectionRange(0,99999);
+  try{document.execCommand('copy');toast('📋 Enlace copiado');}catch(_){toast('❌ No se pudo copiar');}
+  inp.remove();
+}
+
+// ── REPORT ────────────────────────────────────────────────
+function openReportModal(id) {
+  reportItemId=id;
+  document.getElementById('report-modal').classList.add('show');
+}
+function closeReportModal() {
+  document.getElementById('report-modal').classList.remove('show');
+  reportItemId=null;
+}
+document.querySelectorAll('.report-opt').forEach(btn=>{
+  btn.addEventListener('click',function() {
+    const motivo=this.dataset.motivo;
+    sendReport(reportItemId,motivo);
+    closeReportModal();
+  });
+});
+
+async function sendReport(id, motivo) {
+  try {
+    const user=localStorage.getItem('user_admin')||'Anónimo';
+    const r=await fetch(`${API_URL}/items/report/${id}`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({motivo,usuario:user})
+    });
+    const data=await r.json();
+    if(r.ok) {
+      const labels={caido:'Link caído',viejo:'Obsoleto',malware:'Malware'};
+      toast(`✅ Reporte enviado: ${labels[motivo]||motivo}`);
+      if(data.linkStatus==='revision') {
+        document.querySelectorAll(`[data-id="${id}"] .tile-status`).forEach(s=>{
+          s.className='tile-status revision';
+          s.innerHTML='<span class="tile-status-dot"></span>Revisión';
+        });
+      }
+    } else if(r.status===429) {
+      toast('⏱️ Ya reportaste este contenido recientemente');
+    } else { toast('❌ Error al reportar'); }
+  } catch(e) { toast('❌ Error de conexión'); }
+}
+
+// ── PROFILE NAVIGATION ───────────────────────────────────
+function visitarPerfil(usuario) {
+  window.location.href=`./perfil-publico.html?usuario=${encodeURIComponent(usuario)}`;
+}
+
+// ── HANDLE MAIL (abuse) ─────────────────────────────────
+function handleMail(e) {
+  if(e) e.preventDefault();
+  const email='mr.m0onster@protonmail.com';
+  const sub=encodeURIComponent('Soporte - UP GAMES');
+  const body=encodeURIComponent('Hola, necesito ayuda con...\n\n[Describe tu problema aquí]');
+  window.location.href=`mailto:${email}?subject=${sub}&body=${body}`;
+}
+
+// ── BOTTOM NAV TABS ───────────────────────────────────────
+document.querySelectorAll('.nav-tab[data-tab]').forEach(tab=>{
+  tab.addEventListener('click',function(){
+    const t=this.dataset.tab;
+    if(t==='upload') return;
+    switchTab(t);
+  });
+});
+
+function switchTab(t) {
+  currentTab=t;
+  document.querySelectorAll('.nav-tab').forEach(x=>x.classList.remove('active'));
+  document.querySelector(`.nav-tab[data-tab="${t}"]`).classList.add('active');
+  document.getElementById('main-view').style.display=t==='main'?'':'none';
+  document.getElementById('category-row').style.display=t==='main'?'':'none';
+  const favsView=document.getElementById('favs-view');
+  const profileView=document.getElementById('profile-view');
+  favsView.classList.toggle('active',t==='favs');
+  profileView.classList.toggle('active',t==='profile');
+  if(t==='favs') renderFavs();
+  if(t==='profile') renderProfile();
+}
+
+// ── FAVORITES TAB ─────────────────────────────────────────
+function renderFavs() {
+  const grid=document.getElementById('favs-grid');
+  const local=JSON.parse(localStorage.getItem('favoritos')||'[]');
+  const favItems=todosLosItems.filter(i=>local.includes(i._id));
+  if(!favItems.length) {
+    grid.innerHTML=`<div class="empty-state">
+      <ion-icon name="heart-outline"></ion-icon>
+      <h3>Sin favoritos aún</h3>
+      <p>Guarda contenido que te guste pulsando ❤️</p>
+    </div>`;
+    return;
+  }
+  grid.innerHTML='';
+  const frag=document.createDocumentFragment();
+  favItems.forEach(item=>frag.appendChild(createTile(item,false)));
+  grid.appendChild(frag);
+}
+
+// ── PROFILE TAB ──────────────────────────────────────────
+function renderProfile() {
+  const container=document.getElementById('profile-content');
+  const user=localStorage.getItem('user_admin');
+  if(!user) {
+    container.innerHTML=`<div class="profile-not-logged">
+      <ion-icon name="person-circle-outline" style="font-size:3rem;color:var(--txt3)"></ion-icon>
+      <h3>No has iniciado sesión</h3>
+      <p>Accede para ver tu perfil, favoritos y contenido subido</p>
+      <a href="./perfil.html" class="btn-login-action">
+        <ion-icon name="log-in-outline"></ion-icon>Iniciar Sesión
+      </a>
+    </div>`;
+    return;
+  }
+  const level=mapaUsuarios[user]||0;
+  const lvlNames=['','Trusted','Silver','Gold'];
+  container.innerHTML=`
+    <div class="profile-card">
+      <div class="profile-cover"></div>
+      <div class="profile-info" style="padding-top:40px">
+        <div style="position:absolute;top:-24px;left:20px">
+          <div class="profile-avatar">${avatarLetter(user)}</div>
+        </div>
+        <div class="profile-name">@${user} ${getBadge(user)}</div>
+        <div class="profile-handle">Nivel ${level>0?lvlNames[level]||'Gold':'Usuario'}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <div class="stat-box">
+        <div class="stat-val">${todosLosItems.filter(i=>i.usuario===user).length}</div>
+        <div class="stat-lbl">Subidos</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">${JSON.parse(localStorage.getItem('favoritos')||'[]').length}</div>
+        <div class="stat-lbl">Favoritos</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <a href="./perfil.html" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg1);border:1px solid var(--bd);border-radius:14px;font-size:.85rem;font-weight:600">
+        <ion-icon name="create-outline" style="font-size:1.2rem;color:var(--g)"></ion-icon> Editar Perfil
+      </a>
+      <a href="./perfil.html" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg1);border:1px solid var(--bd);border-radius:14px;font-size:.85rem;font-weight:600">
+        <ion-icon name="cloud-upload-outline" style="font-size:1.2rem;color:var(--cy)"></ion-icon> Subir Contenido
+      </a>
+    </div>`;
+  // Fix absolute avatar position
+  container.querySelector('.profile-card').style.position='relative';
+}
+
+// ── TERMS MODAL ──────────────────────────────────────────
+(function initTerms() {
+  const modal=document.getElementById('terms-modal');
+  const btnAccept=document.getElementById('btn-accept-terms');
+  const body=document.getElementById('terms-body');
+  const TERMS_VER='2026.C';
+  const isFirst=!localStorage.getItem('upgames_terms_version');
+  if(localStorage.getItem('upgames_terms_version')!==TERMS_VER) {
+    modal.classList.add('show');
+    document.body.style.overflow='hidden';
+    btnAccept.disabled=true;
+    body.addEventListener('scroll',function(){
+      if(body.scrollTop+body.clientHeight>=body.scrollHeight-40) {
+        btnAccept.disabled=false;
+      }
+    },{passive:true});
+    btnAccept.addEventListener('click',()=>{
+      if(btnAccept.disabled) return;
+      localStorage.setItem('upgames_terms_version',TERMS_VER);
+      modal.classList.remove('show');
+      document.body.style.overflow='';
+      if(isFirst) setTimeout(startTutorial,600);
+    });
+  }
+})();
+
+// ── NEXUS AI WIDGET ──────────────────────────────────────
+let nxOpen=false, nxExpanded=false;
+function nxToggle() {
+  nxOpen=!nxOpen;
+  document.getElementById('nxPanel').classList.toggle('open',nxOpen);
+  if(nxOpen && !document.getElementById('nxFrame').src) {
+    nxBoot();
+  }
+}
+function nxClose() { nxOpen=false; document.getElementById('nxPanel').classList.remove('open'); }
+function nxExpand() {
+  nxExpanded=!nxExpanded;
+  document.getElementById('nxPanel').classList.toggle('expanded',nxExpanded);
+  const ico=document.getElementById('nxExpBtn');
+  if(nxExpanded) {
+    ico.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 2H2v4M14 6V2h-4M10 14h4v-4M2 10v4h4"/></svg>';
+  } else {
+    ico.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>';
+  }
+}
+function nxBoot() {
+  const fill=document.getElementById('nbFill');
+  const pct=document.getElementById('nbPct');
+  const lbl=document.getElementById('nbLbl');
+  const log=document.getElementById('nbLog');
+  const boot=document.getElementById('nxBoot');
+  const frame=document.getElementById('nxFrame');
+  const steps=[
+    {p:20,l:'AUTENTICANDO',lg:'Verificando nodo seguro...'},
+    {p:45,l:'INICIANDO MODELOS',lg:'Cargando módulos IA...'},
+    {p:70,l:'CONECTANDO NUBE',lg:'Estableciendo canal...'},
+    {p:90,l:'CASI LISTO',lg:'Optimizando respuestas...'},
+    {p:100,l:'NEXUS ACTIVO',lg:'Sistema en línea ✓'}
+  ];
+  let i=0;
+  const run=()=>{
+    if(i>=steps.length){
+      frame.src=frame.dataset.src;
+      frame.onload=()=>{boot.style.display='none';frame.classList.add('loaded');};
+      return;
+    }
+    const s=steps[i++];
+    fill.style.width=s.p+'%';
+    pct.textContent=s.p+'%';
+    lbl.textContent=s.l;
+    log.textContent=s.lg;
+    setTimeout(run,i===steps.length?200:600);
+  };
+  run();
+}
+// Clock
+(function nxClock(){
+  const el=document.getElementById('nxClk');
+  setInterval(()=>{
+    const n=new Date();
+    el.textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
+  },1000);
+})();
+
+// ── TUTORIAL ─────────────────────────────────────────────
+const TUT_STEPS = [
+  {sel:'#buscador',title:'🔍 Paso 1: Buscador',body:'Busca cualquier juego, mod, app o contenido en tiempo real. Filtra por nombre, usuario, categoría o tags.',pos:'below'},
+  {sel:'#category-row',title:'🏷️ Paso 2: Categorías',body:'Usa las chips para filtrar por tipo de contenido: Juegos, Mods, Apps y más. Toca una para activarla.',pos:'below'},
+  {sel:null,title:'🃏 Paso 3: Las Cards',body:'Cada tarjeta muestra un ítem de la nube. Toca cualquiera para ver los detalles completos, descargar, comentar y más.',pos:'center'},
+  {sel:'#ds-btn-fav',title:'❤️ Paso 4: Favoritos',body:'Guarda contenido en tus favoritos. También puedes pulsar el ❤️ pequeño en cada tarjeta sin abrirla.',pos:'above'},
+  {sel:'#ds-btn-share',title:'📤 Paso 5: Compartir',body:'Comparte cualquier ítem con tus amigos via enlace directo o las apps de tu dispositivo.',pos:'above'},
+  {sel:'#ds-btn-report',title:'🚩 Paso 6: Reportar',body:'Si un link está caído, el contenido es viejo o parece malware, repórtalo. El equipo lo revisa en 24-72h.',pos:'above'},
+  {sel:'.hdr-btn',title:'🚨 Paso 7: Abuso',body:'Este botón (ⓘ) es para reportar contenido ilegal o peligroso directamente al equipo por email.',pos:'below'},
+  {sel:'#nxFab',title:'🤖 Paso 8: NEXUS IA',body:'Abre la IA integrada de UpGames. Pregúntale cualquier cosa: "Busco un mod de Minecraft" o "Recomiéndame un juego de terror".',pos:'left'},
+  {sel:null,title:'🎉 ¡Listo!',body:'Ya conoces UpGames. Pulsa el botón <strong>?</strong> para ver este tutorial de nuevo. ¡A disfrutar!',pos:'center'}
+];
+let tutIdx=0, tutActive=false, tutLastEl=null;
+
+function startTutorial() {
+  tutIdx=0; tutActive=true;
+  document.getElementById('btut-lock').classList.add('on');
+  document.getElementById('btut-spotlight').style.display='block';
+  document.getElementById('btut-tooltip').style.display='block';
+  document.body.style.overflow='hidden';
+  renderTut();
+}
+function finishTutorial() {
+  tutActive=false;
+  document.getElementById('btut-lock').classList.remove('on');
+  document.getElementById('btut-spotlight').style.display='none';
+  document.getElementById('btut-tooltip').style.display='none';
+  document.body.style.overflow='';
+  clearPulse();
+  localStorage.setItem('upgames_onboarding_done','1');
+}
+function renderTut() {
+  const s=TUT_STEPS[tutIdx];
+  document.getElementById('btut-badge').textContent=`Tutorial · ${tutIdx+1}/${TUT_STEPS.length}`;
+  document.getElementById('btut-title').textContent=s.title;
+  document.getElementById('btut-body').innerHTML=s.body;
+  // Dots
+  const dotsEl=document.getElementById('btut-dots');
+  dotsEl.innerHTML='';
+  TUT_STEPS.forEach((_,i)=>{
+    const d=document.createElement('span');
+    d.className='btut-dot'+(i===tutIdx?' on':'');
+    dotsEl.appendChild(d);
+  });
+  document.getElementById('btut-prev').style.visibility=tutIdx===0?'hidden':'visible';
+  document.getElementById('btut-next').textContent=tutIdx===TUT_STEPS.length-1?'Finalizar ✓':'Siguiente →';
+  clearPulse();
+  if(s.pos==='center'||!s.sel) { hideSpot(); placeCenter(); }
+  else {
+    const el=document.querySelector(s.sel);
+    if(!el){hideSpot();placeCenter();}else{spotOn(el,s);}
+  }
+  const tip=document.getElementById('btut-tooltip');
+  tip.classList.remove('btut-in');
+  void tip.offsetWidth;
+  tip.classList.add('btut-in');
+}
+function spotOn(el,s) {
+  const PAD=8, rect=el.getBoundingClientRect();
+  const sp=document.getElementById('btut-spotlight');
+  sp.style.cssText=`display:block;top:${rect.top-PAD}px;left:${rect.left-PAD}px;width:${rect.width+PAD*2}px;height:${rect.height+PAD*2}px;`;
+  el.classList.add('btut-pulse'); tutLastEl=el;
+  placeTooltip(rect,s.pos);
+}
+function hideSpot(){document.getElementById('btut-spotlight').style.display='none';}
+function clearPulse(){if(tutLastEl){tutLastEl.classList.remove('btut-pulse');tutLastEl=null;}}
+function placeCenter(){
+  const tip=document.getElementById('btut-tooltip');
+  tip.style.cssText='top:50%;left:50%;transform:translate(-50%,-50%)';
+}
+function placeTooltip(rect,pos) {
+  const tip=document.getElementById('btut-tooltip');
+  const TW=tip.offsetWidth||300, TH=tip.offsetHeight||200;
+  const VW=window.innerWidth, VH=window.innerHeight, GAP=12;
+  tip.style.transform='';
+  let top, left;
+  if(VW<=480) {
+    left=12;
+    const below=VH-rect.bottom;
+    if(below>=TH+GAP+20){top=rect.bottom+GAP;}
+    else if(rect.top>=TH+GAP+20){top=rect.top-TH-GAP;}
+    else{top=VH*.5;}
+  } else {
+    if(pos==='below'){top=rect.bottom+GAP;left=rect.left;}
+    else if(pos==='above'){top=rect.top-TH-GAP;left=rect.left;}
+    else if(pos==='left'){top=rect.top;left=rect.left-TW-GAP;if(left<10){left=rect.right+GAP;}}
+    if((left||0)+TW>VW-10) left=VW-TW-10;
+    if((left||0)<10) left=10;
+    if((top||0)+TH>VH-10) top=rect.top-TH-GAP;
+    if((top||0)<10) top=10;
+  }
+  tip.style.top=top+'px';
+  tip.style.left=left+'px';
+}
+document.getElementById('btut-next').onclick=()=>{
+  if(tutIdx<TUT_STEPS.length-1){tutIdx++;renderTut();}else finishTutorial();
+};
+document.getElementById('btut-prev').onclick=()=>{ if(tutIdx>0){tutIdx--;renderTut();} };
+document.getElementById('btut-close').onclick=finishTutorial;
+document.addEventListener('keydown',e=>{
+  if(!tutActive) return;
+  if(e.key==='ArrowRight'||e.key==='Enter') document.getElementById('btut-next').click();
+  if(e.key==='ArrowLeft') document.getElementById('btut-prev').click();
+  if(e.key==='Escape') finishTutorial();
+});
+window.addEventListener('resize',()=>{ if(tutActive) renderTut(); });
+window.startBibliotecaTutorial=startTutorial;
+
+// ── INIT ─────────────────────────────────────────────────
+window.addEventListener('load', loadContent);
+</script>
 </body>
 </html>
