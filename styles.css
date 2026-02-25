@@ -15,12 +15,10 @@ body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: #fff;
     overflow-x: hidden;
-    overscroll-behavior-y: contain; /* ✅ Bloquea pull-to-refresh en Chrome Android */
 }
 
 html {
   scroll-behavior: smooth;
-  overscroll-behavior-y: contain; /* ✅ Necesario también en html para algunos navegadores */
 }
 
 /* ━━━━━━━━━━━━ HEADER MEJORADO ━━━━━━━━━━━━ */

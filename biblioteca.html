@@ -3,30 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // ✅ BLOQUEO TOTAL PULL-TO-REFRESH — debe ir lo más arriba posible
+        document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+    </script>
     <title>UpGames - Librería Digital</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://unpkg.com">
     <link rel="stylesheet" href="./styles.css">
     <style>
-        html, body { overscroll-behavior-y: none; touch-action: pan-x pan-y; }
+        html, body { overscroll-behavior-y: none; }
+        /* Restaurar scroll en elementos que lo necesitan */
+        #output,
+        .juego-card.expandida,
+        .comentarios-list,
+        .custom-modal-body,
+        #nxPanel,
+        .nx-body { touch-action: pan-y; }
     </style>
-    <script>
-        // Bloqueo total de pull-to-refresh en WebView Android
-        (function() {
-            var lastY = 0;
-            document.addEventListener('touchstart', function(e) {
-                lastY = e.touches[0].clientY;
-            }, { passive: true });
-            document.addEventListener('touchmove', function(e) {
-                var y = e.touches[0].clientY;
-                var scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-                // Si está en el tope de la página y baja el dedo → bloquear
-                if (scrollTop <= 0 && y > lastY) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-        })();
-    </script>
 </head>
 <body>
     <!-- PRELOADER OPTIMIZADO -->
