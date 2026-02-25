@@ -2,11 +2,15 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>UpGames - Librería Digital</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://unpkg.com">
     <link rel="stylesheet" href="./styles.css">
+    <style>
+        /* ✅ FIX PULL-TO-REFRESH — Aplicado lo antes posible para máxima efectividad */
+        html, body { overscroll-behavior-y: contain; }
+    </style>
 </head>
 <body>
     <!-- PRELOADER OPTIMIZADO -->
@@ -533,7 +537,7 @@
     </script>
     
     
-<!-- ══════════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════════
      NEXUS IA WIDGET — UpGames
      Archivo standalone · Pega este bloque antes de </body>
      Paleta: #5EFF43 (verde) · #00f2ff (cyan) · #000/#0f0f0f/#1a1a1a
@@ -799,8 +803,6 @@
     0 0 0 .5px rgba(94,255,67,.04),
     0 24px 70px rgba(0,0,0,.97),
     0 48px 100px rgba(0,0,0,.7);
-  overscroll-behavior: contain;
-  touch-action: pan-y;
 }
 #nxPanel.nx-open {
   opacity: 1;
@@ -935,14 +937,12 @@
   position: relative;
   overflow: hidden;
   background: #030304;
-  overscroll-behavior: contain;
 }
 #nxFrame {
   width: 100%; height: 100%;
   border: none; display: block;
   opacity: 0;
   transition: opacity .55s var(--mo);
-  overscroll-behavior: contain;
 }
 #nxFrame.nx-on { opacity: 1; }
 
@@ -1189,17 +1189,35 @@
   });
   window.addEventListener('resize', setOvr);
 
-  /* ── Bloquear pull-to-refresh cuando el panel está abierto ── */
+  /* ══════════════════════════════════════════════════════════════
+     ✅ FIX DEFINITIVO: BLOQUEO DE PULL-TO-REFRESH EN MÓVIL
+     
+     El problema: cuando el usuario hace scroll dentro del panel de
+     Nexus, Chrome Android intercepta el gesto y activa el pull-to-
+     refresh de la página, recargando todo.
+     
+     La solución: interceptar el evento touchmove en el panel y
+     llamar preventDefault() para que el navegador nunca vea el
+     gesto. El scroll interno del iframe sigue funcionando porque
+     el iframe maneja sus propios eventos internamente.
+  ══════════════════════════════════════════════════════════════ */
   let _startY = 0;
-  pan.addEventListener('touchstart', e => {
+  let _startX = 0;
+
+  pan.addEventListener('touchstart', function(e) {
     _startY = e.touches[0].clientY;
+    _startX = e.touches[0].clientX;
   }, { passive: true });
 
-  pan.addEventListener('touchmove', e => {
-    const deltaY = e.touches[0].clientY - _startY;
-    const frame = pan.querySelector('#nxFrame');
-    // Bloquear solo si el iframe está en el top (no puede bajar más) y el gesto es hacia abajo
-    if (deltaY > 0) {
+  pan.addEventListener('touchmove', function(e) {
+    if (!open) return;
+
+    const dy = e.touches[0].clientY - _startY;
+    const dx = e.touches[0].clientX - _startX;
+
+    // Solo bloquear gestos principalmente verticales (scroll/pull)
+    // Dejar pasar gestos horizontales (swipe lateral)
+    if (Math.abs(dy) > Math.abs(dx)) {
       e.preventDefault();
     }
   }, { passive: false });
@@ -1207,7 +1225,6 @@
 })();
 </script>
 <!-- ── FIN NEXUS WIDGET ── -->
-
 
   
 
