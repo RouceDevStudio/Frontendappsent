@@ -1261,89 +1261,135 @@ input, textarea { font-family:inherit; }
   display:none;
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.75);
+  background:transparent;   /* sin fondo: el spotlight hace el oscurecimiento */
   z-index:9900;
   pointer-events:none;
 }
 #btut-lock.on { display:block; pointer-events:auto; }
+/* Cuando no hay elemento a señalar, el lock mismo oscurece */
+#btut-lock.dim { background:rgba(0,0,0,.75); }
+
 #btut-spotlight {
   display:none;
   position:fixed;
-  border-radius:12px;
-  box-shadow:0 0 0 9999px rgba(0,0,0,.75);
+  border-radius:14px;
+  /* box-shadow crea el oscurecimiento alrededor del hueco */
+  box-shadow:0 0 0 9999px rgba(0,0,0,.78);
   z-index:9901;
   pointer-events:none;
-  outline:2px solid var(--g);
-  animation:spotPulse 1.5s ease-in-out infinite;
+  outline:2.5px solid var(--g);
+  outline-offset:1px;
+  animation:spotPulse 1.4s ease-in-out infinite;
+  transition:top .35s cubic-bezier(.4,0,.2,1), left .35s cubic-bezier(.4,0,.2,1),
+             width .35s cubic-bezier(.4,0,.2,1), height .35s cubic-bezier(.4,0,.2,1);
 }
-@keyframes spotPulse{0%,100%{outline-color:var(--g)}50%{outline-color:var(--cy)}}
+@keyframes spotPulse{0%,100%{outline-color:var(--g);box-shadow:0 0 0 9999px rgba(0,0,0,.78)}50%{outline-color:var(--cy);box-shadow:0 0 0 9999px rgba(0,0,0,.82)}}
+
+/* TOOLTIP: fijo en la parte inferior normalmente, arriba si el elemento está abajo */
 #btut-tooltip {
   display:none;
   position:fixed;
-  width:min(300px,calc(100vw - 24px));
+  left:12px;
+  right:12px;
+  bottom:calc(var(--nav-h) + 12px);
+  width:auto;
+  max-height:52vh;          /* nunca más alto que la mitad de pantalla */
   background:var(--bg1);
-  border-radius:16px;
-  border:1px solid var(--bd);
-  z-index:9902;
-  box-shadow:0 8px 32px rgba(0,0,0,.6);
+  border-radius:20px;
+  border:1.5px solid var(--bd-g);
+  z-index:9999;
+  box-shadow:0 -4px 40px rgba(0,0,0,.8), 0 0 0 1px rgba(94,255,67,.1);
   overflow:hidden;
+  display:none;
+  flex-direction:column;    /* columna para que el footer quede siempre visible */
+  transition: bottom .3s cubic-bezier(.4,0,.2,1), top .3s cubic-bezier(.4,0,.2,1);
 }
-.btut-inner { padding:16px; }
+/* cuando está visible */
+#btut-tooltip[style*="display:block"],
+#btut-tooltip[style*="display: block"] {
+  display:flex !important;
+}
+#btut-tooltip.at-top {
+  bottom:auto;
+  top:calc(var(--hdr-h) + 8px);
+}
+.btut-inner {
+  padding:16px 16px 10px;
+  overflow-y:auto;          /* texto scrolleable si es muy largo */
+  flex:1;
+  -webkit-overflow-scrolling:touch;
+}
 .btut-badge {
-  font-size:.6rem;
+  font-size:.58rem;
   font-weight:800;
   color:var(--g);
-  letter-spacing:1.5px;
+  letter-spacing:2px;
   text-transform:uppercase;
-  margin-bottom:6px;
+  margin-bottom:5px;
   font-family:var(--ff-mono);
 }
 .btut-title { font-size:.95rem; font-weight:800; color:var(--txt); margin-bottom:6px; }
-.btut-body { font-size:.8rem; color:var(--txt2); line-height:1.5; }
+.btut-body  { font-size:.81rem; color:var(--txt2); line-height:1.55; }
 .btut-footer {
-  padding:12px 16px;
+  padding:10px 16px 12px;
   border-top:1px solid var(--bd);
+  background:var(--bg1);   /* fondo para que no se vea el texto detrás */
   display:flex; align-items:center; justify-content:space-between;
+  gap:10px;
+  flex-shrink:0;            /* NUNCA se encoge: siempre visible */
 }
-.btut-dots { display:flex; gap:5px; }
+.btut-dots { display:flex; gap:4px; flex-shrink:0; overflow:hidden; max-width:100px; }
 .btut-dot {
-  width:6px; height:6px;
+  width:6px; height:6px; flex-shrink:0;
   border-radius:50%;
   background:var(--bg3);
   transition:background .2s, width .2s;
 }
 .btut-dot.on { background:var(--g); width:14px; border-radius:3px; }
-.btut-nav { display:flex; gap:8px; }
+.btut-nav { display:flex; gap:8px; flex-shrink:0; }
 .btut-btn {
-  height:32px;
-  padding:0 14px;
-  border-radius:8px;
-  font-size:.75rem;
-  font-weight:800;
-  background:var(--bg3);
-  color:var(--txt2);
+  height:40px; padding:0 16px;
+  border-radius:10px;
+  font-size:.8rem; font-weight:800;
+  background:var(--bg3); color:var(--txt2);
   border:1px solid var(--bd);
-  transition:all .18s;
+  transition:all .18s; cursor:pointer;
+  white-space:nowrap;
 }
 .btut-btn.primary {
-  background:var(--g);
-  color:#000;
-  border:none;
+  background:var(--g); color:#000;
+  border:none; min-width:110px;
 }
 .btut-close {
-  position:absolute;
-  top:10px; right:10px;
-  width:24px; height:24px;
-  border-radius:50%;
+  position:absolute; top:10px; right:10px;
+  width:26px; height:26px; border-radius:50%;
   background:var(--bg3);
   display:flex; align-items:center; justify-content:center;
-  font-size:.75rem;
-  color:var(--txt3);
-  border:1px solid var(--bd);
+  font-size:.8rem; color:var(--txt3);
+  border:1px solid var(--bd); cursor:pointer; z-index:2;
 }
-.btut-in { animation:btutSlide .25s var(--spring); }
-@keyframes btutSlide{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.btut-pulse { outline:2px solid var(--g); outline-offset:3px; border-radius:12px; }
+.btut-in { animation:btutSlide .3s var(--spring); }
+@keyframes btutSlide{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.btut-pulse { outline:2px solid var(--g); outline-offset:4px; border-radius:12px; }
+
+/* Spotlight bloquea interacción con el elemento destacado */
+#btut-spotlight {
+  display:none;
+  position:fixed;
+  border-radius:14px;
+  box-shadow:0 0 0 9999px rgba(0,0,0,.78);
+  z-index:9901;
+  pointer-events:auto;      /* BLOQUEA clicks sobre el elemento destacado */
+  outline:2.5px solid var(--g);
+  outline-offset:1px;
+  animation:spotPulse 1.4s ease-in-out infinite;
+  transition:top .35s cubic-bezier(.4,0,.2,1), left .35s cubic-bezier(.4,0,.2,1),
+             width .35s cubic-bezier(.4,0,.2,1), height .35s cubic-bezier(.4,0,.2,1);
+}
+@keyframes spotPulse{
+  0%,100%{outline-color:var(--g);box-shadow:0 0 0 9999px rgba(0,0,0,.78)}
+  50%{outline-color:var(--cy);box-shadow:0 0 0 9999px rgba(0,0,0,.82)}
+}
 
 /* ═══════════════════════════════════════════
    PROFILE VIEW (Tab)
@@ -1476,9 +1522,8 @@ input, textarea { font-family:inherit; }
 <div id="category-row">
   <button class="chip active" data-cat="">Todos</button>
   <button class="chip" data-cat="Juegos">Juegos</button>
-  <button class="chip" data-cat="Mods">Mods</button>
+  <button class="chip" data-cat="Mod">Mod</button>
   <button class="chip" data-cat="Apps">Apps</button>
-  <button class="chip" data-cat="Indie">Indie</button>
   <button class="chip" data-cat="Herramientas">Herramientas</button>
   <button class="chip" data-cat="Música">Música</button>
   <button class="chip" data-cat="Video">Video</button>
@@ -1491,15 +1536,12 @@ input, textarea { font-family:inherit; }
   <div id="output">
     <!-- Skeleton while loading -->
     <div class="skeleton-grid" id="skeleton">
-      ${Array(6).fill(0).map(()=>`
-      <div class="skeleton-card">
-        <div class="skeleton-thumb"></div>
-        <div class="skeleton-lines">
-          <div class="skeleton-line w60"></div>
-          <div class="skeleton-line w80"></div>
-          <div class="skeleton-line w60"></div>
-        </div>
-      </div>`).join('')}
+      <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div><div class="skeleton-line w60"></div></div></div>
+      <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div><div class="skeleton-line w60"></div></div></div>
+      <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div><div class="skeleton-line w60"></div></div></div>
+      <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div><div class="skeleton-line w60"></div></div></div>
+      <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div><div class="skeleton-line w60"></div></div></div>
+      <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div><div class="skeleton-line w60"></div></div></div>
     </div>
   </div>
 </main>
@@ -1760,29 +1802,7 @@ input, textarea { font-family:inherit; }
   </header>
   <div class="nx-div"></div>
   <div class="nx-body">
-    <iframe id="nxFrame" src="" data-src="https://backendbuscador.onrender.com" allow="microphone;clipboard-read;clipboard-write" title="Nexus IA" loading="lazy"></iframe>
-    <div id="nxBoot">
-      <div class="nb-visual">
-        <span class="nb-ring nb-ra"></span>
-        <span class="nb-ring nb-rb"></span>
-        <span class="nb-ring nb-rc"></span>
-        <svg viewBox="0 0 52 52" fill="none" class="nb-ico">
-          <path d="M26 2L50 26L26 50L2 26Z" stroke="#5EFF43" stroke-width=".9" opacity=".25"/>
-          <path d="M26 10L42 26L26 42L10 26Z" stroke="#00f2ff" stroke-width=".7" opacity=".45"/>
-          <line x1="26" y1="18" x2="26" y2="34" stroke="#5EFF43" stroke-width="1.8" stroke-linecap="round"/>
-          <line x1="18" y1="26" x2="34" y2="26" stroke="#5EFF43" stroke-width="1.8" stroke-linecap="round"/>
-          <circle cx="26" cy="26" r="3.5" fill="#5EFF43" opacity=".9"/>
-        </svg>
-      </div>
-      <div class="nb-info">
-        <p class="nb-lbl" id="nbLbl">INICIANDO NEXUS</p>
-        <div class="nb-barwrap">
-          <div class="nb-bar"><div class="nb-fill" id="nbFill"></div></div>
-          <span class="nb-pct" id="nbPct">0%</span>
-        </div>
-        <div class="nb-log" id="nbLog"></div>
-      </div>
-    </div>
+    <iframe id="nxFrame" src="https://backendbuscador.onrender.com" allow="microphone;clipboard-read;clipboard-write" title="Nexus IA" style="position:absolute;inset:0;width:100%;height:100%;border:none;opacity:1"></iframe>
   </div>
   <footer class="nx-foot">
     <span class="nx-fl"><i class="nx-fdot"></i>EN LÍNEA</span>
@@ -1852,12 +1872,18 @@ const ITEMS_BATCH = 12;
     i++;
     if(i<steps.length) setTimeout(next, steps[i].d-(steps[i-1]?.d||0));
   })();
+  function afterPreloader() {
+    // Auto-iniciar tutorial si los términos ya fueron aceptados pero el tutorial no se ha visto
+    if(localStorage.getItem('upgames_terms_version')==='2026.C' && !localStorage.getItem('upgames_onboarding_done')) {
+      setTimeout(startTutorial, 600);
+    }
+  }
   window.closePreloader = function() {
     fill.style.width='100%';
-    setTimeout(()=>preloader.classList.add('hide'), 350);
+    setTimeout(()=>{ preloader.classList.add('hide'); afterPreloader(); }, 350);
   };
-  // Fail-safe
-  setTimeout(()=>preloader.classList.add('hide'), 5000);
+  // Fail-safe: si el API tarda mucho, igual cerrar el preloader y lanzar tutorial
+  setTimeout(()=>{ preloader.classList.add('hide'); afterPreloader(); }, 5000);
 })();
 
 // ── WAKE UP BACKEND ───────────────────────────────────────
@@ -2079,7 +2105,16 @@ async function loadContent() {
   } catch(e) {
     console.error(e);
     window.closePreloader && window.closePreloader();
-    setTimeout(loadContent, 3000);
+    // Mostrar error en pantalla con botón de reintento
+    const out = document.getElementById('output');
+    const skel = document.getElementById('skeleton');
+    if(skel) skel.remove();
+    out.innerHTML=`<div class="empty-state">
+      <ion-icon name="cloud-offline-outline"></ion-icon>
+      <h3>Sin conexión</h3>
+      <p>No se pudo conectar con la nube.<br>Verifica tu internet e intenta de nuevo.</p>
+      <button class="empty-action" onclick="location.reload()">🔄 Reintentar</button>
+    </div>`;
   }
 }
 
@@ -2468,7 +2503,7 @@ function renderProfile() {
   const btnAccept=document.getElementById('btn-accept-terms');
   const body=document.getElementById('terms-body');
   const TERMS_VER='2026.C';
-  const isFirst=!localStorage.getItem('upgames_terms_version');
+  const isFirst=!localStorage.getItem('upgames_onboarding_done');
   if(localStorage.getItem('upgames_terms_version')!==TERMS_VER) {
     modal.classList.add('show');
     document.body.style.overflow='hidden';
@@ -2493,9 +2528,6 @@ let nxOpen=false, nxExpanded=false;
 function nxToggle() {
   nxOpen=!nxOpen;
   document.getElementById('nxPanel').classList.toggle('open',nxOpen);
-  if(nxOpen && !document.getElementById('nxFrame').src) {
-    nxBoot();
-  }
 }
 function nxClose() { nxOpen=false; document.getElementById('nxPanel').classList.remove('open'); }
 function nxExpand() {
@@ -2509,34 +2541,15 @@ function nxExpand() {
   }
 }
 function nxBoot() {
-  const fill=document.getElementById('nbFill');
-  const pct=document.getElementById('nbPct');
-  const lbl=document.getElementById('nbLbl');
-  const log=document.getElementById('nbLog');
-  const boot=document.getElementById('nxBoot');
-  const frame=document.getElementById('nxFrame');
-  const steps=[
-    {p:20,l:'AUTENTICANDO',lg:'Verificando nodo seguro...'},
-    {p:45,l:'INICIANDO MODELOS',lg:'Cargando módulos IA...'},
-    {p:70,l:'CONECTANDO NUBE',lg:'Estableciendo canal...'},
-    {p:90,l:'CASI LISTO',lg:'Optimizando respuestas...'},
-    {p:100,l:'NEXUS ACTIVO',lg:'Sistema en línea ✓'}
-  ];
-  let i=0;
-  const run=()=>{
-    if(i>=steps.length){
-      frame.src=frame.dataset.src;
-      frame.onload=()=>{boot.style.display='none';frame.classList.add('loaded');};
-      return;
-    }
-    const s=steps[i++];
-    fill.style.width=s.p+'%';
-    pct.textContent=s.p+'%';
-    lbl.textContent=s.l;
-    log.textContent=s.lg;
-    setTimeout(run,i===steps.length?200:600);
-  };
-  run();
+  const boot  = document.getElementById('nxBoot');
+  const frame = document.getElementById('nxFrame');
+
+  // Cargar iframe inmediatamente
+  frame.src = frame.dataset.src;
+  frame.classList.add('loaded');
+
+  // Ocultar boot screen después de 2 segundos sin importar nada
+  setTimeout(() => { boot.style.display = 'none'; }, 2000);
 }
 // Clock
 (function nxClock(){
@@ -2548,112 +2561,293 @@ function nxBoot() {
 })();
 
 // ── TUTORIAL ─────────────────────────────────────────────
+// Cada paso puede tener:
+//   sel      → selector CSS del elemento a destacar
+//   title    → título del tooltip
+//   body     → explicación detallada
+//   onEnter  → función que se ejecuta al llegar a este paso
+//   onExit   → función que se ejecuta al salir de este paso
+//   scrollEl → selector del contenedor a hacer scroll (para elementos dentro del sheet)
+
 const TUT_STEPS = [
-  {sel:'#buscador',title:'🔍 Paso 1: Buscador',body:'Busca cualquier juego, mod, app o contenido en tiempo real. Filtra por nombre, usuario, categoría o tags.',pos:'below'},
-  {sel:'#category-row',title:'🏷️ Paso 2: Categorías',body:'Usa las chips para filtrar por tipo de contenido: Juegos, Mods, Apps y más. Toca una para activarla.',pos:'below'},
-  {sel:null,title:'🃏 Paso 3: Las Cards',body:'Cada tarjeta muestra un ítem de la nube. Toca cualquiera para ver los detalles completos, descargar, comentar y más.',pos:'center'},
-  {sel:'#ds-btn-fav',title:'❤️ Paso 4: Favoritos',body:'Guarda contenido en tus favoritos. También puedes pulsar el ❤️ pequeño en cada tarjeta sin abrirla.',pos:'above'},
-  {sel:'#ds-btn-share',title:'📤 Paso 5: Compartir',body:'Comparte cualquier ítem con tus amigos via enlace directo o las apps de tu dispositivo.',pos:'above'},
-  {sel:'#ds-btn-report',title:'🚩 Paso 6: Reportar',body:'Si un link está caído, el contenido es viejo o parece malware, repórtalo. El equipo lo revisa en 24-72h.',pos:'above'},
-  {sel:'.hdr-btn',title:'🚨 Paso 7: Abuso',body:'Este botón (ⓘ) es para reportar contenido ilegal o peligroso directamente al equipo por email.',pos:'below'},
-  {sel:'#nxFab',title:'🤖 Paso 8: NEXUS IA',body:'Abre la IA integrada de UpGames. Pregúntale cualquier cosa: "Busco un mod de Minecraft" o "Recomiéndame un juego de terror".',pos:'left'},
-  {sel:null,title:'🎉 ¡Listo!',body:'Ya conoces UpGames. Pulsa el botón <strong>?</strong> para ver este tutorial de nuevo. ¡A disfrutar!',pos:'center'}
+  // ── PANTALLA PRINCIPAL ──────────────────────────────────
+  {
+    sel: null,
+    title: '👋 Bienvenido a UpGames',
+    body: 'Esta es <strong>La Nube de Contenido</strong>: una biblioteca donde encontrarás juegos, mods, apps y mucho más subido por la comunidad.<br><br>Te voy a mostrar <strong>todo</strong> lo que puedes hacer aquí paso a paso.'
+  },
+  {
+    sel: '#app-header',
+    title: '📌 La Barra Superior',
+    body: 'En la parte de arriba tienes todo lo esencial: el <strong>logo de UpGames</strong>, un <strong>buscador</strong> y dos botones de acción. Ahora los explico uno por uno.'
+  },
+  {
+    sel: '#buscador',
+    title: '🔍 Buscador',
+    body: 'Escribe aquí para buscar <strong>cualquier cosa en tiempo real</strong>: el nombre de un juego, el usuario que lo subió, la categoría, o incluso una etiqueta. Los resultados se filtran mientras escribes.'
+  },
+  {
+    sel: '.hdr-actions .hdr-btn:first-child',
+    title: '☁️ Subir Contenido',
+    body: 'Este botón te lleva a tu <strong>perfil</strong> donde puedes subir tu propio contenido a la nube. Puedes compartir juegos, mods, apps o cualquier cosa con toda la comunidad.'
+  },
+  {
+    sel: '.hdr-actions .hdr-btn:last-child',
+    title: '🚨 Reportar Abuso',
+    body: 'El botón <strong>ⓘ</strong> abre tu correo para reportar directamente al equipo de UpGames si ves algo ilegal, peligroso o inapropiado. Se revisa en menos de 72h.'
+  },
+  {
+    sel: '#category-row',
+    title: '🏷️ Filtros por Categoría',
+    body: 'Toca cualquier chip para ver <strong>solo ese tipo de contenido</strong>: Juegos, Mod, Apps, Herramientas, Música o Video. Toca "Todos" para quitar el filtro. Puedes deslizar la fila para ver más categorías.'
+  },
+  {
+    sel: '.featured-tile',
+    title: '⭐ Card Destacada',
+    body: 'La primera tarjeta grande es el <strong>contenido más destacado</strong> del momento. Muestra la imagen a pantalla ancha, el título, el creador y cuántas veces se ha descargado.'
+  },
+  {
+    sel: '.game-tile .tile-status',
+    title: '🟢 Estado del Link',
+    body: 'Cada tarjeta tiene un badge de estado:<br>• <strong style="color:#5EFF43">● Online</strong> — el link funciona perfectamente<br>• <strong style="color:#ffcc00">● Revisión</strong> — el link está siendo verificado<br>• <strong style="color:#ff4343">● Caído</strong> — el link no funciona'
+  },
+  {
+    sel: '.tile-fav-quick',
+    title: '❤️ Guardar en Favoritos',
+    body: 'El <strong>corazón en la esquina</strong> de cada tarjeta te permite guardar ese contenido en favoritos <strong>sin necesidad de abrirlo</strong>. Se pone rojo cuando está guardado. También puedes hacerlo desde dentro de la tarjeta.'
+  },
+  {
+    sel: '.game-tile .tile-cat',
+    title: '🏷️ Categoría de la Tarjeta',
+    body: 'El texto en azul celeste indica la <strong>categoría del contenido</strong> (Mod, Juegos, Apps…). Toca el chip de esa categoría en la barra de arriba para ver más contenido del mismo tipo.'
+  },
+
+  // ── DETALLE DE CARD ─────────────────────────────────────
+  {
+    sel: '.game-tile',
+    title: '👆 Abriendo una Card…',
+    body: 'Ahora voy a <strong>abrir una tarjeta</strong> para mostrarte todo lo que hay dentro. En tu día a día, simplemente toca cualquier tarjeta para abrirla.',
+    onEnter: function() {
+      const card = document.querySelector('.game-tile');
+      if(card && todosLosItems.length > 0) {
+        // open the second item (index 1) to avoid featured
+        const item = todosLosItems[1] || todosLosItems[0];
+        setTimeout(() => { openDetail(item); }, 500);
+      }
+    }
+  },
+  {
+    sel: '.sheet-media',
+    title: '🖼️ Imagen o Video',
+    body: 'La parte de arriba del detalle muestra la <strong>imagen o video de portada</strong> del contenido. Algunos ítems tienen video de preview que se reproduce automáticamente en silencio.'
+  },
+  {
+    sel: '.sheet-header',
+    title: '📋 Título y Categoría',
+    body: 'Aquí ves el <strong>nombre completo</strong> del contenido y su <strong>categoría</strong> en azul. La X en la esquina cierra esta pantalla y te devuelve a la lista.'
+  },
+  {
+    sel: '#ds-author',
+    title: '👤 El Creador',
+    body: 'Esta fila muestra quién subió el contenido. Puedes <strong>tocar su nombre</strong> para ver su perfil completo, todos sus aportes y su nivel de verificación (✓ bronce, plata u oro).'
+  },
+  {
+    sel: '.sheet-stats',
+    title: '📊 Estadísticas',
+    body: 'Tres datos clave de un vistazo:<br>• <strong>Descargas</strong> — cuántas veces se ha accedido<br>• <strong>Reportes</strong> — si tiene muchos, puede estar caído<br>• <strong>Favs</strong> — cuánta gente lo tiene guardado'
+  },
+  {
+    sel: '#ds-status',
+    title: '🔗 Estado del Enlace',
+    body: 'La barra verde/amarilla/roja indica si el <strong>link de descarga está activo</strong>. Si ves "Link Caído" puedes reportarlo con el botón Reportar para que el equipo lo revise.'
+  },
+  {
+    sel: '#ds-desc',
+    title: '📝 Descripción',
+    body: 'El creador escribe aquí toda la <strong>información importante</strong>: de qué trata el contenido, instrucciones de instalación, versiones compatibles, requisitos, etc. Léela siempre antes de descargar.'
+  },
+  {
+    sel: '.sheet-actions',
+    title: '⚡ Acciones Rápidas',
+    body: 'Tres botones clave:<br>• <strong>❤️ Favorito</strong> — guarda en tu lista<br>• <strong>📤 Compartir</strong> — envía el link a un amigo<br>• <strong>🚩 Reportar</strong> — link caído, contenido viejo o malware'
+  },
+  {
+    sel: '#ds-download',
+    title: '⬇️ Acceder al Contenido',
+    body: 'Este es el <strong>botón principal</strong>. Al tocarlo te lleva al enlace de descarga del contenido. UpGames es una biblioteca de metadatos: los archivos están en la nube del creador (Google Drive, Mediafire, etc.).'
+  },
+  {
+    sel: '.comment-input-area',
+    title: '💬 Comentarios',
+    body: 'Escribe aquí tu <strong>opinión o pregunta</strong> sobre el contenido. Puedes ayudar a otros usuarios diciendo si funciona, si hay algo importante que saber, o simplemente agradecer al creador.',
+    scrollEl: '.sheet-scroll'
+  },
+
+  // ── NAVEGACIÓN INFERIOR ─────────────────────────────────
+  {
+    sel: '#bottom-nav',
+    title: '🧭 Barra de Navegación',
+    body: 'La barra inferior te lleva a las 4 secciones principales de UpGames. Vamos a ver cada una.',
+    onEnter: function() {
+      // Close the detail sheet first
+      closeDetail();
+    }
+  },
+  {
+    sel: '[data-tab="main"]',
+    title: '🔲 Explorar',
+    body: 'La pantalla principal donde ves <strong>todo el contenido</strong> de la nube. Siempre puedes volver aquí tocando este botón.'
+  },
+  {
+    sel: '[data-tab="favs"]',
+    title: '❤️ Mis Favoritos',
+    body: 'Aquí se guardan <strong>todos los ítems que marcaste con ❤️</strong>. Se guardan en tu dispositivo, así que siempre los tienes a mano sin necesidad de buscarlos.'
+  },
+  {
+    sel: '[data-tab="upload"]',
+    title: '➕ Subir Contenido',
+    body: '¿Tienes algo que compartir? Toca aquí para ir a tu <strong>perfil y subir tu propio contenido</strong>. Puedes ganar <strong>$1.00 USD por cada 1,000 descargas</strong> de tus aportes.'
+  },
+  {
+    sel: '[data-tab="profile"]',
+    title: '👤 Mi Perfil',
+    body: 'Tu espacio personal en UpGames. Aquí puedes ver y <strong>editar tu perfil</strong>, gestionar el contenido que subiste y ver tus estadísticas. Inicia sesión para acceder a todas las funciones.'
+  },
+  {
+    sel: null,
+    title: '🤖 NEXUS IA',
+    body: 'El botón verde hexagonal de la esquina inferior derecha abre la <strong>IA integrada de UpGames</strong>. Puedes preguntarle cualquier cosa:<br>• "¿Qué mods hay para Minecraft?"<br>• "Recomiéndame un juego de terror"<br>• "¿Cómo instalo un mod?"'
+  },
+  {
+    sel: '#tut-fab',
+    title: '🎉 ¡Ya lo sabes todo!',
+    body: 'Este botón <strong>?</strong> en la esquina inferior izquierda te permite volver a ver este tutorial en cualquier momento.<br><br>¡Bienvenido a UpGames! 🚀 Explora, descarga y comparte con la comunidad.'
+  }
 ];
+
 let tutIdx=0, tutActive=false, tutLastEl=null;
 
 function startTutorial() {
-  tutIdx=0; tutActive=true;
+  tutIdx=0;
+  tutActive=true;
+  // Cerrar nexus si está abierto
+  if(nxOpen) nxToggle();
+  closeDetail();
   document.getElementById('btut-lock').classList.add('on');
-  document.getElementById('btut-spotlight').style.display='block';
-  document.getElementById('btut-tooltip').style.display='block';
+  document.getElementById('btut-lock').classList.remove('dim');
+  document.getElementById('btut-tooltip').style.display='flex';
   document.body.style.overflow='hidden';
   renderTut();
 }
+
 function finishTutorial() {
   tutActive=false;
-  document.getElementById('btut-lock').classList.remove('on');
+  const lock = document.getElementById('btut-lock');
+  lock.classList.remove('on');
+  lock.classList.remove('dim');
   document.getElementById('btut-spotlight').style.display='none';
   document.getElementById('btut-tooltip').style.display='none';
   document.body.style.overflow='';
   clearPulse();
+  // Cerrar nexus si se abrió accidentalmente durante el tutorial
+  if(nxOpen) nxToggle();
+  closeDetail();
   localStorage.setItem('upgames_onboarding_done','1');
 }
+
 function renderTut() {
-  const s=TUT_STEPS[tutIdx];
-  document.getElementById('btut-badge').textContent=`Tutorial · ${tutIdx+1}/${TUT_STEPS.length}`;
-  document.getElementById('btut-title').textContent=s.title;
-  document.getElementById('btut-body').innerHTML=s.body;
+  const s   = TUT_STEPS[tutIdx];
+  const lock = document.getElementById('btut-lock');
+  const sp   = document.getElementById('btut-spotlight');
+  const tip  = document.getElementById('btut-tooltip');
+
+  // Ejecutar onEnter si existe
+  if(s.onEnter) s.onEnter();
+
+  // Contenido del tooltip
+  document.getElementById('btut-badge').textContent      = `Tutorial · ${tutIdx+1} de ${TUT_STEPS.length}`;
+  document.getElementById('btut-title').textContent      = s.title;
+  document.getElementById('btut-body').innerHTML         = s.body;
+  document.getElementById('btut-next').textContent       = tutIdx === TUT_STEPS.length-1 ? '¡Listo! ✓' : 'Siguiente →';
+  document.getElementById('btut-prev').style.visibility  = tutIdx === 0 ? 'hidden' : 'visible';
+
   // Dots
-  const dotsEl=document.getElementById('btut-dots');
-  dotsEl.innerHTML='';
-  TUT_STEPS.forEach((_,i)=>{
-    const d=document.createElement('span');
-    d.className='btut-dot'+(i===tutIdx?' on':'');
+  const dotsEl = document.getElementById('btut-dots');
+  dotsEl.innerHTML = '';
+  TUT_STEPS.forEach((_,i) => {
+    const d = document.createElement('span');
+    d.className = 'btut-dot' + (i===tutIdx ? ' on' : '');
     dotsEl.appendChild(d);
   });
-  document.getElementById('btut-prev').style.visibility=tutIdx===0?'hidden':'visible';
-  document.getElementById('btut-next').textContent=tutIdx===TUT_STEPS.length-1?'Finalizar ✓':'Siguiente →';
+
   clearPulse();
-  if(s.pos==='center'||!s.sel) { hideSpot(); placeCenter(); }
-  else {
-    const el=document.querySelector(s.sel);
-    if(!el){hideSpot();placeCenter();}else{spotOn(el,s);}
-  }
-  const tip=document.getElementById('btut-tooltip');
+
+  // Esperar a que onEnter termine (animaciones de sheet, etc.) antes de spotlightear
+  const delay = (s.onEnter) ? 650 : 0;
+
+  setTimeout(() => {
+    const el = s.sel ? document.querySelector(s.sel) : null;
+    if(el) {
+      lock.classList.remove('dim');
+
+      // Si el elemento está dentro del sheet-scroll, hacer scroll interno
+      if(s.scrollEl) {
+        const container = document.querySelector(s.scrollEl);
+        if(container) {
+          el.scrollIntoView({behavior:'smooth', block:'center'});
+        }
+      } else {
+        el.scrollIntoView({behavior:'smooth', block:'center'});
+      }
+
+      function doSpot() {
+        const PAD = 10;
+        const r   = el.getBoundingClientRect();
+        // Verificar que el elemento esté visible en pantalla
+        if(r.width === 0 && r.height === 0) return;
+        sp.style.top    = (r.top    - PAD) + 'px';
+        sp.style.left   = (r.left   - PAD) + 'px';
+        sp.style.width  = (r.width  + PAD*2) + 'px';
+        sp.style.height = (r.height + PAD*2) + 'px';
+        sp.style.display = 'block';
+        el.classList.add('btut-pulse');
+        tutLastEl = el;
+        // Tooltip arriba si el elemento está en la mitad inferior
+        if(r.top > window.innerHeight * 0.42) {
+          tip.classList.add('at-top');
+        } else {
+          tip.classList.remove('at-top');
+        }
+      }
+      doSpot();
+      setTimeout(doSpot, 450);
+    } else {
+      sp.style.display = 'none';
+      lock.classList.add('dim');
+      tip.classList.remove('at-top');
+    }
+  }, delay);
+
+  // Animación entrada tooltip
   tip.classList.remove('btut-in');
   void tip.offsetWidth;
   tip.classList.add('btut-in');
 }
-function spotOn(el,s) {
-  const PAD=8, rect=el.getBoundingClientRect();
-  const sp=document.getElementById('btut-spotlight');
-  sp.style.cssText=`display:block;top:${rect.top-PAD}px;left:${rect.left-PAD}px;width:${rect.width+PAD*2}px;height:${rect.height+PAD*2}px;`;
-  el.classList.add('btut-pulse'); tutLastEl=el;
-  placeTooltip(rect,s.pos);
+
+function clearPulse() {
+  if(tutLastEl) { tutLastEl.classList.remove('btut-pulse'); tutLastEl=null; }
 }
-function hideSpot(){document.getElementById('btut-spotlight').style.display='none';}
-function clearPulse(){if(tutLastEl){tutLastEl.classList.remove('btut-pulse');tutLastEl=null;}}
-function placeCenter(){
-  const tip=document.getElementById('btut-tooltip');
-  tip.style.cssText='top:50%;left:50%;transform:translate(-50%,-50%)';
-}
-function placeTooltip(rect,pos) {
-  const tip=document.getElementById('btut-tooltip');
-  const TW=tip.offsetWidth||300, TH=tip.offsetHeight||200;
-  const VW=window.innerWidth, VH=window.innerHeight, GAP=12;
-  tip.style.transform='';
-  let top, left;
-  if(VW<=480) {
-    left=12;
-    const below=VH-rect.bottom;
-    if(below>=TH+GAP+20){top=rect.bottom+GAP;}
-    else if(rect.top>=TH+GAP+20){top=rect.top-TH-GAP;}
-    else{top=VH*.5;}
-  } else {
-    if(pos==='below'){top=rect.bottom+GAP;left=rect.left;}
-    else if(pos==='above'){top=rect.top-TH-GAP;left=rect.left;}
-    else if(pos==='left'){top=rect.top;left=rect.left-TW-GAP;if(left<10){left=rect.right+GAP;}}
-    if((left||0)+TW>VW-10) left=VW-TW-10;
-    if((left||0)<10) left=10;
-    if((top||0)+TH>VH-10) top=rect.top-TH-GAP;
-    if((top||0)<10) top=10;
-  }
-  tip.style.top=top+'px';
-  tip.style.left=left+'px';
-}
-document.getElementById('btut-next').onclick=()=>{
-  if(tutIdx<TUT_STEPS.length-1){tutIdx++;renderTut();}else finishTutorial();
-};
-document.getElementById('btut-prev').onclick=()=>{ if(tutIdx>0){tutIdx--;renderTut();} };
-document.getElementById('btut-close').onclick=finishTutorial;
-document.addEventListener('keydown',e=>{
-  if(!tutActive) return;
-  if(e.key==='ArrowRight'||e.key==='Enter') document.getElementById('btut-next').click();
-  if(e.key==='ArrowLeft') document.getElementById('btut-prev').click();
-  if(e.key==='Escape') finishTutorial();
+
+document.getElementById('btut-next').addEventListener('click', () => {
+  if(tutIdx < TUT_STEPS.length-1) { tutIdx++; renderTut(); }
+  else finishTutorial();
 });
-window.addEventListener('resize',()=>{ if(tutActive) renderTut(); });
-window.startBibliotecaTutorial=startTutorial;
+document.getElementById('btut-prev').addEventListener('click', () => {
+  if(tutIdx > 0) { tutIdx--; renderTut(); }
+});
+document.getElementById('btut-close').addEventListener('click', finishTutorial);
+
+window.startBibliotecaTutorial = startTutorial;
 
 // ── INIT ─────────────────────────────────────────────────
 window.addEventListener('load', loadContent);
