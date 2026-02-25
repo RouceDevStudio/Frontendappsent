@@ -7,6 +7,26 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://unpkg.com">
     <link rel="stylesheet" href="./styles.css">
+    <style>
+        html, body { overscroll-behavior-y: none; touch-action: pan-x pan-y; }
+    </style>
+    <script>
+        // Bloqueo total de pull-to-refresh en WebView Android
+        (function() {
+            var lastY = 0;
+            document.addEventListener('touchstart', function(e) {
+                lastY = e.touches[0].clientY;
+            }, { passive: true });
+            document.addEventListener('touchmove', function(e) {
+                var y = e.touches[0].clientY;
+                var scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+                // Si está en el tope de la página y baja el dedo → bloquear
+                if (scrollTop <= 0 && y > lastY) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        })();
+    </script>
 </head>
 <body>
     <!-- PRELOADER OPTIMIZADO -->
@@ -1163,6 +1183,7 @@
     setOvr();
     if (open && !ready) boot_run(() => { boot.classList.add('nx-done'); frm.src = frm.dataset.src; });
     if (!open && exp)   { exp = false; pan.classList.remove('nx-exp'); setOvr(); setExpIco(); }
+    /* Ocultar scroll-tooltip de UpGames mientras Nexus está abierto */
     const sc = document.getElementById('sc-tip');
     if (sc) sc.style.display = open ? 'none' : '';
   };
@@ -1183,36 +1204,6 @@
     if (exp) nxExpand(); else if (open) nxToggle();
   });
   window.addEventListener('resize', setOvr);
-
-  /* ══════════════════════════════════════════════════════════════
-     ✅ FIX WEBVIEW ANDROID — Pull-to-refresh blocker
-     
-     En WebView, overscroll-behavior CSS no tiene efecto.
-     La única forma es interceptar touchmove en el DOCUMENT
-     y bloquear el evento cuando el toque ocurre DENTRO del panel.
-     Esto le quita el gesto al sistema nativo antes de que
-     WebView lo interprete como pull-to-refresh.
-  ══════════════════════════════════════════════════════════════ */
-  let _startY = 0;
-  let _insidePanel = false;
-
-  document.addEventListener('touchstart', function(e) {
-    _startY = e.touches[0].clientY;
-    // Verificar si el toque comenzó dentro del panel de Nexus
-    _insidePanel = pan.contains(e.target) || fab.contains(e.target);
-  }, { passive: true });
-
-  document.addEventListener('touchmove', function(e) {
-    if (!_insidePanel) return; // Solo actuar si el toque es en el panel
-
-    const dy = e.touches[0].clientY - _startY;
-
-    // Bloquear SIEMPRE cuando se está dentro del panel
-    // Esto evita que WebView interprete cualquier gesto vertical
-    // como pull-to-refresh
-    e.preventDefault();
-
-  }, { passive: false }); // passive: false es OBLIGATORIO para que preventDefault funcione
 
 })();
 </script>
