@@ -1392,61 +1392,583 @@ input, textarea { font-family:inherit; }
 }
 
 /* ═══════════════════════════════════════════
-   PROFILE VIEW (Tab)
+   PROFILE VIEW (Tab) — FULL PERFIL
 ═══════════════════════════════════════════ */
 #profile-view {
   display:none;
-  padding:20px 16px calc(var(--nav-h) + 20px);
+  padding:0 0 calc(var(--nav-h) + 20px);
+  min-height:100vh;
 }
 #profile-view.active { display:block; }
+
+/* ── Profile Header Card ── */
 .profile-card {
   background:var(--bg1);
-  border-radius:20px;
-  border:1px solid var(--bd);
-  overflow:hidden;
-  margin-bottom:16px;
+  border-bottom:1px solid var(--bd);
+  margin-bottom:12px;
+  position:relative;
 }
 .profile-cover {
-  height:100px;
-  background:linear-gradient(135deg,var(--g-dim),var(--cy-dim));
+  height:90px;
+  background:linear-gradient(135deg,rgba(94,255,67,.18),rgba(0,242,255,.12));
   position:relative;
 }
 .profile-avatar-wrap {
   position:absolute;
-  bottom:-24px;
-  left:20px;
+  right:1.3rem;
+  cursor:pointer;
+  z-index: 1000;
+  top: 25px;
 }
 .profile-avatar {
-  width:56px; height:56px;
+  width:110px; height:110px;
   border-radius:50%;
   background:linear-gradient(135deg,var(--g),var(--cy));
   display:flex; align-items:center; justify-content:center;
-  font-size:1.4rem;
-  font-weight:800;
-  color:#000;
+  font-size:1.4rem; font-weight:800; color:#000;
   border:3px solid var(--bg1);
+  overflow:hidden;
+  transition:transform .2s var(--spring);
 }
-.profile-info { padding:32px 20px 20px; }
-.profile-name { font-size:1.1rem; font-weight:800; }
-.profile-handle { font-size:.78rem; color:var(--txt3); font-family:var(--ff-mono); margin-top:2px; }
-.profile-not-logged {
+.profile-avatar:active { transform:scale(1.05); }
+.profile-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+.profile-info { padding:28px 16px 16px; }
+.profile-name {
+  font-size:1.05rem; font-weight:800;
+  display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+}
+.profile-bio {
+  font-size:.75rem; color:var(--txt3); font-family:var(--ff-mono);
+  margin-top:3px; line-height:1.4;
+}
+
+/* ── Profile Stats Row ── */
+.profile-stats-row {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:8px; padding:0 12px 12px;
+}
+.profile-stat-box {
+  background:var(--bg2);
+  border:1px solid var(--bd);
+  border-radius:14px;
+  padding:10px;
   text-align:center;
-  padding:40px 20px;
+}
+.profile-stat-val {
+  font-family:var(--ff-disp);
+  font-size:1.3rem; letter-spacing:1px;
+  color:var(--txt); line-height:1;
+}
+.profile-stat-lbl {
+  font-size:.58rem; color:var(--txt3);
+  font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; margin-top:3px;
+}
+
+/* ── Profile Action Buttons ── */
+.profile-actions {
+  display:flex; flex-direction:column; gap:8px;
+  padding:0 12px 12px;
+}
+.profile-action-btn {
+  display:flex; align-items:center; gap:12px;
+  padding:13px 16px;
+  background:var(--bg1);
+  border:1px solid var(--bd);
+  border-radius:14px;
+  font-size:.85rem; font-weight:600;
+  color:var(--txt);
+  transition:border-color .18s, background .18s;
+  cursor:pointer; width:100%; text-align:left;
+}
+.profile-action-btn:active { border-color:var(--bd-g); background:var(--bg2); }
+.profile-action-btn ion-icon { font-size:1.2rem; flex-shrink:0; }
+.profile-action-btn.red ion-icon { color:#ff4343; }
+.profile-action-btn.red:active { border-color:rgba(255,67,67,.3); }
+
+/* ── Perfil Inner Tabs ── */
+.perfil-tabs {
+  display:flex; gap:0;
+  padding:0 12px;
+  margin-bottom:12px;
+  border-bottom:1px solid var(--bd);
+  overflow-x:auto; scrollbar-width:none;
+}
+.perfil-tab {
+  flex-shrink:0;
+  padding:10px 14px;
+  font-size:.68rem; font-weight:800;
+  letter-spacing:1px; text-transform:uppercase;
   color:var(--txt3);
+  border-bottom:2.5px solid transparent;
+  transition:color .18s, border-color .18s;
+  display:flex; align-items:center; gap:6px;
+  cursor:pointer; white-space:nowrap;
+  background:none; border-top:none; border-left:none; border-right:none;
 }
-.profile-not-logged h3 { font-size:1rem; font-weight:700; color:var(--txt2); margin-top:12px; }
-.profile-not-logged p { font-size:.82rem; margin-top:6px; }
-.btn-login-action {
-  margin-top:16px;
-  display:inline-flex; align-items:center; gap:8px;
-  padding:12px 24px;
-  background:var(--g);
-  color:#000;
+.perfil-tab.active { color:var(--g); border-bottom-color:var(--g); }
+.perfil-tab ion-icon { font-size:.9rem; }
+
+/* ── Perfil Tab Content ── */
+.perfil-tab-content { display:none; padding:0 12px; }
+.perfil-tab-content.active { display:block; }
+
+/* ── Upload Form ── */
+.pf-section-title {
+  display:flex; align-items:center; gap:8px;
+  font-size:.7rem; font-weight:800; letter-spacing:2px;
+  text-transform:uppercase; color:var(--txt2);
+  margin-bottom:14px; margin-top:4px;
+}
+.pf-section-title ion-icon { color:var(--g); font-size:.9rem; }
+.pf-form-group { margin-bottom:14px; }
+.pf-label {
+  display:flex; align-items:center; gap:6px;
+  font-size:.72rem; font-weight:700; color:var(--txt2);
+  margin-bottom:7px; text-transform:uppercase; letter-spacing:.5px;
+}
+.pf-info-icon {
+  width:16px; height:16px;
+  border-radius:50%;
+  background:var(--bg3); border:1px solid var(--bd);
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:.62rem; color:var(--txt3); font-weight:800;
+  cursor:pointer; flex-shrink:0;
+  transition:border-color .18s, color .18s;
+}
+.pf-info-icon:active { border-color:var(--bd-g); color:var(--g); }
+.pf-input, .pf-textarea, .pf-select {
+  width:100%;
+  background:var(--bg2);
+  border:1.5px solid var(--bd);
   border-radius:12px;
+  padding:11px 14px;
+  color:var(--txt);
   font-size:.85rem;
-  font-weight:800;
-  letter-spacing:.3px;
+  font-family:var(--ff);
+  outline:none;
+  transition:border-color .2s, box-shadow .2s;
 }
+.pf-input:focus, .pf-textarea:focus, .pf-select:focus {
+  border-color:var(--bd-g);
+  box-shadow:0 0 0 3px rgba(94,255,67,.08);
+}
+.pf-input::placeholder, .pf-textarea::placeholder { color:var(--txt3); }
+.pf-textarea { resize:none; height:80px; line-height:1.5; }
+.pf-select { appearance:none; }
+.pf-select option { background:var(--bg2); }
+.pf-input.valid { border-color:rgba(94,255,67,.6); }
+.pf-input.invalid { border-color:#ff4343; }
+
+/* Category badge */
+.pf-cat-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:999px;
+  background:var(--cy-dim); border:1px solid rgba(0,242,255,.2);
+  font-size:.6rem; font-weight:800; color:var(--cy);
+  letter-spacing:.5px; cursor:pointer; margin-left:6px;
+}
+
+/* Tooltip popup */
+.pf-tooltip {
+  display:none;
+  position:fixed; left:12px; right:12px;
+  bottom:calc(var(--nav-h) + 12px);
+  background:var(--bg1);
+  border:1.5px solid var(--bd-g);
+  border-radius:18px;
+  padding:16px;
+  z-index:800;
+  box-shadow:0 -4px 40px rgba(0,0,0,.8);
+  max-height:60vh; overflow-y:auto;
+  animation:btutSlide .3s var(--spring);
+}
+.pf-tooltip.active { display:block; }
+.pf-tooltip-close {
+  position:absolute; top:10px; right:12px;
+  width:26px; height:26px; border-radius:50%;
+  background:var(--bg3); border:1px solid var(--bd);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.8rem; color:var(--txt3); cursor:pointer;
+}
+.pf-tooltip h4 {
+  font-size:.85rem; font-weight:800; color:var(--txt);
+  margin-bottom:8px; padding-right:30px;
+  display:flex; align-items:center; gap:6px;
+}
+.pf-tooltip p, .pf-tooltip li {
+  font-size:.78rem; color:var(--txt2); line-height:1.5;
+}
+.pf-tooltip ul, .pf-tooltip ol {
+  padding-left:16px; margin:8px 0;
+}
+.pf-tooltip li { margin-bottom:4px; }
+.pf-warn { color:#ffcc00!important; font-weight:700; }
+.pf-ok { color:var(--g)!important; font-weight:700; }
+
+/* Preview card */
+.pf-preview-card {
+  background:var(--bg2);
+  border:1px solid var(--bd);
+  border-radius:14px;
+  overflow:hidden;
+  margin-bottom:14px;
+}
+.pf-preview-card img {
+  width:100%; height:120px; object-fit:cover; display:block;
+}
+.pf-preview-info { padding:10px 12px; }
+.pf-preview-tag {
+  font-size:.6rem; font-weight:800; letter-spacing:1px;
+  text-transform:uppercase; color:#000;
+  background:var(--g); padding:2px 8px; border-radius:999px;
+  display:inline-block; margin-bottom:5px;
+}
+.pf-preview-title {
+  font-size:.85rem; font-weight:700; color:var(--txt);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* Submit button */
+.pf-btn-submit {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; height:50px;
+  border-radius:14px;
+  background:var(--g); color:#000;
+  font-size:.9rem; font-weight:800; letter-spacing:.5px;
+  text-transform:uppercase;
+  border:none; cursor:pointer;
+  transition:opacity .18s, transform .18s;
+  position:relative; overflow:hidden;
+}
+.pf-btn-submit::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);
+}
+.pf-btn-submit:active { opacity:.85; transform:scale(.98); }
+.pf-btn-submit ion-icon { font-size:1.1rem; }
+
+/* Items grid (historial / boveda) */
+.pf-items-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(160px,1fr));
+  gap:10px; padding-bottom:10px;
+}
+.pf-item-card {
+  background:var(--bg2);
+  border:1px solid var(--bd);
+  border-radius:var(--card-r);
+  overflow:hidden;
+  position:relative;
+  transition:border-color .18s, transform .18s var(--spring);
+}
+.pf-item-card:active { transform:scale(.97); border-color:var(--bd-g); }
+.pf-item-card img {
+  width:100%; aspect-ratio:16/9;
+  object-fit:cover; display:block;
+}
+.pf-item-badge {
+  position:absolute; top:6px; right:6px;
+  padding:2px 8px; border-radius:999px;
+  font-size:.58rem; font-weight:800; letter-spacing:.5px;
+  backdrop-filter:blur(8px);
+  text-transform:uppercase;
+}
+.pf-item-badge.pending { background:rgba(255,204,0,.18); color:#ffcc00; border:1px solid rgba(255,204,0,.3); }
+.pf-item-badge.approved { background:rgba(94,255,67,.15); color:var(--g); border:1px solid rgba(94,255,67,.25); }
+.pf-item-info { padding:10px; }
+.pf-item-title {
+  font-size:.8rem; font-weight:700; color:var(--txt);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  margin-bottom:4px;
+}
+.pf-item-cat {
+  font-size:.6rem; color:var(--cy); font-weight:700;
+  letter-spacing:.5px; text-transform:uppercase; margin-bottom:8px;
+}
+.pf-item-stats {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:4px; margin-bottom:8px;
+  padding:7px; background:var(--bg3); border-radius:8px;
+}
+.pf-item-stat { text-align:center; }
+.pf-item-stat-val { font-family:var(--ff-disp); font-size:.85rem; letter-spacing:.5px; color:var(--txt); }
+.pf-item-stat-lbl { font-size:.52rem; color:var(--txt3); font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
+.pf-item-actions { display:flex; gap:6px; }
+.pf-btn-action {
+  flex:1; display:flex; align-items:center; justify-content:center; gap:4px;
+  height:32px; border-radius:9px;
+  font-size:.68rem; font-weight:700;
+  border:1px solid var(--bd); background:var(--bg3);
+  color:var(--txt2); cursor:pointer;
+  transition:all .18s;
+}
+.pf-btn-action:active { border-color:var(--bd-g); color:var(--txt); }
+.pf-btn-action.edit:active { border-color:rgba(0,242,255,.3); color:var(--cy); }
+.pf-btn-action.del:active { border-color:rgba(255,67,67,.3); color:#ff4343; }
+.pf-btn-action ion-icon { font-size:.85rem; }
+
+/* Boveda item */
+.pf-vault-card {
+  background:var(--bg2);
+  border:1px solid var(--bd);
+  border-radius:var(--card-r);
+  overflow:hidden;
+  transition:border-color .18s;
+}
+.pf-vault-card:active { border-color:var(--bd-g); }
+.pf-vault-card img { width:100%; aspect-ratio:16/9; object-fit:cover; }
+.pf-vault-info { padding:10px; }
+.pf-vault-title { font-size:.8rem; font-weight:700; color:var(--txt); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pf-vault-user { font-size:.65rem; color:var(--g); font-weight:600; margin-bottom:8px; }
+.pf-vault-actions { display:flex; gap:6px; }
+.pf-vault-btn {
+  flex:1; height:32px; border-radius:9px;
+  font-size:.68rem; font-weight:700;
+  border:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:4px;
+  transition:opacity .18s;
+}
+.pf-vault-btn:active { opacity:.75; }
+.pf-vault-btn.access { background:var(--g); color:#000; }
+.pf-vault-btn.remove { background:rgba(255,67,67,.15); color:#ff4343; border:1px solid rgba(255,67,67,.2); }
+
+/* Reportes */
+.pf-reporte-card {
+  background:var(--bg2);
+  border-radius:14px;
+  border:1px solid var(--bd);
+  padding:14px;
+  margin-bottom:10px;
+  border-left:3px solid var(--g);
+}
+.pf-reporte-title { font-size:.88rem; font-weight:700; color:var(--txt); margin-bottom:4px; }
+.pf-reporte-date { font-size:.65rem; color:var(--txt3); font-family:var(--ff-mono); margin-bottom:10px; }
+.pf-reporte-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:999px;
+  font-size:.62rem; font-weight:800;
+  background:rgba(255,67,67,.12); color:#ff4343;
+  border:1px solid rgba(255,67,67,.2);
+}
+.pf-reporte-motivos {
+  display:flex; gap:12px; flex-wrap:wrap;
+  padding:10px; background:var(--bg3); border-radius:10px;
+  margin:10px 0;
+}
+.pf-reporte-motivo {
+  display:flex; align-items:center; gap:5px;
+  font-size:.72rem; color:var(--txt2);
+}
+.pf-reporte-motivo ion-icon { font-size:1rem; }
+.pf-reporte-tip {
+  font-size:.72rem; color:var(--txt3); line-height:1.5;
+  padding:8px; background:var(--bg3); border-radius:8px;
+  margin:8px 0;
+}
+.pf-reporte-ver {
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  width:100%; height:36px; border-radius:10px;
+  background:var(--g); color:#000;
+  font-size:.75rem; font-weight:800;
+  border:none; cursor:pointer; margin-top:6px;
+}
+
+/* Economia card */
+.pf-economia {
+  background:var(--bg1);
+  border:1px solid var(--bd-g);
+  border-radius:18px;
+  padding:16px;
+  margin-bottom:12px;
+}
+.pf-economia-title {
+  display:flex; align-items:center; gap:8px;
+  font-size:.75rem; font-weight:800; color:var(--g);
+  letter-spacing:2px; text-transform:uppercase;
+  margin-bottom:14px;
+}
+.pf-economia-title ion-icon { font-size:1.1rem; }
+.pf-saldo-box {
+  background:rgba(94,255,67,.05);
+  border:1px solid rgba(94,255,67,.15);
+  border-radius:14px;
+  padding:14px; text-align:center; margin-bottom:12px;
+}
+.pf-saldo-lbl { font-size:.62rem; color:var(--txt3); font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:5px; }
+.pf-saldo-val {
+  font-family:var(--ff-disp); font-size:2.6rem;
+  letter-spacing:2px; color:var(--g);
+  text-shadow:0 0 16px rgba(94,255,67,.35); line-height:1;
+}
+.pf-saldo-cur { font-size:.62rem; color:var(--txt3); font-weight:700; margin-top:3px; }
+.pf-eco-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.pf-eco-stat { background:var(--bg2); border-radius:10px; padding:10px; text-align:center; }
+.pf-eco-stat-val { font-family:var(--ff-disp); font-size:1.3rem; color:var(--g); line-height:1; }
+.pf-eco-stat-lbl { font-size:.58rem; color:var(--txt3); font-weight:700; letter-spacing:.5px; text-transform:uppercase; margin-top:3px; }
+.pf-eco-warn {
+  display:flex; align-items:center; gap:8px;
+  padding:10px; background:rgba(255,204,0,.08);
+  border:1px solid rgba(255,204,0,.2); border-radius:10px;
+  font-size:.72rem; color:#ffcc00; margin-bottom:12px;
+}
+.pf-eco-warn ion-icon { font-size:1.1rem; flex-shrink:0; }
+.pf-paypal-row { display:flex; gap:8px; margin-bottom:12px; }
+.pf-paypal-input {
+  flex:1; background:var(--bg2); border:1.5px solid var(--bd);
+  border-radius:12px; padding:10px 14px;
+  color:var(--txt); font-size:.82rem; font-family:var(--ff);
+  outline:none; transition:border-color .2s;
+}
+.pf-paypal-input:focus { border-color:var(--bd-g); }
+.pf-paypal-input::placeholder { color:var(--txt3); }
+.pf-paypal-save {
+  padding:10px 16px; border-radius:12px;
+  background:var(--g); color:#000;
+  font-size:.72rem; font-weight:800; border:none; cursor:pointer;
+  transition:opacity .18s; white-space:nowrap;
+}
+.pf-paypal-save:active { opacity:.75; }
+.pf-solicitar-btn {
+  width:100%; height:48px; border-radius:14px;
+  font-size:.85rem; font-weight:800; border:none;
+  cursor:not-allowed; transition:all .2s;
+  background:var(--bg3); color:var(--txt3);
+}
+.pf-solicitar-btn.enabled {
+  background:var(--g); color:#000; cursor:pointer;
+}
+.pf-solicitar-btn.enabled:active { opacity:.85; transform:scale(.98); }
+.pf-eco-pending {
+  display:flex; align-items:center; gap:8px;
+  padding:10px; background:rgba(94,255,67,.08);
+  border:1px solid rgba(94,255,67,.2); border-radius:10px;
+  font-size:.72rem; color:var(--g); margin-top:10px;
+}
+.pf-eco-info {
+  padding:10px; background:var(--bg2); border-radius:10px;
+  font-size:.65rem; color:var(--txt3); line-height:1.6;
+  margin-top:10px; font-family:var(--ff-mono);
+}
+
+/* Modals de perfil */
+.pf-modal-overlay {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.8); backdrop-filter:blur(8px);
+  z-index:900; display:flex; align-items:flex-end;
+  opacity:0; visibility:hidden;
+  transition:opacity .3s, visibility .3s;
+}
+.pf-modal-overlay.show { opacity:1; visibility:visible; }
+.pf-modal-sheet {
+  width:100%; max-width:520px; margin:0 auto;
+  background:var(--bg1);
+  border-radius:24px 24px 0 0;
+  padding:0 0 env(safe-area-inset-bottom);
+  transform:translateY(100%);
+  transition:transform .4s var(--spring);
+  max-height:90dvh; overflow-y:auto;
+}
+.pf-modal-overlay.show .pf-modal-sheet { transform:translateY(0); }
+.pf-modal-handle {
+  width:36px; height:4px; background:var(--bg3);
+  border-radius:999px; margin:12px auto 0;
+}
+.pf-modal-hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px 12px;
+  border-bottom:1px solid var(--bd);
+}
+.pf-modal-hdr-title {
+  font-size:.95rem; font-weight:800;
+  display:flex; align-items:center; gap:8px;
+}
+.pf-modal-hdr-title ion-icon { color:var(--g); }
+.pf-modal-close {
+  width:30px; height:30px; border-radius:50%;
+  background:var(--bg3); border:1px solid var(--bd);
+  display:flex; align-items:center; justify-content:center;
+  color:var(--txt2); font-size:.9rem; cursor:pointer;
+}
+.pf-modal-body { padding:16px 20px 20px; }
+
+/* Settings tabs */
+.pf-stabs { display:flex; border-bottom:1px solid var(--bd); margin-bottom:16px; }
+.pf-stab {
+  flex:1; padding:12px; text-align:center;
+  font-size:.78rem; font-weight:700; color:var(--txt3);
+  border-bottom:2.5px solid transparent; cursor:pointer;
+  background:none; border-top:none; border-left:none; border-right:none;
+  transition:color .18s, border-color .18s;
+}
+.pf-stab.active { color:var(--g); border-bottom-color:var(--g); }
+.pf-scontent { display:none; }
+.pf-scontent.active { display:block; }
+.pf-avatar-preview {
+  width:120px; height:120px; border-radius:50%;
+  background:linear-gradient(135deg,var(--g),var(--cy));
+  margin:0 auto 16px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:2.5rem; font-weight:800; color:#000;
+  overflow:hidden; border:2.5px solid var(--g);
+}
+.pf-avatar-preview img { width:100%; height:100%; object-fit:cover; }
+.pf-btn-save {
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; height:46px; border-radius:13px;
+  background:var(--g); color:#000;
+  font-size:.88rem; font-weight:800;
+  border:none; cursor:pointer; margin-top:14px;
+  transition:opacity .18s; position:relative; overflow:hidden;
+}
+.pf-btn-save::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,.15),transparent); }
+.pf-btn-save:active { opacity:.8; }
+
+/* Category info grid */
+.pf-cat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.pf-cat-info {
+  background:var(--bg2); border:1px solid var(--bd);
+  border-radius:12px; padding:12px;
+}
+.pf-cat-info h4 {
+  font-size:.72rem; font-weight:800; color:var(--g);
+  margin-bottom:5px; display:flex; align-items:center; gap:4px;
+}
+.pf-cat-info p { font-size:.68rem; color:var(--txt3); line-height:1.4; }
+.pf-warning-box {
+  grid-column:1/-1; background:rgba(255,204,0,.06);
+  border:1px solid rgba(255,204,0,.2); border-radius:12px; padding:12px;
+}
+.pf-warning-box h4 { font-size:.72rem; font-weight:800; color:#ffcc00; margin-bottom:5px; display:flex; align-items:center; gap:4px; }
+.pf-warning-box p { font-size:.68rem; color:var(--txt3); line-height:1.4; }
+
+/* Not logged state */
+.profile-not-logged {
+  text-align:center; padding:60px 20px; color:var(--txt3);
+}
+.profile-not-logged ion-icon { font-size:3.5rem; color:var(--txt3); }
+.profile-not-logged h3 { font-size:1rem; font-weight:700; color:var(--txt2); margin-top:12px; }
+.profile-not-logged p { font-size:.82rem; margin-top:6px; line-height:1.5; }
+.btn-login-action {
+  margin-top:20px; display:inline-flex; align-items:center; gap:8px;
+  padding:13px 28px; background:var(--g); color:#000;
+  border-radius:14px; font-size:.88rem; font-weight:800; letter-spacing:.3px;
+}
+.pf-empty {
+  text-align:center; padding:40px 20px; color:var(--txt3);
+}
+.pf-empty ion-icon { font-size:2.5rem; opacity:.4; }
+.pf-empty p { font-size:.82rem; margin-top:10px; }
+
+/* Reportes info box */
+.pf-info-box {
+  display:flex; gap:10px; align-items:flex-start;
+  padding:12px; border-radius:12px; margin-bottom:12px;
+  background:rgba(0,242,255,.05); border:1px solid rgba(0,242,255,.15);
+}
+.pf-info-box ion-icon { font-size:1.3rem; color:var(--cy); flex-shrink:0; }
+.pf-info-box h4 { font-size:.78rem; font-weight:800; color:var(--cy); margin-bottom:4px; }
+.pf-info-box p { font-size:.72rem; color:var(--txt3); line-height:1.5; }
 
 /* ═══════════════════════════════════════════
    FAVORITES VIEW (Tab)
@@ -1507,7 +2029,7 @@ input, textarea { font-family:inherit; }
     <input type="text" id="buscador" placeholder="Buscar juegos, mods, apps..." autocomplete="off">
   </div>
   <div class="hdr-actions">
-    <button class="hdr-btn" onclick="window.location.href='./perfil.html'" title="Subir contenido">
+    <button class="hdr-btn" onclick="switchTab('profile')" title="Subir contenido">
       <ion-icon name="cloud-upload-outline"></ion-icon>
     </button>
     <button class="hdr-btn" onclick="handleMail()" title="Reportar abuso">
@@ -1521,11 +2043,11 @@ input, textarea { font-family:inherit; }
 ══════════════════════════════════ -->
 <div id="category-row">
   <button class="chip active" data-cat="">Todos</button>
-  <button class="chip" data-cat="Juegos">Juegos</button>
+  <button class="chip" data-cat="Juego">Juegos</button>
   <button class="chip" data-cat="Mod">Mod</button>
   <button class="chip" data-cat="Apps">Apps</button>
-  <button class="chip" data-cat="Herramientas">Herramientas</button>
-  <button class="chip" data-cat="Música">Música</button>
+  <button class="chip" data-cat="Ajustes">Herramientas</button>
+  <button class="chip" data-cat="Software">Software</button>
   <button class="chip" data-cat="Video">Video</button>
 </div>
 
@@ -1561,10 +2083,388 @@ input, textarea { font-family:inherit; }
 </div>
 
 <!-- ══════════════════════════════════
-  PROFILE VIEW
+  PROFILE VIEW — FULL PERFIL INTEGRADO
 ══════════════════════════════════ -->
 <div id="profile-view">
-  <div id="profile-content"></div>
+  <!-- Not logged state -->
+  <div id="pf-not-logged" class="profile-not-logged" style="display:none">
+    <ion-icon name="person-circle-outline"></ion-icon>
+    <h3>No has iniciado sesión</h3>
+    <p>Accede para gestionar tu perfil,<br>subir contenido y monetizar</p>
+    <a href="./index.html" class="btn-login-action">
+      <ion-icon name="log-in-outline"></ion-icon> Iniciar Sesión
+    </a>
+  </div>
+
+  <!-- Logged in content -->
+  <div id="pf-logged" style="display:none">
+
+    <!-- ── Cover + Avatar + Info ── -->
+    <div class="profile-card">
+      <div class="profile-cover"></div>
+      <div class="profile-avatar-wrap" onclick="pfOpenSettings()">
+        <div class="profile-avatar" id="pf-avatar-display">
+          <ion-icon name="person" id="pf-avatar-icon" style="font-size:1.4rem"></ion-icon>
+          <img src="" alt="Avatar" id="pf-avatar-img" style="display:none">
+        </div>
+      </div>
+      <div class="profile-info">
+        <div class="profile-name">
+          <span id="pf-username">@usuario</span>
+          <span id="pf-badge"></span>
+        </div>
+        <div class="profile-bio" id="pf-bio">Sin biografía</div>
+      </div>
+    </div>
+
+    <!-- ── Stats ── -->
+    <div class="profile-stats-row">
+      <div class="profile-stat-box">
+        <div class="profile-stat-val" id="pf-stat-uploads">0</div>
+        <div class="profile-stat-lbl">Publicaciones</div>
+      </div>
+      <div class="profile-stat-box">
+        <div class="profile-stat-val" id="pf-stat-followers">0</div>
+        <div class="profile-stat-lbl">Seguidores</div>
+      </div>
+      <div class="profile-stat-box">
+        <div class="profile-stat-val" id="pf-stat-following">0</div>
+        <div class="profile-stat-lbl">Siguiendo</div>
+      </div>
+    </div>
+
+    <!-- ── Action Shortcuts ── -->
+    <div class="profile-actions">
+      <button class="profile-action-btn" onclick="pfOpenSettings()">
+        <ion-icon name="settings-outline" style="color:var(--g)"></ion-icon>
+        Editar Perfil (Avatar &amp; Bio)
+      </button>
+      <button class="profile-action-btn red" onclick="pfLogout()">
+        <ion-icon name="log-out-outline"></ion-icon>
+        Cerrar Sesión
+      </button>
+    </div>
+
+    <!-- ── Inner Tabs ── -->
+    <div class="perfil-tabs" id="pf-tabs">
+      <button class="perfil-tab active" data-pftab="publicar" onclick="pfSwitchTab('publicar',this)">
+        <ion-icon name="cloud-upload"></ion-icon> Publicar
+      </button>
+      <button class="perfil-tab" data-pftab="historial" onclick="pfSwitchTab('historial',this)">
+        <ion-icon name="time"></ion-icon> Historial
+      </button>
+      <button class="perfil-tab" data-pftab="boveda" onclick="pfSwitchTab('boveda',this)">
+        <ion-icon name="shield-checkmark"></ion-icon> Bóveda
+      </button>
+      <button class="perfil-tab" data-pftab="reportes" onclick="pfSwitchTab('reportes',this)">
+        <ion-icon name="flag"></ion-icon> Reportes
+      </button>
+      <button class="perfil-tab" data-pftab="economia" onclick="pfSwitchTab('economia',this)">
+        <ion-icon name="cash"></ion-icon> Economía
+      </button>
+    </div>
+
+    <!-- ══ TAB: PUBLICAR ══ -->
+    <div id="pf-tab-publicar" class="perfil-tab-content active">
+      <div class="pf-section-title"><ion-icon name="cloud-upload"></ion-icon> SUBIR NUEVO PROYECTO</div>
+
+      <!-- Título -->
+      <div class="pf-form-group">
+        <label class="pf-label">
+          Título del Proyecto
+          <span class="pf-info-icon" onclick="pfToggleTooltip('pf-tooltip-title')">?</span>
+        </label>
+        <input type="text" id="pf-addTitle" class="pf-input" placeholder="Ej: GTA V Optimizado">
+      </div>
+
+      <!-- Descripción -->
+      <div class="pf-form-group">
+        <label class="pf-label">Descripción (opcional)</label>
+        <textarea id="pf-addDescription" class="pf-textarea" placeholder="Breve descripción..."></textarea>
+      </div>
+
+      <!-- Link -->
+      <div class="pf-form-group">
+        <label class="pf-label">
+          Link de Descarga
+          <span class="pf-info-icon" onclick="pfToggleTooltip('pf-tooltip-link')">?</span>
+        </label>
+        <input type="url" id="pf-addLink" class="pf-input" placeholder="https://mediafire.com/...">
+      </div>
+
+      <!-- Imagen -->
+      <div class="pf-form-group">
+        <label class="pf-label">
+          Imagen (URL)
+          <span class="pf-info-icon" onclick="pfToggleTooltip('pf-tooltip-image')">?</span>
+        </label>
+        <input type="url" id="pf-addImage" class="pf-input" placeholder="https://i.imgur.com/...">
+      </div>
+
+      <!-- Categoría -->
+      <div class="pf-form-group">
+        <label class="pf-label">
+          Categoría
+          <span class="pf-cat-badge" onclick="pfOpenCatInfo()">
+            <ion-icon name="help-circle"></ion-icon> VER INFO
+          </span>
+        </label>
+        <select id="pf-addCategory" class="pf-select">
+          <option value="Juego">Juego</option>
+          <option value="Mod">Mod</option>
+          <option value="Optimizacion">Optimización</option>
+          <option value="Ajustes">Ajustes (Herramientas)</option>
+          <option value="Apps">Apps</option>
+          <option value="Software">Software Open Source</option>
+        </select>
+      </div>
+
+      <!-- Vista previa -->
+      <div class="pf-section-title" style="font-size:.62rem"><ion-icon name="eye"></ion-icon> VISTA PREVIA</div>
+      <div class="pf-preview-card">
+        <img id="pf-prev-img" src="https://via.placeholder.com/300x150?text=Esperando+Imagen" alt="Preview">
+        <div class="pf-preview-info">
+          <span id="pf-prev-tag" class="pf-preview-tag">CATEGORÍA</span>
+          <div id="pf-prev-title" class="pf-preview-title">Título del Proyecto</div>
+        </div>
+      </div>
+
+      <button class="pf-btn-submit" id="pf-subirBtn">
+        <ion-icon name="cloud-upload"></ion-icon>
+        ENVIAR A REVISIÓN
+      </button>
+    </div>
+
+    <!-- ══ TAB: HISTORIAL ══ -->
+    <div id="pf-tab-historial" class="perfil-tab-content">
+      <div class="pf-section-title"><ion-icon name="time"></ion-icon> TUS PUBLICACIONES</div>
+      <div class="pf-items-grid" id="pf-showContent">
+        <div class="pf-empty"><ion-icon name="sync-outline"></ion-icon><p>Cargando...</p></div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: BÓVEDA ══ -->
+    <div id="pf-tab-boveda" class="perfil-tab-content">
+      <div class="pf-section-title"><ion-icon name="shield-checkmark"></ion-icon> FAVORITOS GUARDADOS</div>
+      <div class="pf-items-grid" id="pf-vaultContent">
+        <div class="pf-empty"><ion-icon name="sync-outline"></ion-icon><p>Cargando...</p></div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: REPORTES ══ -->
+    <div id="pf-tab-reportes" class="perfil-tab-content">
+      <div class="pf-section-title"><ion-icon name="flag"></ion-icon> MIS PUBLICACIONES REPORTADAS</div>
+      <div class="pf-info-box">
+        <ion-icon name="information-circle"></ion-icon>
+        <div>
+          <h4>¿Por qué es importante atender los reportes?</h4>
+          <p>Los reportes ayudan a mantener la calidad de la plataforma. Links caídos o desactualizados afectan tu reputación y pueden reducir tus ganancias.</p>
+        </div>
+      </div>
+      <div id="pf-reportesContent">
+        <div class="pf-empty"><ion-icon name="sync-outline"></ion-icon><p>Cargando...</p></div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: ECONOMÍA ══ -->
+    <div id="pf-tab-economia" class="perfil-tab-content">
+      <div class="pf-economia">
+        <div class="pf-economia-title"><ion-icon name="cash-outline"></ion-icon> MI ECONOMÍA</div>
+
+        <!-- Saldo -->
+        <div class="pf-saldo-box">
+          <div class="pf-saldo-lbl">SALDO DISPONIBLE</div>
+          <div class="pf-saldo-val" id="pf-saldo-display">$0.00</div>
+          <div class="pf-saldo-cur">USD</div>
+        </div>
+
+        <!-- Stats eco -->
+        <div class="pf-eco-stats">
+          <div class="pf-eco-stat">
+            <div class="pf-eco-stat-val" id="pf-descargas-totales">0</div>
+            <div class="pf-eco-stat-lbl">Descargas Totales</div>
+          </div>
+          <div class="pf-eco-stat">
+            <div class="pf-eco-stat-val" id="pf-juegos-elegibles">0</div>
+            <div class="pf-eco-stat-lbl">Juegos +2K Vistas</div>
+          </div>
+        </div>
+
+        <!-- Verificación warning -->
+        <div class="pf-eco-warn" id="pf-estado-verificacion" style="display:none">
+          <ion-icon name="alert-circle"></ion-icon>
+          <span>Necesitas verificación nivel 1+ para monetizar</span>
+        </div>
+
+        <!-- PayPal -->
+        <label class="pf-label" style="margin-bottom:8px">
+          <ion-icon name="logo-paypal" style="color:var(--cy)"></ion-icon> EMAIL DE PAYPAL
+        </label>
+        <div class="pf-paypal-row">
+          <input type="email" id="pf-paypal-email-input" class="pf-paypal-input" placeholder="tucorreo@paypal.com">
+          <button class="pf-paypal-save" id="pf-btn-guardar-paypal">GUARDAR</button>
+        </div>
+
+        <!-- Solicitar pago -->
+        <button class="pf-solicitar-btn" id="pf-btn-solicitar-pago" disabled>
+          SOLICITAR PAGO (Mínimo $10 USD)
+        </button>
+
+        <!-- Solicitud pendiente -->
+        <div class="pf-eco-pending" id="pf-solicitud-pendiente" style="display:none">
+          <ion-icon name="checkmark-circle"></ion-icon>
+          <span>Tienes una solicitud de pago pendiente de revisión</span>
+        </div>
+
+        <!-- Info requisitos -->
+        <div class="pf-eco-info">
+          <strong style="color:var(--g)">💡 Requisitos para cobrar:</strong><br>
+          • Saldo mínimo: $10 USD<br>
+          • Verificación nivel 1+<br>
+          • Al menos 1 juego con +2,000 descargas<br>
+          • Email de PayPal configurado
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /#pf-logged -->
+</div><!-- /#profile-view -->
+
+<!-- ══ Modal: Configuración (Avatar/Bio) ══ -->
+<div class="pf-modal-overlay" id="pf-settingsModal">
+  <div class="pf-modal-sheet">
+    <div class="pf-modal-handle"></div>
+    <div class="pf-modal-hdr">
+      <div class="pf-modal-hdr-title"><ion-icon name="settings"></ion-icon> CONFIGURACIÓN</div>
+      <button class="pf-modal-close" onclick="pfCloseSettings()"><ion-icon name="close-outline"></ion-icon></button>
+    </div>
+    <div class="pf-modal-body">
+      <div class="pf-stabs">
+        <button class="pf-stab active" onclick="pfSwitchSettings('avatar',this)">Avatar</button>
+        <button class="pf-stab" onclick="pfSwitchSettings('bio',this)">Bio</button>
+      </div>
+      <!-- Avatar -->
+      <div id="pf-settings-avatar" class="pf-scontent active">
+        <div class="pf-avatar-preview" id="pf-preview-avatar">
+          <ion-icon name="person"></ion-icon>
+        </div>
+        <div class="pf-form-group">
+          <label class="pf-label">URL de Avatar</label>
+          <input type="url" id="pf-input-avatar-url" class="pf-input"
+                 placeholder="https://i.imgur.com/..."
+                 oninput="pfUpdateAvatarPreview()">
+        </div>
+        <button class="pf-btn-save" onclick="pfSaveAvatar()">
+          <ion-icon name="save"></ion-icon> GUARDAR AVATAR
+        </button>
+      </div>
+      <!-- Bio -->
+      <div id="pf-settings-bio" class="pf-scontent">
+        <div class="pf-form-group">
+          <label class="pf-label">Biografía (máx. 200 caracteres)</label>
+          <textarea id="pf-input-bio" class="pf-textarea" maxlength="200"
+                    placeholder="Cuéntanos sobre ti..."
+                    style="min-height:120px"
+                    oninput="document.getElementById('pf-bio-count').textContent=this.value.length"></textarea>
+          <small style="color:var(--txt3);font-size:.72rem"><span id="pf-bio-count">0</span>/200</small>
+        </div>
+        <button class="pf-btn-save" onclick="pfSaveBio()">
+          <ion-icon name="save"></ion-icon> GUARDAR BIO
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: Editar Publicación ══ -->
+<div class="pf-modal-overlay" id="pf-editModal">
+  <div class="pf-modal-sheet">
+    <div class="pf-modal-handle"></div>
+    <div class="pf-modal-hdr">
+      <div class="pf-modal-hdr-title"><ion-icon name="create"></ion-icon> EDITAR PUBLICACIÓN</div>
+      <button class="pf-modal-close" onclick="pfCloseEditModal()"><ion-icon name="close-outline"></ion-icon></button>
+    </div>
+    <div class="pf-modal-body">
+      <input type="hidden" id="pf-edit-id">
+      <div class="pf-form-group"><label class="pf-label">Título</label>
+        <input type="text" id="pf-edit-title" class="pf-input" required></div>
+      <div class="pf-form-group"><label class="pf-label">Descripción</label>
+        <textarea id="pf-edit-description" class="pf-textarea"></textarea></div>
+      <div class="pf-form-group"><label class="pf-label">Enlace</label>
+        <input type="url" id="pf-edit-link" class="pf-input" required></div>
+      <div class="pf-form-group"><label class="pf-label">Imagen URL</label>
+        <input type="url" id="pf-edit-image" class="pf-input"></div>
+      <div class="pf-form-group"><label class="pf-label">Categoría</label>
+        <select id="pf-edit-category" class="pf-select">
+          <option value="Juego">Juego</option>
+          <option value="Mod">Mod</option>
+          <option value="Optimizacion">Optimización</option>
+          <option value="Ajustes">Ajustes (Herramientas)</option>
+          <option value="Apps">Apps</option>
+          <option value="Software">Software Open Source</option>
+        </select></div>
+      <button class="pf-btn-save" id="pf-edit-save-btn">
+        <ion-icon name="checkmark-circle"></ion-icon> GUARDAR CAMBIOS
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: Guía de Categorías ══ -->
+<div class="pf-modal-overlay" id="pf-catModal">
+  <div class="pf-modal-sheet">
+    <div class="pf-modal-handle"></div>
+    <div class="pf-modal-hdr">
+      <div class="pf-modal-hdr-title"><ion-icon name="apps"></ion-icon> GUÍA DE CATEGORÍAS</div>
+      <button class="pf-modal-close" onclick="pfCloseCatInfo()"><ion-icon name="close-outline"></ion-icon></button>
+    </div>
+    <div class="pf-modal-body">
+      <div class="pf-cat-grid">
+        <div class="pf-cat-info"><h4><ion-icon name="game-controller"></ion-icon> JUEGO</h4>
+          <p>Juegos completos distribuidos legalmente (código abierto, desarrollador original, dominio público, o con permiso expreso).</p></div>
+        <div class="pf-cat-info"><h4><ion-icon name="construct"></ion-icon> MOD</h4>
+          <p>Modificaciones de juegos existentes (texturas, gameplay, personajes, etc.)</p></div>
+        <div class="pf-cat-info"><h4><ion-icon name="speedometer"></ion-icon> OPTIMIZACIÓN</h4>
+          <p>Mejoras de rendimiento, configuraciones optimizadas, parches de FPS.</p></div>
+        <div class="pf-cat-info"><h4><ion-icon name="settings"></ion-icon> AJUSTES</h4>
+          <p>Utilidades, herramientas de configuración, tweaks del sistema.</p></div>
+        <div class="pf-cat-info"><h4><ion-icon name="phone-portrait"></ion-icon> APPS</h4>
+          <p>Aplicaciones móviles o de escritorio.</p></div>
+        <div class="pf-cat-info"><h4><ion-icon name="code-slash"></ion-icon> OPEN SOURCE</h4>
+          <p>Software de código abierto, proyectos GPL, herramientas libres.</p></div>
+        <div class="pf-warning-box">
+          <h4><ion-icon name="warning"></ion-icon> IMPORTANTE</h4>
+          <p><strong>Categoría "Juego":</strong> Solo si eres el desarrollador original o tienes autorización legal. Redistribuir juegos de terceros sin permiso puede violar derechos de autor.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Tooltips de formulario ══ -->
+<div class="pf-tooltip" id="pf-tooltip-title">
+  <button class="pf-tooltip-close" onclick="pfCloseTooltip('pf-tooltip-title')">✕</button>
+  <h4><ion-icon name="shield-checkmark"></ion-icon> Bot de Metadata Activo</h4>
+  <p class="pf-warn">⚠️ Sistema anti-piratería activado</p>
+  <p style="color:var(--txt);font-weight:600;margin-top:10px">Palabras PROHIBIDAS en el título:</p>
+  <ul><li><strong>crack</strong>, cracked, crackeado</li><li><strong>pirata</strong>, pirateado</li><li><strong>gratis</strong>, free</li><li><strong>full</strong>, completo</li><li><strong>premium</strong>, pro (sin licencia)</li><li><strong>descargar</strong>, download</li></ul>
+  <p class="pf-ok" style="margin-top:10px">✅ Usa títulos descriptivos y profesionales</p>
+</div>
+
+<div class="pf-tooltip" id="pf-tooltip-link">
+  <button class="pf-tooltip-close" onclick="pfCloseTooltip('pf-tooltip-link')">✕</button>
+  <h4><ion-icon name="information-circle"></ion-icon> Requisitos del Enlace</h4>
+  <p class="pf-ok">✅ Solo se admiten enlaces de descarga DIRECTA</p>
+  <p style="color:var(--txt);font-weight:600;margin-top:10px">Plataformas permitidas:</p>
+  <ul><li>MediaFire, MEGA, Google Drive</li><li>OneDrive, Dropbox, GitHub</li><li>GoFile, PixelDrain, Krakenfiles</li></ul>
+  <p class="pf-warn" style="margin-top:10px">❌ NO se permiten acortadores (bit.ly, etc.)</p>
+</div>
+
+<div class="pf-tooltip" id="pf-tooltip-image">
+  <button class="pf-tooltip-close" onclick="pfCloseTooltip('pf-tooltip-image')">✕</button>
+  <h4><ion-icon name="image"></ion-icon> Cómo obtener enlace de imagen</h4>
+  <ol><li>Abre Google Imágenes y busca</li><li><strong>Móvil:</strong> Mantén presionada → "Abrir en otra pestaña"</li><li><strong>PC:</strong> Clic derecho → "Abrir imagen en pestaña nueva"</li><li>Copia el enlace completo</li><li>Pega aquí</li></ol>
+  <p class="pf-warn" style="margin-top:10px">⚠️ El enlace debe terminar en .jpg, .png, .webp o .gif</p>
 </div>
 
 <!-- ══════════════════════════════════
@@ -1738,7 +2638,7 @@ input, textarea { font-family:inherit; }
     <ion-icon name="heart"></ion-icon>
     <span>Favoritos</span>
   </button>
-  <button class="nav-tab" data-tab="upload" onclick="window.location.href='./perfil.html'">
+  <button class="nav-tab" data-tab="upload">
     <ion-icon name="add-circle"></ion-icon>
     <span>Subir</span>
   </button>
@@ -2409,15 +3309,16 @@ function handleMail(e) {
 document.querySelectorAll('.nav-tab[data-tab]').forEach(tab=>{
   tab.addEventListener('click',function(){
     const t=this.dataset.tab;
-    if(t==='upload') return;
     switchTab(t);
   });
 });
 
 function switchTab(t) {
+  if(t==='upload') t='profile';
   currentTab=t;
   document.querySelectorAll('.nav-tab').forEach(x=>x.classList.remove('active'));
-  document.querySelector(`.nav-tab[data-tab="${t}"]`).classList.add('active');
+  const navBtn = document.querySelector(`.nav-tab[data-tab="${t}"]`);
+  if(navBtn) navBtn.classList.add('active');
   document.getElementById('main-view').style.display=t==='main'?'':'none';
   document.getElementById('category-row').style.display=t==='main'?'':'none';
   const favsView=document.getElementById('favs-view');
@@ -2449,53 +3350,599 @@ function renderFavs() {
 
 // ── PROFILE TAB ──────────────────────────────────────────
 function renderProfile() {
-  const container=document.getElementById('profile-content');
-  const user=localStorage.getItem('user_admin');
+  const user = localStorage.getItem('user_admin');
   if(!user) {
-    container.innerHTML=`<div class="profile-not-logged">
-      <ion-icon name="person-circle-outline" style="font-size:3rem;color:var(--txt3)"></ion-icon>
-      <h3>No has iniciado sesión</h3>
-      <p>Accede para ver tu perfil, favoritos y contenido subido</p>
-      <a href="./perfil.html" class="btn-login-action">
-        <ion-icon name="log-in-outline"></ion-icon>Iniciar Sesión
-      </a>
-    </div>`;
+    document.getElementById('pf-not-logged').style.display='';
+    document.getElementById('pf-logged').style.display='none';
     return;
   }
-  const level=mapaUsuarios[user]||0;
-  const lvlNames=['','Trusted','Silver','Gold'];
-  container.innerHTML=`
-    <div class="profile-card">
-      <div class="profile-cover"></div>
-      <div class="profile-info" style="padding-top:40px">
-        <div style="position:absolute;top:-24px;left:20px">
-          <div class="profile-avatar">${avatarLetter(user)}</div>
-        </div>
-        <div class="profile-name">@${user} ${getBadge(user)}</div>
-        <div class="profile-handle">Nivel ${level>0?lvlNames[level]||'Gold':'Usuario'}</div>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-      <div class="stat-box">
-        <div class="stat-val">${todosLosItems.filter(i=>i.usuario===user).length}</div>
-        <div class="stat-lbl">Subidos</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-val">${JSON.parse(localStorage.getItem('favoritos')||'[]').length}</div>
-        <div class="stat-lbl">Favoritos</div>
-      </div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <a href="./perfil.html" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg1);border:1px solid var(--bd);border-radius:14px;font-size:.85rem;font-weight:600">
-        <ion-icon name="create-outline" style="font-size:1.2rem;color:var(--g)"></ion-icon> Editar Perfil
-      </a>
-      <a href="./perfil.html" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg1);border:1px solid var(--bd);border-radius:14px;font-size:.85rem;font-weight:600">
-        <ion-icon name="cloud-upload-outline" style="font-size:1.2rem;color:var(--cy)"></ion-icon> Subir Contenido
-      </a>
-    </div>`;
-  // Fix absolute avatar position
-  container.querySelector('.profile-card').style.position='relative';
+  document.getElementById('pf-not-logged').style.display='none';
+  document.getElementById('pf-logged').style.display='';
+  pfInit(user);
 }
+
+// ═══════════════════════════════════════════════════════════
+// PERFIL INTEGRADO — FULL LOGIC
+// ═══════════════════════════════════════════════════════════
+const PF_API = "https://backendapp-037y.onrender.com";
+let pfUser = null;
+let pfInitialized = false;
+let pfCurrentEditId = null;
+
+function pfInit(user) {
+  pfUser = user;
+  if(pfInitialized) {
+    // Refresh data
+    pfLoadUserData();
+    pfLoadHistorial();
+    pfLoadEconomia();
+    return;
+  }
+  pfInitialized = true;
+  pfLoadUserData();
+  pfLoadHistorial();
+  pfLoadBoveda();
+  pfLoadEconomia();
+  pfInitForm();
+}
+
+// ── Load user data (badge, bio, avatar, stats) ──
+async function pfLoadUserData() {
+  if(!pfUser) return;
+  document.getElementById('pf-username').textContent = '@' + pfUser;
+
+  try {
+    const res = await fetch(`${PF_API}/auth/users/public`);
+    const users = await res.json();
+    const ud = users.find(u => u.usuario === pfUser);
+    if(!ud) return;
+
+    const nivel = ud.verificadoNivel || 0;
+    if(nivel > 0) {
+      const cls = ['','lv1','lv2','lv3'][nivel]||'lv3';
+      const ico = nivel === 3 ? 'checkmark-done-circle-sharp' : 'checkmark-circle';
+      document.getElementById('pf-badge').innerHTML =
+        `<ion-icon name="${ico}" class="verificado-badge ${cls}" title="Verificado nivel ${nivel}"></ion-icon>`;
+    }
+
+    if(ud.avatar && ud.avatar.trim()) {
+      const img = document.getElementById('pf-avatar-img');
+      const ico = document.getElementById('pf-avatar-icon');
+      img.src = ud.avatar; img.style.display='block'; ico.style.display='none';
+      const prev = document.getElementById('pf-preview-avatar');
+      if(prev) prev.innerHTML=`<img src="${ud.avatar}" alt="Avatar">`;
+      const inp = document.getElementById('pf-input-avatar-url');
+      if(inp) inp.value = ud.avatar;
+    }
+    if(ud.bio && ud.bio.trim()) {
+      document.getElementById('pf-bio').textContent = ud.bio;
+      const inp = document.getElementById('pf-input-bio');
+      if(inp) { inp.value = ud.bio; document.getElementById('pf-bio-count').textContent = ud.bio.length; }
+    }
+  } catch(e) { console.error('pfLoadUserData', e); }
+
+  // Stats
+  try {
+    const sr = await fetch(`${PF_API}/usuarios/stats-seguimiento/${pfUser}`);
+    if(sr.ok) {
+      const sd = await sr.json();
+      if(sd.stats) {
+        document.getElementById('pf-stat-followers').textContent = sd.stats.seguidores || 0;
+        document.getElementById('pf-stat-following').textContent = sd.stats.siguiendo || 0;
+      }
+    } else {
+      // fallback
+      const ur = await fetch(`${PF_API}/auth/users/public`);
+      const us = await ur.json();
+      const uu = us.find(u => u.usuario === pfUser);
+      if(uu) {
+        const seg = uu.listaSeguidores ? uu.listaSeguidores.length : (uu.seguidores ? uu.seguidores.length : 0);
+        const sig = uu.siguiendo ? uu.siguiendo.length : 0;
+        document.getElementById('pf-stat-followers').textContent = seg;
+        document.getElementById('pf-stat-following').textContent = sig;
+      }
+    }
+  } catch(e) {}
+
+  try {
+    const ir = await fetch(`${PF_API}/items/user/${pfUser}`);
+    if(ir.ok) {
+      const id = await ir.json();
+      const aprobados = Array.isArray(id) ? id.filter(i => i.status === 'aprobado').length : 0;
+      document.getElementById('pf-stat-uploads').textContent = aprobados;
+    }
+  } catch(e) {}
+}
+
+// ── Inner tab switching ──
+function pfSwitchTab(tabName, el) {
+  document.querySelectorAll('.perfil-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.perfil-tab-content').forEach(c => c.classList.remove('active'));
+  if(el) el.classList.add('active');
+  else document.querySelector(`[data-pftab="${tabName}"]`)?.classList.add('active');
+  const tc = document.getElementById(`pf-tab-${tabName}`);
+  if(tc) tc.classList.add('active');
+  if(tabName === 'historial') pfLoadHistorial();
+  if(tabName === 'boveda') pfLoadBoveda();
+  if(tabName === 'reportes') pfLoadReportes();
+  if(tabName === 'economia') pfLoadEconomia();
+}
+
+// ── Form: upload ──
+function pfInitForm() {
+  ['pf-addTitle','pf-addDescription','pf-addLink','pf-addImage','pf-addCategory'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', pfUpdatePreview);
+    if(id === 'pf-addTitle' && el) el.addEventListener('input', pfValidateTitle);
+  });
+  const btn = document.getElementById('pf-subirBtn');
+  if(btn) btn.addEventListener('click', pfSubirJuego);
+  document.addEventListener('click', e => {
+    if(!e.target.closest('.pf-info-icon') && !e.target.closest('.pf-tooltip')) {
+      document.querySelectorAll('.pf-tooltip').forEach(t => t.classList.remove('active'));
+    }
+  });
+  // PayPal
+  document.getElementById('pf-btn-guardar-paypal')?.addEventListener('click', pfGuardarPaypal);
+  document.getElementById('pf-btn-solicitar-pago')?.addEventListener('click', pfSolicitarPago);
+  // Edit save
+  document.getElementById('pf-edit-save-btn')?.addEventListener('click', pfSaveEdit);
+}
+
+const PF_BANNED = ['crack','cracked','crackeado','crackeo','pirata','pirateado','piratear',
+  'gratis','free','gratuito','full','completo','complete','premium gratis','pro gratis',
+  'descargar gratis','download free'];
+const PF_BANNED_VISUAL = ['crack','cracked','crackeado','crackeo','pirata','pirateado',
+  'gratis','free','gratuito','full','completo','complete','premium','pro','descargar','download'];
+const PF_ALLOWED_LINKS = ['mediafire.com','mega.nz','mega.co.nz','drive.google.com',
+  'gofile.io','onedrive.live.com','icloud.com','proton.me','pcloud.com',
+  'pixeldrain.com','1fichier.com','qiwi.gg','krakenfiles.com','dropbox.com','github.com'];
+
+function pfAnalizarLink(url) {
+  if(!url) return { ok: null };
+  try {
+    const h = new URL(url).hostname.replace('www.','');
+    const ok = PF_ALLOWED_LINKS.some(d => h === d || h.endsWith('.'+d));
+    if(!ok) return { ok:false, msg:'❌ Solo se permite MediaFire, Mega, Drive, etc. Sin acortadores.' };
+    if(url.toLowerCase().endsWith('.exe')||url.toLowerCase().endsWith('.msi'))
+      return { ok:false, msg:'⚠️ No enlaces directos a .exe. Usa .zip o .rar' };
+    return { ok:true };
+  } catch(e) { return { ok:false, msg:'❌ Formato de enlace inválido.' }; }
+}
+
+function pfUpdatePreview() {
+  const t = document.getElementById('pf-addTitle')?.value || 'Título del Proyecto';
+  const c = document.getElementById('pf-addCategory')?.value || 'Categoría';
+  const i = document.getElementById('pf-addImage')?.value || 'https://via.placeholder.com/300x150?text=Esperando+Imagen';
+  document.getElementById('pf-prev-title').textContent = t;
+  document.getElementById('pf-prev-tag').textContent = c.toUpperCase();
+  document.getElementById('pf-prev-img').src = i;
+  const linkEl = document.getElementById('pf-addLink');
+  if(linkEl && linkEl.value.trim()) {
+    const r = pfAnalizarLink(linkEl.value.trim());
+    linkEl.classList.toggle('valid', r.ok === true);
+    linkEl.classList.toggle('invalid', r.ok === false);
+  } else if(linkEl) { linkEl.classList.remove('valid','invalid'); }
+}
+
+function pfValidateTitle() {
+  const el = document.getElementById('pf-addTitle');
+  if(!el) return;
+  const txt = el.value.toLowerCase();
+  const bad = PF_BANNED_VISUAL.some(k => new RegExp('\\b'+k+'\\b','i').test(txt));
+  el.classList.toggle('invalid', bad && txt.length > 0);
+  if(bad && txt.length > 0) el.classList.remove('valid');
+}
+
+async function pfSubirJuego() {
+  if(!pfUser) return alert('Debes iniciar sesión.');
+  const ahora = Date.now();
+  const ult = localStorage.getItem('ultima_publicacion');
+  if(ult && ahora - parseInt(ult) < 30000) {
+    const s = Math.ceil((30000-(ahora-parseInt(ult)))/1000);
+    return toast(`⏱️ Anti-spam: Espera ${s}s antes de publicar.`);
+  }
+  const titulo = document.getElementById('pf-addTitle').value.trim();
+  const desc = document.getElementById('pf-addDescription').value.trim();
+  const link = document.getElementById('pf-addLink').value.trim();
+  const imagen = document.getElementById('pf-addImage').value.trim();
+  const cat = document.getElementById('pf-addCategory').value;
+
+  const bad = PF_BANNED.find(k => new RegExp('\\b'+k+'\\b','i').test(titulo.toLowerCase()));
+  if(bad) return toast(`🚫 Palabra prohibida: "${bad}"`);
+  const vLink = pfAnalizarLink(link);
+  if(vLink.ok === false) return toast(vLink.msg);
+  if(!titulo || !link) return toast('⚠️ Completa Título y Enlace.');
+
+  const token = localStorage.getItem('token');
+  if(!token) { alert('⚠️ Sesión expirada.'); location.href='./index.html'; return; }
+
+  const btn = document.getElementById('pf-subirBtn');
+  btn.textContent = 'Enviando...'; btn.disabled = true;
+  try {
+    const res = await fetch(`${PF_API}/items/add`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body: JSON.stringify({ title:titulo, description:desc, link, image:imagen, category:cat, usuario:pfUser, status:'pendiente' })
+    });
+    if(res.ok) {
+      localStorage.setItem('ultima_publicacion', Date.now().toString());
+      toast('✅ Publicado. Esperando aprobación.');
+      document.getElementById('pf-addTitle').value='';
+      document.getElementById('pf-addDescription').value='';
+      document.getElementById('pf-addLink').value='';
+      document.getElementById('pf-addImage').value='';
+      pfUpdatePreview();
+      pfLoadHistorial();
+      pfLoadUserData();
+    } else {
+      const err = await res.json();
+      toast('❌ ' + (err.error || err.message || 'Error al publicar'));
+    }
+  } catch(e) { toast('❌ Error de conexión'); }
+  finally { btn.innerHTML='<ion-icon name="cloud-upload"></ion-icon> ENVIAR A REVISIÓN'; btn.disabled=false; }
+}
+
+// ── Historial ──
+async function pfLoadHistorial() {
+  const cont = document.getElementById('pf-showContent');
+  if(!cont || !pfUser) return;
+  cont.innerHTML = '<div class="pf-empty"><ion-icon name="sync-outline"></ion-icon><p>Cargando...</p></div>';
+  try {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${PF_API}/items/user/${pfUser}`, {
+      headers: token ? { Authorization:`Bearer ${token}` } : {}
+    });
+    const data = await res.json();
+    const items = Array.isArray(data) ? data.reverse() : [];
+    if(!items.length) {
+      cont.innerHTML='<div class="pf-empty"><ion-icon name="cloud-offline-outline"></ion-icon><p>Aún no has publicado nada.</p></div>';
+      return;
+    }
+    cont.innerHTML='';
+    items.forEach(item => {
+      const isPending = item.status==='pendiente'||item.status==='pending';
+      const ls = item.linkStatus||'online';
+      const lsText = ls==='online'?'🟢 Online':ls==='revision'?'🟡 Rev.':'🔴 Caído';
+      const card = document.createElement('div');
+      card.className = 'pf-item-card';
+      card.innerHTML = `
+        <div class="pf-item-badge ${isPending?'pending':'approved'}">${isPending?'Pendiente':'Aprobado'}</div>
+        <img src="${item.image||'https://via.placeholder.com/300x170?text=Sin+Imagen'}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/300x170?text=Sin+Imagen'">
+        <div class="pf-item-info">
+          <div class="pf-item-title">${item.title||'Sin título'}</div>
+          <div class="pf-item-cat">${item.category||'General'}</div>
+          <div class="pf-item-stats">
+            <div class="pf-item-stat"><div class="pf-item-stat-val">${item.descargasEfectivas||0}</div><div class="pf-item-stat-lbl">DL</div></div>
+            <div class="pf-item-stat"><div class="pf-item-stat-val" style="font-size:.62rem">${lsText}</div><div class="pf-item-stat-lbl">LINK</div></div>
+            <div class="pf-item-stat"><div class="pf-item-stat-val" style="color:${(item.reportes||0)>=3?'#ff4343':'var(--txt)'}">${item.reportes||0}</div><div class="pf-item-stat-lbl">REP</div></div>
+          </div>
+          <div class="pf-item-actions">
+            <button class="pf-btn-action edit" onclick="pfOpenEditModal('${item._id}')"><ion-icon name="create"></ion-icon> Editar</button>
+            <button class="pf-btn-action del" onclick="pfEliminar('${item._id}')"><ion-icon name="trash"></ion-icon> Borrar</button>
+          </div>
+        </div>`;
+      cont.appendChild(card);
+    });
+  } catch(e) {
+    cont.innerHTML='<div class="pf-empty" style="color:#ff4343"><p>Error al cargar historial</p></div>';
+  }
+}
+
+async function pfEliminar(id) {
+  if(!confirm('¿Eliminar este archivo de la nube?')) return;
+  const token = localStorage.getItem('token');
+  if(!token) { alert('Sesión expirada'); location.href='./index.html'; return; }
+  try {
+    const res = await fetch(`${PF_API}/items/${id}`,{
+      method:'DELETE', headers:{'Authorization':`Bearer ${token}`}
+    });
+    if(res.ok) { toast('✅ Eliminado.'); pfLoadHistorial(); pfLoadUserData(); }
+    else { const e=await res.json(); toast('❌ '+(e.mensaje||e.error||'Error')); }
+  } catch(e) { toast('❌ Error de conexión'); }
+}
+
+// ── Edit Modal ──
+async function pfOpenEditModal(itemId) {
+  pfCurrentEditId = itemId;
+  try {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${PF_API}/items/user/${pfUser}`,{
+      headers: token ? { Authorization:`Bearer ${token}` } : {}
+    });
+    const data = await res.json();
+    const item = data.find(i => i._id === itemId);
+    if(!item) { toast('❌ Item no encontrado'); return; }
+    document.getElementById('pf-edit-id').value = item._id;
+    document.getElementById('pf-edit-title').value = item.title||'';
+    document.getElementById('pf-edit-description').value = item.description||'';
+    document.getElementById('pf-edit-link').value = item.link||'';
+    document.getElementById('pf-edit-image').value = item.image||'';
+    document.getElementById('pf-edit-category').value = item.category||'Juego';
+    document.getElementById('pf-editModal').classList.add('show');
+    document.body.style.overflow='hidden';
+  } catch(e) { toast('❌ Error al cargar'); }
+}
+function pfCloseEditModal() {
+  document.getElementById('pf-editModal').classList.remove('show');
+  document.body.style.overflow='';
+  pfCurrentEditId = null;
+}
+async function pfSaveEdit() {
+  if(!pfCurrentEditId) return;
+  const upd = {
+    title: document.getElementById('pf-edit-title').value.trim(),
+    description: document.getElementById('pf-edit-description').value.trim(),
+    link: document.getElementById('pf-edit-link').value.trim(),
+    image: document.getElementById('pf-edit-image').value.trim(),
+    category: document.getElementById('pf-edit-category').value
+  };
+  const vl = pfAnalizarLink(upd.link);
+  if(vl.ok===false) { toast(vl.msg); return; }
+  if(!upd.title||!upd.link) { toast('⚠️ Título y enlace requeridos'); return; }
+  const bad = PF_BANNED.find(k => new RegExp('\\b'+k+'\\b','i').test(upd.title.toLowerCase()));
+  if(bad) { toast(`🚫 Palabra prohibida: "${bad}"`); return; }
+  const token = localStorage.getItem('token');
+  if(!token) { toast('Sesión expirada'); return; }
+  try {
+    const res = await fetch(`${PF_API}/items/${pfCurrentEditId}`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body: JSON.stringify(upd)
+    });
+    if(res.ok) { toast('✅ Actualizado'); pfCloseEditModal(); pfLoadHistorial(); }
+    else { const e=await res.json(); toast('❌ '+(e.error||'Error')); }
+  } catch(e) { toast('❌ Error de conexión'); }
+}
+
+// ── Bóveda ──
+async function pfLoadBoveda() {
+  const cont = document.getElementById('pf-vaultContent');
+  if(!cont||!pfUser) return;
+  cont.innerHTML='<div class="pf-empty"><ion-icon name="sync-outline"></ion-icon><p>Cargando...</p></div>';
+  try {
+    const res = await fetch(`${PF_API}/favoritos/${pfUser}`);
+    const data = await res.json();
+    const favs = Array.isArray(data) ? data : [];
+    if(!favs.length) {
+      cont.innerHTML='<div class="pf-empty"><ion-icon name="heart-dislike-outline"></ion-icon><p>Tu bóveda está vacía.<br>Agrega favoritos desde la biblioteca.</p></div>';
+      return;
+    }
+    cont.innerHTML='';
+    favs.forEach(item => {
+      if(!item) return;
+      const card = document.createElement('div');
+      card.className='pf-vault-card';
+      card.innerHTML=`
+        <img src="${item.image||'https://via.placeholder.com/300x170?text=Sin+Imagen'}" alt="${item.title||''}" onerror="this.src='https://via.placeholder.com/300x170?text=Sin+Imagen'">
+        <div class="pf-vault-info">
+          <div class="pf-vault-title">${(item.title||'Sin título').substring(0,40)}</div>
+          <div class="pf-vault-user">@${item.usuario||'Anónimo'}</div>
+          <div class="pf-vault-actions">
+            <button class="pf-vault-btn access" onclick="window.open('puente.html?id=${item._id}','_blank')"><ion-icon name="cloud-download"></ion-icon> Acceder</button>
+            <button class="pf-vault-btn remove" onclick="pfRemoveFav('${item._id}')"><ion-icon name="trash"></ion-icon> Quitar</button>
+          </div>
+        </div>`;
+      cont.appendChild(card);
+    });
+  } catch(e) { cont.innerHTML='<div class="pf-empty" style="color:#ff4343"><p>Error al cargar favoritos</p></div>'; }
+}
+async function pfRemoveFav(itemId) {
+  if(!confirm('¿Quitar de tu bóveda?')) return;
+  try {
+    const res = await fetch(`${PF_API}/favoritos/remove`,{
+      method:'DELETE',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ usuario:pfUser, itemId })
+    });
+    const d = await res.json();
+    if(d.success||d.ok) { toast('💔 Eliminado de favoritos'); pfLoadBoveda(); }
+    else toast('❌ '+(d.error||'Error'));
+  } catch(e) { toast('❌ Error de conexión'); }
+}
+
+// ── Reportes ──
+async function pfLoadReportes() {
+  const cont = document.getElementById('pf-reportesContent');
+  if(!cont||!pfUser) return;
+  cont.innerHTML='<div class="pf-empty"><ion-icon name="sync-outline"></ion-icon><p>Cargando...</p></div>';
+  try {
+    const res = await fetch(`${PF_API}/items/mis-reportes/${pfUser}`);
+    const data = await res.json();
+    if(!data.success||!data.publicaciones||!data.publicaciones.length) {
+      cont.innerHTML=`<div class="pf-empty"><ion-icon name="happy-outline"></ion-icon><p>¡Excelente! No tienes publicaciones con reportes activos.</p></div>`;
+      return;
+    }
+    cont.innerHTML='';
+    data.publicaciones.forEach(pub => {
+      const d = pub.reportesDesglose||{caido:0,viejo:0,malware:0};
+      const sColor = pub.linkStatus==='online'?'var(--g)':pub.linkStatus==='revision'?'#ffcc00':'#ff4343';
+      const sText = pub.linkStatus==='online'?'🟢 Online':pub.linkStatus==='revision'?'🟡 En Revisión':'🔴 Caído';
+      const card = document.createElement('div');
+      card.className='pf-reporte-card';
+      card.style.borderLeftColor = sColor;
+      card.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div><div class="pf-reporte-title">${pub.title}</div>
+          <div class="pf-reporte-date">${new Date(pub.createdAt).toLocaleDateString('es-ES')}</div></div>
+          <div style="text-align:right">
+            <div class="pf-reporte-badge">${pub.reportes} Reportes</div>
+            <div style="font-size:.65rem;font-weight:700;margin-top:4px;color:${sColor}">${sText}</div>
+          </div>
+        </div>
+        <div class="pf-reporte-motivos">
+          <div class="pf-reporte-motivo"><ion-icon name="link-outline" style="color:#ff4343"></ion-icon><span style="font-weight:700;color:#ff4343">${d.caido||0}</span><span>Link caído</span></div>
+          <div class="pf-reporte-motivo"><ion-icon name="time-outline" style="color:#ffaa00"></ion-icon><span style="font-weight:700;color:#ffaa00">${d.viejo||0}</span><span>Obsoleto</span></div>
+          <div class="pf-reporte-motivo"><ion-icon name="shield-outline" style="color:#ff00ff"></ion-icon><span style="font-weight:700;color:#ff00ff">${d.malware||0}</span><span>Malware</span></div>
+        </div>
+        <div class="pf-reporte-tip">💡 <strong>Consejo:</strong> Actualiza tu link para mantener tu reputación y tus ganancias.</div>
+        <button class="pf-reporte-ver" onclick="window.open('biblioteca.html?id=${pub._id}','_blank')"><ion-icon name="eye-outline"></ion-icon> Ver Publicación</button>`;
+      cont.appendChild(card);
+    });
+  } catch(e) { cont.innerHTML='<div class="pf-empty" style="color:#ff4343"><p>Error al cargar reportes</p></div>'; }
+}
+
+// ── Economía ──
+async function pfLoadEconomia() {
+  const token = localStorage.getItem('token');
+  if(!token) return;
+  try {
+    const res = await fetch(`${PF_API}/economia/mi-saldo`,{
+      headers:{ Authorization:`Bearer ${token}` }
+    });
+    if(!res.ok) return;
+    const d = await res.json();
+    if(d.success) {
+      document.getElementById('pf-saldo-display').textContent = `$${d.saldo.toFixed(2)}`;
+      document.getElementById('pf-descargas-totales').textContent = pfFmt(d.descargasTotales);
+      document.getElementById('pf-juegos-elegibles').textContent = d.juegosElegibles;
+      if(d.paypalEmail) document.getElementById('pf-paypal-email-input').value = d.paypalEmail;
+      if(!d.isVerificado||d.verificadoNivel<1) {
+        document.getElementById('pf-estado-verificacion').style.display='flex';
+      }
+      const btnP = document.getElementById('pf-btn-solicitar-pago');
+      if(d.solicitudPagoPendiente) {
+        document.getElementById('pf-solicitud-pendiente').style.display='flex';
+        btnP.disabled=true; btnP.classList.remove('enabled');
+      } else if(d.puedeRetirar) {
+        btnP.disabled=false; btnP.classList.add('enabled');
+      }
+    }
+  } catch(e) { console.error('pfLoadEconomia', e); }
+}
+function pfFmt(n) {
+  if(!n) return '0';
+  if(n>=1e6) return (n/1e6).toFixed(1)+'M';
+  if(n>=1e3) return (n/1e3).toFixed(1)+'K';
+  return n.toString();
+}
+async function pfGuardarPaypal() {
+  const email = document.getElementById('pf-paypal-email-input').value.trim();
+  if(!email||!email.includes('@')||!email.includes('.')) { toast('⚠️ Email inválido'); return; }
+  const token = localStorage.getItem('token');
+  try {
+    const res = await fetch(`${PF_API}/economia/actualizar-paypal`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body: JSON.stringify({ paypalEmail: email })
+    });
+    const d = await res.json();
+    if(d.success) toast('✅ Email de PayPal actualizado');
+    else toast('❌ '+(d.error||'Error'));
+  } catch(e) { toast('❌ Error de conexión'); }
+}
+async function pfSolicitarPago() {
+  if(!confirm('¿Confirmas que deseas solicitar un pago? El admin revisará tu solicitud.')) return;
+  const token = localStorage.getItem('token');
+  try {
+    const res = await fetch(`${PF_API}/economia/solicitar-pago`,{
+      method:'POST', headers:{ Authorization:`Bearer ${token}` }
+    });
+    const d = await res.json();
+    if(d.success) { toast('✅ '+d.mensaje); pfLoadEconomia(); }
+    else toast('❌ '+(d.error||'Error'));
+  } catch(e) { toast('❌ Error de conexión'); }
+}
+
+// ── Settings Modal ──
+function pfOpenSettings() {
+  document.getElementById('pf-settingsModal').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function pfCloseSettings() {
+  document.getElementById('pf-settingsModal').classList.remove('show');
+  document.body.style.overflow='';
+}
+function pfSwitchSettings(type, el) {
+  document.querySelectorAll('.pf-stab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.pf-scontent').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(`pf-settings-${type}`).classList.add('active');
+}
+function pfUpdateAvatarPreview() {
+  const url = document.getElementById('pf-input-avatar-url').value;
+  const prev = document.getElementById('pf-preview-avatar');
+  if(url) prev.innerHTML=`<img src="${url}" alt="Avatar">`;
+  else prev.innerHTML='<ion-icon name="person"></ion-icon>';
+}
+async function pfSaveAvatar() {
+  const url = document.getElementById('pf-input-avatar-url').value.trim();
+  if(!url) { toast('⚠️ Ingresa una URL de avatar'); return; }
+  try {
+    const res = await fetch(`${PF_API}/auth/update-avatar`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ usuario:pfUser, nuevaFoto:url })
+    });
+    if(res.ok) {
+      toast('✅ Avatar actualizado');
+      const img = document.getElementById('pf-avatar-img');
+      img.src=url; img.style.display='block';
+      document.getElementById('pf-avatar-icon').style.display='none';
+      pfCloseSettings();
+    } else toast('❌ Error al actualizar avatar');
+  } catch(e) { toast('❌ Error de conexión'); }
+}
+async function pfSaveBio() {
+  const bio = document.getElementById('pf-input-bio').value.trim();
+  if(!bio) { toast('⚠️ La bio no puede estar vacía'); return; }
+  try {
+    const res = await fetch(`${PF_API}/usuarios/update-bio`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ usuario:pfUser, bio })
+    });
+    if(res.ok) {
+      toast('✅ Bio actualizada');
+      document.getElementById('pf-bio').textContent = bio;
+      pfCloseSettings();
+    } else toast('❌ Error al actualizar bio');
+  } catch(e) { toast('❌ Error de conexión'); }
+}
+
+// ── Category info modal ──
+function pfOpenCatInfo() {
+  document.getElementById('pf-catModal').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function pfCloseCatInfo() {
+  document.getElementById('pf-catModal').classList.remove('show');
+  document.body.style.overflow='';
+}
+
+// ── Tooltips ──
+function pfToggleTooltip(id) {
+  document.querySelectorAll('.pf-tooltip').forEach(t => { if(t.id!==id) t.classList.remove('active'); });
+  document.getElementById(id)?.classList.toggle('active');
+}
+function pfCloseTooltip(id) {
+  document.getElementById(id)?.classList.remove('active');
+}
+
+// ── Logout ──
+function pfLogout() {
+  if(!confirm('¿Cerrar sesión?')) return;
+  ['user_admin','token','RefreshToken','user_avatar','user_verified','user_rol'].forEach(k => localStorage.removeItem(k));
+  toast('👋 Sesión cerrada');
+  setTimeout(()=>{ location.href='./index.html'; }, 800);
+}
+
+// Close modals on overlay click
+['pf-settingsModal','pf-editModal','pf-catModal'].forEach(id => {
+  document.getElementById(id)?.addEventListener('click', function(e) {
+    if(e.target===this) {
+      this.classList.remove('show');
+      document.body.style.overflow='';
+    }
+  });
+});
+// Escape closes pf modals
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape') {
+    pfCloseSettings(); pfCloseEditModal(); pfCloseCatInfo();
+    document.querySelectorAll('.pf-tooltip').forEach(t=>t.classList.remove('active'));
+  }
+});
 
 // ── TERMS MODAL ──────────────────────────────────────────
 (function initTerms() {
