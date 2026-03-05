@@ -85,6 +85,45 @@
         let countdown = 30;
         let enlaceFinal = null;
         let validacionRealizada = false;
+        let tieneAdBlocker = false; // Se detecta al cargar
+
+        // ⭐ DETECCIÓN DE AD BLOCKER
+        // Crea un elemento "cebo" con clases típicas de anuncios.
+        // Los bloqueadores los ocultan o eliminan → los detectamos.
+        async function detectarAdBlocker() {
+            return new Promise(resolve => {
+                const bait = document.createElement('div');
+                bait.className = 'ad-banner ad-unit ads adsbox ad-placeholder adsbygoogle pub_300x250';
+                bait.style.cssText = 'width:1px;height:1px;position:absolute;top:-9999px;left:-9999px;pointer-events:none;';
+                bait.setAttribute('aria-hidden', 'true');
+                document.body.appendChild(bait);
+
+                // Dar tiempo al bloqueador para actuar (~150ms es suficiente)
+                setTimeout(() => {
+                    const style = window.getComputedStyle(bait);
+                    const bloqueado =
+                        bait.offsetHeight === 0 ||
+                        bait.offsetWidth  === 0 ||
+                        style.display     === 'none' ||
+                        style.visibility  === 'hidden' ||
+                        style.opacity     === '0' ||
+                        !document.body.contains(bait); // algunos lo eliminan del DOM
+
+                    try { document.body.removeChild(bait); } catch (_) {}
+                    resolve(bloqueado);
+                }, 200);
+            });
+        }
+
+        // Lanzar detección al cargar (sin bloquear el countdown)
+        detectarAdBlocker().then(resultado => {
+            tieneAdBlocker = resultado;
+            if (resultado) {
+                log("⚠️ Ad Blocker detectado — la descarga NO contará para el autor", 'error');
+            } else {
+                log("✅ Sin Ad Blocker detectado", 'success');
+            }
+        });
         
         // ⭐ OBTENER PARÁMETROS DE URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -154,8 +193,13 @@
             log(`Enviando petición al backend - Juego ID: ${juegoId}`);
             
             try {
-                const requestBody = { juegoId };
+                const requestBody = { juegoId, tieneAdBlocker };
                 log(`Body de la petición: ${JSON.stringify(requestBody)}`);
+                
+                // ⭐ AVISO VISUAL si hay ad blocker (no bloquea, solo informa)
+                if (tieneAdBlocker) {
+                    showWarning("⚠️ Bloqueador de anuncios detectado. El autor no recibirá comisión por esta descarga.");
+                }
                 
                 const response = await fetch(`${API_URL}/economia/validar-descarga`, {
                     method: 'POST',
@@ -194,7 +238,10 @@
                     log(`✅ Enlace recibido: ${enlaceFinal.substring(0, 50)}...`, 'success');
                     
                     // ⭐ MOSTRAR MENSAJE SEGÚN EL ESTADO
-                    if (data.limiteAlcanzado) {
+                    if (data.adBlockerDetectado) {
+                        showWarning("⚠️ Acceso permitido, pero tu bloqueador de anuncios impide que el autor reciba comisión. Considera desactivarlo.");
+                        log("Ad Blocker confirmado — descarga no contada para el autor", 'info');
+                    } else if (data.limiteAlcanzado) {
                         showWarning("⚠️ " + (data.mensaje || "Ya descargaste este juego 2 veces hoy. Aún puedes acceder al enlace."));
                         log("Límite alcanzado pero enlace permitido", 'info');
                     } else {
