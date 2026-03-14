@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#07070f">
 <title>UpGames — La Nube de Contenido</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://backendapp-037y.onrender.com" crossorigin>
+<link rel="dns-prefetch" href="https://backendapp-037y.onrender.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
@@ -229,6 +231,7 @@ input, textarea { font-family:inherit; }
   transition:transform .18s var(--spring), border-color .18s;
   position:relative;
   will-change:transform;
+  contain:layout style paint;
 }
 .game-tile:active { transform:scale(.96); border-color:var(--bd-g); }
 .game-tile .thumb-wrap {
@@ -3110,22 +3113,14 @@ let mapaUsuarios = {};
 let currentItem = null;
 let currentTab = 'main';
 let activeCategory = '';
-let itemsRendered = 0;
-let isLoadingMore = false;
 let reportItemId = null;
 let currentObserver = null;
-const ITEMS_BATCH = 12;
 
 // ── PRELOADER ─────────────────────────────────────────────
 (function initPreloader() {
   const fill = document.getElementById('pl-fill');
   const preloader = document.getElementById('preloader');
   let closed = false;
-
-  // Animar barra con delays absolutos: 30% → 55% → 75%
-  setTimeout(() => { if(!closed) fill.style.width='30%'; }, 0);
-  setTimeout(() => { if(!closed) fill.style.width='55%'; }, 300);
-  setTimeout(() => { if(!closed) fill.style.width='75%'; }, 700);
 
   function afterPreloader() {
     if(LS.get('upgames_terms_version')==='2026.C' && !LS.get('upgames_onboarding_done')) {
@@ -3140,21 +3135,31 @@ const ITEMS_BATCH = 12;
     setTimeout(()=>{
       preloader.classList.add('hide');
       if(typeof startTutorial === 'function') afterPreloader();
-    }, 350);
+    }, 300);
   };
 
-  // Si no hay caché, mostrar mensaje de estado al usuario
-  const hasCachedItems = (()=>{ try{ const r=localStorage.getItem('upgames_items_cache'); if(!r) return false; const {ts}=JSON.parse(r); return (Date.now()-ts) < 120000; }catch(_){ return false; } })();
-  if(!hasCachedItems) {
-    const sub = preloader.querySelector('.pl-sub');
-    if(sub) {
-      setTimeout(()=>{ if(!closed) sub.textContent='CONECTANDO CON EL SERVIDOR...'; }, 800);
-      setTimeout(()=>{ if(!closed) sub.textContent='EL SERVIDOR PUEDE TARDAR HASTA 30s...'; }, 4000);
-    }
-  }
+  // Verificar si hay caché válido
+  const hasCachedItems = (()=>{
+    try{
+      const r=localStorage.getItem('upgames_items_cache');
+      if(!r) return false;
+      const {ts}=JSON.parse(r);
+      return (Date.now()-ts) < (10 * 60 * 1000); // 10 min
+    }catch(_){ return false; }
+  })();
 
-  // Fail-safe: cerrar a los 8s si la API no respondió
-  setTimeout(()=>{ window.closePreloader && window.closePreloader(); }, 8000);
+  if(hasCachedItems) {
+    // Con caché: animación rápida de 0→100% en 400ms y cerrar
+    fill.style.transition='width .4s ease';
+    fill.style.width='100%';
+    setTimeout(window.closePreloader, 450);
+  } else {
+    // Sin caché: barra parcial y cerrar en 1.5s máximo
+    // El skeleton visible es suficiente feedback — no necesitamos 8s de spinner
+    setTimeout(() => { if(!closed) fill.style.width='40%'; }, 0);
+    setTimeout(() => { if(!closed) fill.style.width='70%'; }, 400);
+    setTimeout(() => { window.closePreloader && window.closePreloader(); }, 1500);
+  }
 })();
 
 // ── WAKE UP BACKEND ───────────────────────────────────────
@@ -3163,7 +3168,7 @@ fetch(`${API_URL}/items`,{mode:'no-cors'}).catch(()=>{});
 // ── CACHE SYSTEM ──────────────────────────────────────────
 const CACHE_KEY_ITEMS   = 'upgames_items_cache';
 const CACHE_KEY_USERS   = 'upgames_users_cache';
-const CACHE_TTL         = 2 * 60 * 1000; // 2 minutos (más fresco)
+const CACHE_TTL         = 10 * 60 * 1000; // 10 minutos
 
 function cacheSet(key, data) {
   try {
@@ -3462,30 +3467,22 @@ function initLazyVideos() {
   });
 }
 
-// ── RENDER ────────────────────────────────────────────────
+// ── RENDER — todo de una vez, sin scroll infinito ────────
 function render(list, reset=true) {
   const out = document.getElementById('output');
   const skel = document.getElementById('skeleton');
   if(skel) skel.remove();
 
-  // Desconectar observer anterior para evitar observers fantasma
-  if(currentObserver) {
-    currentObserver.disconnect();
-    currentObserver = null;
-  }
+  if(currentObserver){ currentObserver.disconnect(); currentObserver=null; }
 
-  // Remover trigger anterior
-  const old = document.getElementById('scroll-trigger');
-  if(old) old.remove();
+  if(!reset) return;
 
-  if(reset) {
-    if(typeof _vidObserver!=='undefined'&&_vidObserver){_vidObserver.disconnect();_vidObserver=null;}
-    out.innerHTML='';
-    itemsRendered=0;
-    if(list.length>0 && typeof initHeroCarousel==='function') initHeroCarousel(list);
-  }
+  if(typeof _vidObserver!=='undefined'&&_vidObserver){ _vidObserver.disconnect(); _vidObserver=null; }
+  out.innerHTML='';
 
-  if(!list.length && reset) {
+  if(list.length>0 && typeof initHeroCarousel==='function') initHeroCarousel(list);
+
+  if(!list.length) {
     out.innerHTML=`<div class="empty-state">
       <ion-icon name="cloud-offline-outline"></ion-icon>
       <h3>Sin resultados</h3>
@@ -3495,59 +3492,21 @@ function render(list, reset=true) {
     return;
   }
 
-  const batch = list.slice(itemsRendered, itemsRendered+ITEMS_BATCH);
-  if(!batch.length) return;
-
   const frag = document.createDocumentFragment();
-
-  batch.forEach((item, idx) => {
-    const globalIdx = itemsRendered+idx;
-    // Section header cada 12 ítems
-    if(globalIdx>0 && globalIdx%12===0) {
+  list.forEach((item, idx) => {
+    if(idx > 0 && idx % 12 === 0) {
       const sh = document.createElement('div');
-      sh.className='section-header';
-      sh.innerHTML=`<span class="section-title">Más Contenido</span><span class="section-count">${list.length} items</span>`;
+      sh.className = 'section-header';
+      sh.innerHTML = `<span class="section-title">Más Contenido</span><span class="section-count">${list.length} publicaciones</span>`;
       frag.appendChild(sh);
     }
     frag.appendChild(createTile(item, false));
   });
 
   out.appendChild(frag);
-  itemsRendered+=batch.length;
   initLazyVideos();
-
-  // Agregar trigger de scroll infinito si quedan más ítems
-  if(itemsRendered<list.length) {
-    const trigger = document.createElement('div');
-    trigger.id='scroll-trigger';
-    trigger.style.cssText='height:40px;width:100%;grid-column:1/-1;';
-    out.appendChild(trigger);
-    currentObserver = new IntersectionObserver((entries)=>{
-      entries.forEach(e=>{
-        if(e.isIntersecting && !isLoadingMore) loadMore(list);
-      });
-    },{rootMargin:'0px', threshold:0.1});
-    setTimeout(()=>{ if(currentObserver) currentObserver.observe(trigger); }, 200);
-  }
 }
 
-function loadMore(list) {
-  if(isLoadingMore || itemsRendered>=list.length) return;
-  isLoadingMore=true;
-  // Remover trigger mientras carga para evitar disparos múltiples
-  const old = document.getElementById('scroll-trigger');
-  if(old) old.remove();
-  const loader = document.createElement('div');
-  loader.className='scroll-loader';
-  loader.id='inf-loader';
-  loader.innerHTML='<ion-icon name="sync-outline"></ion-icon> Cargando más...';
-  document.getElementById('output').appendChild(loader);
-  setTimeout(()=>{
-    loader.remove();
-    render(list, false);
-    isLoadingMore=false;
-  }, 400);
-}
 
 // ── LOAD DATA ─────────────────────────────────────────────
 // Helper: fetch con timeout configurable
@@ -3592,8 +3551,9 @@ async function loadContent() {
     const data = await r.json();
     cacheSet(CACHE_KEY_ITEMS, data);
 
-    // Solo re-renderizar si los datos cambiaron
-    const changed = JSON.stringify(data) !== JSON.stringify(todosLosItems);
+    // Comparación ligera — evita serializar 100 objetos completos
+    const changed = data.length !== todosLosItems.length ||
+      data.some((it,i) => !todosLosItems[i] || it._id !== todosLosItems[i]._id || it.scoreRecomendacion !== todosLosItems[i].scoreRecomendacion);
     todosLosItems = data;
     filteredItems = activeCategory
       ? data.filter(i=>i.category===activeCategory)
@@ -5321,7 +5281,71 @@ document.getElementById('btut-close').addEventListener('click', finishTutorial);
 
 // ── INIT ─────────────────────────────────────────────────
 window.startBibliotecaTutorial = startTutorial;
-window.addEventListener('load', loadContent);
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', loadContent);
+} else { loadContent(); }
+
+// ── SERVICE WORKER (caché de imágenes) ───────────────────
+// Se registra inline via Blob para no necesitar sw.js separado
+(function registerImageSW() {
+  if(!('serviceWorker' in navigator)) return;
+
+  const SW_SRC = `
+const CACHE = 'upgames-imgs-v1';
+const IMG_HOSTS = [
+  'img.youtube.com',
+  'i.imgur.com','imgur.com',
+  'i.postimg.cc','postimg.cc',
+  'i.ibb.co','ibb.co',
+  'lh3.googleusercontent.com',
+  'via.placeholder.com',
+  'placehold.co',
+  'cdn.discordapp.com',
+  'media.discordapp.net',
+  'raw.githubusercontent.com',
+];
+
+self.addEventListener('fetch', e => {
+  const url = e.request.url;
+  const isImg = IMG_HOSTS.some(h => url.includes(h)) ||
+    /\\.(jpg|jpeg|png|webp|gif|avif)(\\?|$)/i.test(url);
+  if(!isImg) return;
+
+  e.respondWith(
+    caches.open(CACHE).then(cache =>
+      cache.match(e.request).then(cached => {
+        if(cached) return cached;
+        return fetch(e.request).then(res => {
+          // Solo cachear respuestas válidas
+          if(res && res.status === 200 && res.type !== 'opaque') {
+            cache.put(e.request, res.clone());
+          }
+          return res;
+        }).catch(() => cached);
+      })
+    )
+  );
+});
+
+// Limpiar caches viejos al activar nueva versión
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    )
+  );
+});
+`;
+
+  try {
+    const blob = new Blob([SW_SRC], {type:'application/javascript'});
+    const url  = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url, {scope:'/'})
+      .then(() => console.log('✅ Image SW activo'))
+      .catch(e => console.warn('SW no disponible:', e.message));
+  } catch(e) {}
+})();
+
 </script>
 </body>
 </html>
