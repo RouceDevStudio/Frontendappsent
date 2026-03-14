@@ -231,7 +231,6 @@ input, textarea { font-family:inherit; }
   transition:transform .18s var(--spring), border-color .18s;
   position:relative;
   will-change:transform;
-  contain:layout style paint;
 }
 .game-tile:active { transform:scale(.96); border-color:var(--bd-g); }
 .game-tile .thumb-wrap {
@@ -280,6 +279,7 @@ input, textarea { font-family:inherit; }
   background:currentColor;
   animation:blink 1.8s ease-in-out infinite;
   flex-shrink:0;
+  will-change:opacity;
 }
 @keyframes blink {0%,100%{opacity:1}50%{opacity:.3}}
 .tile-info {
@@ -1308,16 +1308,16 @@ input, textarea { font-family:inherit; }
   width:52px; height:52px;
   border-radius:50%;
   background:linear-gradient(135deg,#0f1f0f,#0a1a1a);
-  border:1.5px solid rgba(94,255,67,.3);
+  border:1.5px solid rgba(94,255,67,.4);
   display:flex; align-items:center; justify-content:center;
   z-index:600;
-  box-shadow:0 4px 20px rgba(94,255,67,.2), 0 0 0 0 rgba(94,255,67,.3);
+  box-shadow:0 4px 16px rgba(94,255,67,.15);
   animation:fabPulse 3s ease-in-out infinite;
   cursor:pointer;
 }
 @keyframes fabPulse {
-  0%,100%{box-shadow:0 4px 20px rgba(94,255,67,.2),0 0 0 0 rgba(94,255,67,.3)}
-  50%{box-shadow:0 4px 20px rgba(94,255,67,.3),0 0 0 8px rgba(94,255,67,0)}
+  0%,100%{opacity:1}
+  50%{opacity:.75}
 }
 #nxFab svg { width:26px; height:26px; }
 
@@ -1467,7 +1467,7 @@ input, textarea { font-family:inherit; }
   position:fixed;
   border-radius:14px;
   /* box-shadow crea el oscurecimiento alrededor del hueco */
-  box-shadow:0 0 0 9999px rgba(0,0,0,.78);
+  box-shadow:0 0 0 9999px rgba(0,0,0,.78); animation:none;
   z-index:9901;
   pointer-events:none;
   outline:2.5px solid var(--g);
@@ -1476,7 +1476,7 @@ input, textarea { font-family:inherit; }
   transition:top .35s cubic-bezier(.4,0,.2,1), left .35s cubic-bezier(.4,0,.2,1),
              width .35s cubic-bezier(.4,0,.2,1), height .35s cubic-bezier(.4,0,.2,1);
 }
-@keyframes spotPulse{0%,100%{outline-color:var(--g);box-shadow:0 0 0 9999px rgba(0,0,0,.78)}50%{outline-color:var(--cy);box-shadow:0 0 0 9999px rgba(0,0,0,.82)}}
+@keyframes spotPulse{0%,100%{outline-color:var(--g)}50%{outline-color:var(--cy)}}
 
 /* TOOLTIP: fijo en la parte inferior normalmente, arriba si el elemento está abajo */
 #btut-tooltip {
@@ -1570,7 +1570,7 @@ input, textarea { font-family:inherit; }
   display:none;
   position:fixed;
   border-radius:14px;
-  box-shadow:0 0 0 9999px rgba(0,0,0,.78);
+  box-shadow:0 0 0 9999px rgba(0,0,0,.78); animation:none;
   z-index:9901;
   pointer-events:auto;      /* BLOQUEA clicks sobre el elemento destacado */
   outline:2.5px solid var(--g);
@@ -3122,6 +3122,11 @@ let currentObserver = null;
   const preloader = document.getElementById('preloader');
   let closed = false;
 
+  // Animar barra con delays absolutos: 30% → 55% → 75%
+  setTimeout(() => { if(!closed) fill.style.width='30%'; }, 0);
+  setTimeout(() => { if(!closed) fill.style.width='55%'; }, 300);
+  setTimeout(() => { if(!closed) fill.style.width='75%'; }, 700);
+
   function afterPreloader() {
     if(LS.get('upgames_terms_version')==='2026.C' && !LS.get('upgames_onboarding_done')) {
       setTimeout(startTutorial, 600);
@@ -3135,35 +3140,24 @@ let currentObserver = null;
     setTimeout(()=>{
       preloader.classList.add('hide');
       if(typeof startTutorial === 'function') afterPreloader();
-    }, 300);
+    }, 350);
   };
 
-  // Verificar si hay caché válido
-  const hasCachedItems = (()=>{
-    try{
-      const r=localStorage.getItem('upgames_items_cache');
-      if(!r) return false;
-      const {ts}=JSON.parse(r);
-      return (Date.now()-ts) < (10 * 60 * 1000); // 10 min
-    }catch(_){ return false; }
-  })();
-
-  if(hasCachedItems) {
-    // Con caché: animación rápida de 0→100% en 400ms y cerrar
-    fill.style.transition='width .4s ease';
-    fill.style.width='100%';
-    setTimeout(window.closePreloader, 450);
-  } else {
-    // Sin caché: barra parcial y cerrar en 1.5s máximo
-    // El skeleton visible es suficiente feedback — no necesitamos 8s de spinner
-    setTimeout(() => { if(!closed) fill.style.width='40%'; }, 0);
-    setTimeout(() => { if(!closed) fill.style.width='70%'; }, 400);
-    setTimeout(() => { window.closePreloader && window.closePreloader(); }, 1500);
+  // Si no hay caché, mostrar mensaje de estado al usuario
+  const hasCachedItems = (()=>{ try{ const r=localStorage.getItem('upgames_items_cache'); if(!r) return false; const {ts}=JSON.parse(r); return (Date.now()-ts) < 120000; }catch(_){ return false; } })();
+  if(!hasCachedItems) {
+    const sub = preloader.querySelector('.pl-sub');
+    if(sub) {
+      setTimeout(()=>{ if(!closed) sub.textContent='CONECTANDO CON EL SERVIDOR...'; }, 800);
+      setTimeout(()=>{ if(!closed) sub.textContent='EL SERVIDOR PUEDE TARDAR HASTA 30s...'; }, 4000);
+    }
   }
+
+  setTimeout(()=>{ window.closePreloader && window.closePreloader(); }, 1500);
 })();
 
 // ── WAKE UP BACKEND ───────────────────────────────────────
-fetch(`${API_URL}/items`,{mode:'no-cors'}).catch(()=>{});
+try{fetch(`${API_URL}/items`,{mode:'no-cors'});}catch(_){}
 
 // ── CACHE SYSTEM ──────────────────────────────────────────
 const CACHE_KEY_ITEMS   = 'upgames_items_cache';
@@ -3431,7 +3425,8 @@ function heroPrev() { heroGoTo(heroIdx - 1); }
 function heroStartAutoplay() {
   if(heroTimer) clearInterval(heroTimer);
   heroTimer = setInterval(() => {
-    if(!heroAutoplayPaused) heroNext();
+    // No animar si la página no es visible
+    if(!heroAutoplayPaused && !document.hidden) heroNext();
   }, 5000);
 }
 
@@ -3472,16 +3467,11 @@ function render(list, reset=true) {
   const out = document.getElementById('output');
   const skel = document.getElementById('skeleton');
   if(skel) skel.remove();
-
   if(currentObserver){ currentObserver.disconnect(); currentObserver=null; }
-
   if(!reset) return;
-
   if(typeof _vidObserver!=='undefined'&&_vidObserver){ _vidObserver.disconnect(); _vidObserver=null; }
   out.innerHTML='';
-
   if(list.length>0 && typeof initHeroCarousel==='function') initHeroCarousel(list);
-
   if(!list.length) {
     out.innerHTML=`<div class="empty-state">
       <ion-icon name="cloud-offline-outline"></ion-icon>
@@ -3491,7 +3481,6 @@ function render(list, reset=true) {
     </div>`;
     return;
   }
-
   const frag = document.createDocumentFragment();
   list.forEach((item, idx) => {
     if(idx > 0 && idx % 12 === 0) {
@@ -3502,7 +3491,6 @@ function render(list, reset=true) {
     }
     frag.appendChild(createTile(item, false));
   });
-
   out.appendChild(frag);
   initLazyVideos();
 }
@@ -3551,7 +3539,6 @@ async function loadContent() {
     const data = await r.json();
     cacheSet(CACHE_KEY_ITEMS, data);
 
-    // Comparación ligera — evita serializar 100 objetos completos
     const changed = data.length !== todosLosItems.length ||
       data.some((it,i) => !todosLosItems[i] || it._id !== todosLosItems[i]._id || it.scoreRecomendacion !== todosLosItems[i].scoreRecomendacion);
     todosLosItems = data;
@@ -4781,11 +4768,13 @@ function nxToggle() {
   nxOpen=!nxOpen;
   document.getElementById('nxPanel').classList.toggle('open',nxOpen);
   document.body.style.overflow = nxOpen ? 'hidden' : '';
+  if(nxOpen) nxClockStart(); else nxClockStop();
 }
 function nxClose() {
   nxOpen=false;
   document.getElementById('nxPanel').classList.remove('open');
   document.body.style.overflow = '';
+  nxClockStop();
 }
 function nxExpand() {
   nxExpanded=!nxExpanded;
@@ -4808,14 +4797,21 @@ function nxBoot() {
   // Ocultar boot screen después de 2 segundos sin importar nada
   setTimeout(() => { boot.style.display = 'none'; }, 2000);
 }
-// Clock
-(function nxClock(){
+// Clock — solo activo cuando el panel NEXUS está abierto
+let _clockInterval = null;
+function nxClockStart() {
+  if(_clockInterval) return;
   const el=document.getElementById('nxClk');
-  setInterval(()=>{
+  const tick=()=>{
     const n=new Date();
-    el.textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
-  },1000);
-})();
+    if(el) el.textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
+  };
+  tick();
+  _clockInterval=setInterval(tick,10000); // cada 10s es suficiente para un reloj
+}
+function nxClockStop() {
+  if(_clockInterval){ clearInterval(_clockInterval); _clockInterval=null; }
+}
 
 // ── TUTORIAL ─────────────────────────────────────────────
 // Cada paso puede tener:
@@ -5284,68 +5280,6 @@ window.startBibliotecaTutorial = startTutorial;
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded', loadContent);
 } else { loadContent(); }
-
-// ── SERVICE WORKER (caché de imágenes) ───────────────────
-// Se registra inline via Blob para no necesitar sw.js separado
-(function registerImageSW() {
-  if(!('serviceWorker' in navigator)) return;
-
-  const SW_SRC = `
-const CACHE = 'upgames-imgs-v1';
-const IMG_HOSTS = [
-  'img.youtube.com',
-  'i.imgur.com','imgur.com',
-  'i.postimg.cc','postimg.cc',
-  'i.ibb.co','ibb.co',
-  'lh3.googleusercontent.com',
-  'via.placeholder.com',
-  'placehold.co',
-  'cdn.discordapp.com',
-  'media.discordapp.net',
-  'raw.githubusercontent.com',
-];
-
-self.addEventListener('fetch', e => {
-  const url = e.request.url;
-  const isImg = IMG_HOSTS.some(h => url.includes(h)) ||
-    /\\.(jpg|jpeg|png|webp|gif|avif)(\\?|$)/i.test(url);
-  if(!isImg) return;
-
-  e.respondWith(
-    caches.open(CACHE).then(cache =>
-      cache.match(e.request).then(cached => {
-        if(cached) return cached;
-        return fetch(e.request).then(res => {
-          // Solo cachear respuestas válidas
-          if(res && res.status === 200 && res.type !== 'opaque') {
-            cache.put(e.request, res.clone());
-          }
-          return res;
-        }).catch(() => cached);
-      })
-    )
-  );
-});
-
-// Limpiar caches viejos al activar nueva versión
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
-  );
-});
-`;
-
-  try {
-    const blob = new Blob([SW_SRC], {type:'application/javascript'});
-    const url  = URL.createObjectURL(blob);
-    navigator.serviceWorker.register(url, {scope:'/'})
-      .then(() => console.log('✅ Image SW activo'))
-      .catch(e => console.warn('SW no disponible:', e.message));
-  } catch(e) {}
-})();
-
 </script>
 </body>
 </html>
