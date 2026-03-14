@@ -351,7 +351,119 @@ input, textarea { font-family:inherit; }
 .verificado-badge.lv3 { color:#ffd700; }
 
 /* ═══════════════════════════════════════════
-   FEATURED BANNER (1 column full)
+   HERO CAROUSEL (reemplaza featured banner)
+═══════════════════════════════════════════ */
+#hero-carousel {
+  grid-column: 1/-1;
+  position: relative;
+  border-radius: var(--card-r);
+  overflow: hidden;
+  aspect-ratio: 21/9;
+  background: var(--bg1);
+  cursor: pointer;
+  border: 1px solid var(--bd);
+  margin: 0;
+}
+.hero-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform .55s cubic-bezier(.4,0,.2,1);
+  will-change: transform;
+}
+.hero-slide {
+  flex-shrink: 0;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+.hero-slide img,
+.hero-slide video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+.hero-slide::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(7,7,15,.95) 0%, rgba(7,7,15,.2) 55%, transparent 100%);
+  pointer-events: none;
+}
+.hero-info {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 14px 16px;
+  z-index: 2;
+  pointer-events: none;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--g); color: #000;
+  font-size: .6rem; font-weight: 800;
+  letter-spacing: 1px; padding: 3px 10px;
+  border-radius: 999px; margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.hero-title {
+  font-size: 1.15rem; font-weight: 800;
+  line-height: 1.2; color: #fff;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hero-meta {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 5px;
+}
+.hero-user {
+  font-size: .72rem; color: rgba(255,255,255,.65);
+}
+.hero-dl {
+  font-size: .68rem; color: rgba(255,255,255,.5);
+  display: flex; align-items: center; gap: 3px;
+}
+/* Dots indicadores */
+.hero-dots {
+  position: absolute;
+  bottom: 12px; right: 14px;
+  display: flex; gap: 5px;
+  z-index: 3;
+}
+.hero-dot {
+  width: 6px; height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.35);
+  transition: width .3s, background .3s;
+}
+.hero-dot.active {
+  width: 18px;
+  background: var(--g);
+}
+/* Flechas prev/next */
+.hero-arrow {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(7,7,15,.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.15);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 1rem;
+  z-index: 3;
+  transition: background .2s;
+  cursor: pointer;
+}
+.hero-arrow:active { background: rgba(94,255,67,.25); }
+.hero-arrow.prev { left: 10px; }
+.hero-arrow.next { right: 10px; }
+
+/* ═══════════════════════════════════════════
+   FEATURED BANNER (1 column full) — legacy, oculto
 ═══════════════════════════════════════════ */
 .featured-tile {
   grid-column:1/-1;
@@ -674,6 +786,79 @@ input, textarea { font-family:inherit; }
 .sheet-download:active { opacity:.85; transform:scale(.98); }
 .sheet-download ion-icon { font-size:1.2rem; }
 
+/* ─── GALERÍA DE MEDIAS en el detail sheet ─── */
+.sheet-gallery {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 0 0 4px;
+  margin-bottom: 14px;
+}
+.sheet-gallery::-webkit-scrollbar { display: none; }
+.gallery-thumb {
+  flex-shrink: 0;
+  width: 72px; height: 52px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid var(--bd);
+  cursor: pointer;
+  transition: border-color .18s, transform .18s;
+  position: relative;
+  background: var(--bg2);
+}
+.gallery-thumb img, .gallery-thumb video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+.gallery-thumb.active { border-color: var(--g); transform: scale(1.05); }
+.gallery-thumb:active { transform: scale(.94); }
+.gallery-yt-icon {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.gallery-yt-icon ion-icon { font-size: 1.1rem; color: #fff; filter: drop-shadow(0 1px 4px rgba(0,0,0,.8)); }
+
+/* ─── FORMULARIO: grid de hasta 4 medias ─── */
+.pf-images-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.pf-image-slot {
+  position: relative;
+}
+.pf-image-slot .pf-input {
+  padding-right: 36px;
+  font-size: .75rem;
+}
+.pf-image-slot-label {
+  font-size: .62rem; font-weight: 700; color: var(--txt3);
+  letter-spacing: .5px; text-transform: uppercase;
+  margin-bottom: 5px; display: flex; align-items: center; gap: 4px;
+}
+.pf-image-slot-label ion-icon { font-size: .8rem; color: var(--cy); }
+.pf-img-preview-mini {
+  width: 100%; height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg2);
+  border: 1px solid var(--bd);
+  margin-top: 5px;
+  display: none;
+}
+.pf-img-preview-mini img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.pf-img-preview-mini.show { display: block; }
+
 /* Comments section */
 .comments-section-title {
   font-size:.72rem;
@@ -832,6 +1017,7 @@ input, textarea { font-family:inherit; }
   max-height:80dvh;
   overflow-y:auto;
   overscroll-behavior:contain;
+  touch-action:pan-y;
 }
 .modal-overlay.show .modal-sheet { transform:translateY(0); }
 .modal-handle {
@@ -1997,6 +2183,51 @@ input, textarea { font-family:inherit; }
   gap:10px;
 }
 
+/* ═══════════════════════════════════════════
+   CUSTOM CONFIRM DIALOG
+═══════════════════════════════════════════ */
+#custom-confirm {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.75);
+  backdrop-filter:blur(8px);
+  z-index:99999;
+  display:flex; align-items:center; justify-content:center;
+  padding:20px;
+  opacity:0; visibility:hidden;
+  transition:opacity .25s, visibility .25s;
+}
+#custom-confirm.show { opacity:1; visibility:visible; }
+.cc-box {
+  background:var(--bg1);
+  border:1px solid var(--bd);
+  border-radius:20px;
+  padding:24px 20px 20px;
+  width:100%; max-width:320px;
+  box-shadow:0 24px 60px rgba(0,0,0,.8);
+  transform:scale(.92);
+  transition:transform .25s var(--spring);
+}
+#custom-confirm.show .cc-box { transform:scale(1); }
+.cc-icon { font-size:2rem; text-align:center; margin-bottom:10px; }
+.cc-title {
+  font-size:.95rem; font-weight:800; color:var(--txt);
+  text-align:center; margin-bottom:8px;
+}
+.cc-msg {
+  font-size:.8rem; color:var(--txt2); text-align:center;
+  line-height:1.5; margin-bottom:18px;
+}
+.cc-btns { display:flex; gap:10px; }
+.cc-btn {
+  flex:1; height:44px; border-radius:12px;
+  font-size:.82rem; font-weight:800; border:none; cursor:pointer;
+  transition:opacity .18s;
+}
+.cc-btn:active { opacity:.75; }
+.cc-btn.cancel { background:var(--bg3); color:var(--txt2); border:1px solid var(--bd); }
+.cc-btn.confirm { background:var(--g); color:#000; }
+.cc-btn.confirm.danger { background:#ff4343; color:#fff; }
+
 /* Responsive tweaks */
 @media (max-width:380px) {
   .sheet-stats { grid-template-columns:1fr 1fr; }
@@ -2032,10 +2263,10 @@ input, textarea { font-family:inherit; }
     <input type="text" id="buscador" placeholder="Buscar juegos, mods, apps..." autocomplete="off">
   </div>
   <div class="hdr-actions">
-    <button class="hdr-btn" onclick="switchTab('profile')" title="Subir contenido">
+    <button class="hdr-btn" onclick="switchTab('profile')" title="Subir contenido" aria-label="Subir contenido">
       <ion-icon name="cloud-upload-outline"></ion-icon>
     </button>
-    <button class="hdr-btn" onclick="handleMail()" title="Reportar abuso">
+    <button class="hdr-btn" onclick="handleMail()" title="Reportar abuso" aria-label="Contactar soporte">
       <ion-icon name="information-circle-outline"></ion-icon>
     </button>
   </div>
@@ -2058,6 +2289,12 @@ input, textarea { font-family:inherit; }
   MAIN OUTPUT GRID
 ══════════════════════════════════ -->
 <main id="main-view">
+  <div id="hero-carousel" style="display:none">
+    <div class="hero-track" id="hero-track"></div>
+    <div class="hero-dots" id="hero-dots"></div>
+    <button class="hero-arrow prev" id="hero-prev" aria-label="Anterior"><ion-icon name="chevron-back"></ion-icon></button>
+    <button class="hero-arrow next" id="hero-next" aria-label="Siguiente"><ion-icon name="chevron-forward"></ion-icon></button>
+  </div>
   <div id="output">
     <!-- Skeleton while loading -->
     <div class="skeleton-grid" id="skeleton">
@@ -2195,13 +2432,34 @@ input, textarea { font-family:inherit; }
         <input type="url" id="pf-addLink" class="pf-input" placeholder="https://mediafire.com/...">
       </div>
 
-      <!-- Imagen -->
+      <!-- Medias (hasta 4: imagen principal + 3 adicionales) -->
       <div class="pf-form-group">
         <label class="pf-label">
-          Imagen (URL)
+          Medias (hasta 4 imágenes o videos)
           <span class="pf-info-icon" onclick="pfToggleTooltip('pf-tooltip-image')">?</span>
         </label>
-        <input type="url" id="pf-addImage" class="pf-input" placeholder="https://i.imgur.com/...">
+        <div class="pf-images-grid">
+          <div class="pf-image-slot">
+            <div class="pf-image-slot-label"><ion-icon name="image"></ion-icon> Portada principal</div>
+            <input type="url" id="pf-addImage" class="pf-input" placeholder="URL imagen o YouTube..." oninput="pfUpdatePreview();pfPreviewSlot(0)">
+            <div class="pf-img-preview-mini" id="pf-slot-prev-0"><img src="" alt=""></div>
+          </div>
+          <div class="pf-image-slot">
+            <div class="pf-image-slot-label"><ion-icon name="images"></ion-icon> Media 2</div>
+            <input type="url" id="pf-addImage2" class="pf-input" placeholder="URL imagen o YouTube..." oninput="pfPreviewSlot(1)">
+            <div class="pf-img-preview-mini" id="pf-slot-prev-1"><img src="" alt=""></div>
+          </div>
+          <div class="pf-image-slot">
+            <div class="pf-image-slot-label"><ion-icon name="images"></ion-icon> Media 3</div>
+            <input type="url" id="pf-addImage3" class="pf-input" placeholder="URL imagen o YouTube..." oninput="pfPreviewSlot(2)">
+            <div class="pf-img-preview-mini" id="pf-slot-prev-2"><img src="" alt=""></div>
+          </div>
+          <div class="pf-image-slot">
+            <div class="pf-image-slot-label"><ion-icon name="images"></ion-icon> Media 4</div>
+            <input type="url" id="pf-addImage4" class="pf-input" placeholder="URL imagen o YouTube..." oninput="pfPreviewSlot(3)">
+            <div class="pf-img-preview-mini" id="pf-slot-prev-3"><img src="" alt=""></div>
+          </div>
+        </div>
       </div>
 
       <!-- Categoría -->
@@ -2408,10 +2666,27 @@ input, textarea { font-family:inherit; }
         <small style="color:var(--txt3);font-size:.7rem" id="pf-edit-link-hint"></small>
       </div>
       <div class="pf-form-group">
-        <label class="pf-label">Imagen URL
+        <label class="pf-label">Medias (hasta 4)
           <span class="pf-info-icon" onclick="pfToggleTooltip('pf-tooltip-image-edit')">?</span>
         </label>
-        <input type="url" id="pf-edit-image" class="pf-input" oninput="pfValidateEditImage()">
+        <div class="pf-images-grid">
+          <div class="pf-image-slot">
+            <div class="pf-image-slot-label"><ion-icon name="image"></ion-icon> Portada</div>
+            <input type="url" id="pf-edit-image" class="pf-input" placeholder="URL portada..." oninput="pfValidateEditImage()">
+          </div>
+          <div class="pf-image-slot">
+            <div class="pf-image-slot-label"><ion-icon name="images"></ion-icon> Media 2</div>
+            <input type="url" id="pf-edit-image2" class="pf-input" placeholder="URL media 2...">
+          </div>
+          <div class="pf-image-slot">
+            <div class="pf-image-slot-label"><ion-icon name="images"></ion-icon> Media 3</div>
+            <input type="url" id="pf-edit-image3" class="pf-input" placeholder="URL media 3...">
+          </div>
+          <div class="pf-image-slot">
+            <div class="pf-image-slot-label"><ion-icon name="images"></ion-icon> Media 4</div>
+            <input type="url" id="pf-edit-image4" class="pf-input" placeholder="URL media 4...">
+          </div>
+        </div>
         <small style="color:var(--txt3);font-size:.7rem" id="pf-edit-image-hint"></small>
       </div>
       <div class="pf-form-group"><label class="pf-label">Categoría</label>
@@ -2484,7 +2759,7 @@ input, textarea { font-family:inherit; }
   <button class="pf-tooltip-close" onclick="pfCloseTooltip('pf-tooltip-image')">✕</button>
   <h4><ion-icon name="image"></ion-icon> Cómo obtener enlace de imagen</h4>
   <ol><li>Abre Google Imágenes y busca</li><li><strong>Móvil:</strong> Mantén presionada → "Abrir en otra pestaña"</li><li><strong>PC:</strong> Clic derecho → "Abrir imagen en pestaña nueva"</li><li>Copia el enlace completo</li><li>Pega aquí</li></ol>
-  <p class="pf-warn" style="margin-top:10px">⚠️ El enlace debe terminar en .jpg, .png, .webp o .gif</p>
+  <p class="pf-warn" style="margin-top:10px">⚠️ También se aceptan URLs de Imgur, Google Drive, Discord, y la mayoría de CDNs de imagen/video.</p>
 </div>
 
 <!-- Tooltips modal Editar (mismos límites que Publicar) -->
@@ -2525,6 +2800,8 @@ input, textarea { font-family:inherit; }
     <div class="sheet-media-overlay"></div>
   </div>
   <div class="sheet-scroll">
+    <!-- Galería de miniaturas (se oculta si solo hay 1 media) -->
+    <div class="sheet-gallery" id="ds-gallery" style="display:none"></div>
     <!-- Header -->
     <div class="sheet-header">
       <div class="sheet-title-area">
@@ -2674,21 +2951,21 @@ input, textarea { font-family:inherit; }
   BOTTOM NAVIGATION
 ══════════════════════════════════ -->
 <nav id="bottom-nav">
-  <button class="nav-tab active" data-tab="main">
+  <button class="nav-tab active" data-tab="main" aria-label="Explorar biblioteca">
     <div class="nav-dot"></div>
     <ion-icon name="grid"></ion-icon>
     <span>Explorar</span>
   </button>
-  <button class="nav-tab" data-tab="favs">
+  <button class="nav-tab" data-tab="favs" aria-label="Mis favoritos">
     <div class="nav-dot"></div>
     <ion-icon name="heart"></ion-icon>
     <span>Favoritos</span>
   </button>
-  <button class="nav-tab" data-tab="upload">
+  <button class="nav-tab" data-tab="upload" aria-label="Subir contenido">
     <ion-icon name="add-circle"></ion-icon>
     <span>Subir</span>
   </button>
-  <button class="nav-tab" data-tab="profile">
+  <button class="nav-tab" data-tab="profile" aria-label="Mi perfil">
     <div class="nav-dot"></div>
     <ion-icon name="person-circle"></ion-icon>
     <span>Perfil</span>
@@ -2780,6 +3057,21 @@ input, textarea { font-family:inherit; }
   </div>
 </div>
 
+<!-- ══════════════════════════════════
+  CUSTOM CONFIRM DIALOG
+══════════════════════════════════ -->
+<div id="custom-confirm">
+  <div class="cc-box">
+    <div class="cc-icon" id="cc-icon">⚠️</div>
+    <div class="cc-title" id="cc-title"></div>
+    <div class="cc-msg" id="cc-msg"></div>
+    <div class="cc-btns">
+      <button class="cc-btn cancel" id="cc-cancel">Cancelar</button>
+      <button class="cc-btn confirm" id="cc-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ION ICONS -->
 <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
 <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
@@ -2791,6 +3083,25 @@ input, textarea { font-family:inherit; }
 // ═══════════════════════════════════════════════════════════
 
 const API_URL = "https://backendapp-037y.onrender.com";
+
+// ── SAFE LOCALSTORAGE (modo incógnito estricto no rompe la app) ──────────
+const LS = {
+  get(k, fallback='') {
+    try { return localStorage.getItem(k) ?? fallback; } catch(_) { return fallback; }
+  },
+  set(k, v) {
+    try { localStorage.setItem(k, v); } catch(_) {}
+  },
+  remove(k) {
+    try { localStorage.removeItem(k); } catch(_) {}
+  },
+  getJSON(k, fallback=null) {
+    try { const r=localStorage.getItem(k); return r ? JSON.parse(r) : fallback; } catch(_) { return fallback; }
+  },
+  setJSON(k, v) {
+    try { localStorage.setItem(k, JSON.stringify(v)); } catch(_) {}
+  }
+};
 
 // State
 let todosLosItems = [];
@@ -2817,7 +3128,7 @@ const ITEMS_BATCH = 12;
   setTimeout(() => { if(!closed) fill.style.width='75%'; }, 700);
 
   function afterPreloader() {
-    if(localStorage.getItem('upgames_terms_version')==='2026.C' && !localStorage.getItem('upgames_onboarding_done')) {
+    if(LS.get('upgames_terms_version')==='2026.C' && !LS.get('upgames_onboarding_done')) {
       setTimeout(startTutorial, 600);
     }
   }
@@ -2828,13 +3139,22 @@ const ITEMS_BATCH = 12;
     fill.style.width='100%';
     setTimeout(()=>{
       preloader.classList.add('hide');
-      // afterPreloader solo si startTutorial ya existe
       if(typeof startTutorial === 'function') afterPreloader();
     }, 350);
   };
 
-  // Fail-safe: cerrar a los 6s si la API no respondió
-  setTimeout(()=>{ window.closePreloader && window.closePreloader(); }, 6000);
+  // Si no hay caché, mostrar mensaje de estado al usuario
+  const hasCachedItems = (()=>{ try{ const r=localStorage.getItem('upgames_items_cache'); if(!r) return false; const {ts}=JSON.parse(r); return (Date.now()-ts) < 120000; }catch(_){ return false; } })();
+  if(!hasCachedItems) {
+    const sub = preloader.querySelector('.pl-sub');
+    if(sub) {
+      setTimeout(()=>{ if(!closed) sub.textContent='CONECTANDO CON EL SERVIDOR...'; }, 800);
+      setTimeout(()=>{ if(!closed) sub.textContent='EL SERVIDOR PUEDE TARDAR HASTA 30s...'; }, 4000);
+    }
+  }
+
+  // Fail-safe: cerrar a los 8s si la API no respondió
+  setTimeout(()=>{ window.closePreloader && window.closePreloader(); }, 8000);
 })();
 
 // ── WAKE UP BACKEND ───────────────────────────────────────
@@ -2843,7 +3163,7 @@ fetch(`${API_URL}/items`,{mode:'no-cors'}).catch(()=>{});
 // ── CACHE SYSTEM ──────────────────────────────────────────
 const CACHE_KEY_ITEMS   = 'upgames_items_cache';
 const CACHE_KEY_USERS   = 'upgames_users_cache';
-const CACHE_TTL         = 5 * 60 * 1000; // 5 minutos
+const CACHE_TTL         = 2 * 60 * 1000; // 2 minutos (más fresco)
 
 function cacheSet(key, data) {
   try {
@@ -2871,6 +3191,29 @@ function toast(msg, dur=2500) {
     t.classList.add('out');
     setTimeout(()=>t.remove(), 320);
   }, dur);
+}
+
+// ── CUSTOM CONFIRM (reemplaza confirm() nativo) ────────────
+function customConfirm({ icon='⚠️', title='', msg='', okText='Confirmar', okDanger=false } = {}) {
+  return new Promise(resolve => {
+    const el = document.getElementById('custom-confirm');
+    document.getElementById('cc-icon').textContent = icon;
+    document.getElementById('cc-title').textContent = title;
+    document.getElementById('cc-msg').textContent = msg;
+    const okBtn = document.getElementById('cc-ok');
+    okBtn.textContent = okText;
+    okBtn.className = 'cc-btn confirm' + (okDanger ? ' danger' : '');
+    el.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    const close = (val) => {
+      el.classList.remove('show');
+      document.body.style.overflow = '';
+      resolve(val);
+    };
+    okBtn.onclick = () => close(true);
+    document.getElementById('cc-cancel').onclick = () => close(false);
+    el.onclick = (e) => { if(e.target === el) close(false); };
+  });
 }
 
 // ── FORMAT NUMBER ─────────────────────────────────────────
@@ -2904,17 +3247,38 @@ function avatarLetter(str) {
   return (str||'?')[0].toUpperCase();
 }
 
+// ── YOUTUBE HELPERS ──────────────────────────────────────
+function getYouTubeId(url) {
+  if(!url) return null;
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|v\/))([-\w]{11})/i);
+  return m ? m[1] : null;
+}
+function isYouTubeUrl(url) { return !!getYouTubeId(url); }
+function isVideoUrl(url) {
+  if(!url) return false;
+  return /\.(mp4|webm|mov|avi)(\?.*)?$/i.test(url) || isYouTubeUrl(url);
+}
+function getYouTubeThumbnail(url) {
+  const id = getYouTubeId(url);
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+}
+function getYouTubeEmbed(url, autoplay=0) {
+  const id = getYouTubeId(url);
+  return id ? `https://www.youtube.com/embed/${id}?autoplay=${autoplay}&mute=1&loop=1&playlist=${id}&controls=1&rel=0&playsinline=1` : null;
+}
+
 // ── CREATE TILE ───────────────────────────────────────────
 function createTile(item, isFeatured=false) {
   const ls = item.linkStatus || (item.reportes>=3?'revision':'online');
   const isOnline = ls==='online';
   const statusLabel = ls==='online'?'Online':ls==='revision'?'Revisión':'Caído';
   const isVid = /\.(mp4|webm|mov)$/i.test(item.image);
+  // Videos: no autoplay directo, se activan al entrar al viewport
   const media = isVid
-    ? `<video src="${item.image}" autoplay muted loop playsinline></video>`
-    : `<img src="${item.image}" alt="${item.title}" loading="lazy">`;
+    ? `<video data-src="${item.image}" muted loop playsinline preload="none" class="lazy-vid"></video>`
+    : `<img src="${item.image}" alt="${item.title}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x170/12121f/555570?text=Sin+imagen'">`;
 
-  const favIds = JSON.parse(localStorage.getItem('favoritos')||'[]');
+  const favIds = LS.getJSON('favoritos', []);
   const isFav = favIds.includes(item._id);
   const dl = item.descargasEfectivas||0;
 
@@ -2922,8 +3286,11 @@ function createTile(item, isFeatured=false) {
     const el = document.createElement('div');
     el.className='featured-tile';
     el.dataset.id=item._id;
+    const ftMedia = isVid
+      ? `<video data-src="${item.image}" muted loop playsinline preload="none" class="lazy-vid"></video>`
+      : `<img src="${item.image}" alt="${item.title}" loading="lazy" onerror="this.src='https://via.placeholder.com/600x260/12121f/555570?text=Sin+imagen'">`;
     el.innerHTML=`
-      <div class="thumb-wrap">${media}</div>
+      <div class="thumb-wrap">${ftMedia}</div>
       <div class="ft-info">
         <div class="ft-badge">⭐ Destacado</div>
         <div class="ft-title">${item.title}</div>
@@ -2945,7 +3312,7 @@ function createTile(item, isFeatured=false) {
       <div class="tile-status ${ls}">
         <span class="tile-status-dot"></span>${statusLabel}
       </div>
-      <button class="tile-fav-quick ${isFav?'active':''}" data-id="${item._id}" title="Favorito">
+      <button class="tile-fav-quick ${isFav?'active':''}" data-id="${item._id}" title="Favorito" aria-label="${isFav?'Quitar de favoritos':'Añadir a favoritos'}">
         <ion-icon name="${isFav?'heart':'heart-outline'}"></ion-icon>
       </button>
     </div>
@@ -2969,6 +3336,132 @@ function createTile(item, isFeatured=false) {
   return el;
 }
 
+
+// ══════════════════════════════════════════════════
+// HERO CAROUSEL — muestra los 10 primeros items
+// ══════════════════════════════════════════════════
+let heroItems = [];
+let heroIdx = 0;
+let heroTimer = null;
+let heroTouchStartX = 0;
+let heroAutoplayPaused = false;
+
+function initHeroCarousel(items) {
+  // Tomar los primeros 10 items
+  heroItems = items.slice(0, 6);
+  if(heroItems.length < 2) return; // Con 1 o 0 no tiene sentido
+  
+  const carousel = document.getElementById('hero-carousel');
+  const track    = document.getElementById('hero-track');
+  const dotsEl   = document.getElementById('hero-dots');
+  
+  carousel.style.display = 'block';
+  track.innerHTML = '';
+  dotsEl.innerHTML = '';
+
+  heroItems.forEach((item, i) => {
+    // Slide
+    const slide = document.createElement('div');
+    slide.className = 'hero-slide';
+    slide.dataset.id = item._id;
+    
+    const isYT  = isYouTubeUrl(item.image);
+    const isMp4 = /\.(mp4|webm|mov)(\?.*)?$/i.test(item.image);
+    let mediaSrc = item.image;
+    if(isYT) mediaSrc = getYouTubeThumbnail(item.image);
+    
+    const dl = item.descargasEfectivas || 0;
+    slide.innerHTML = `
+      <img src="${mediaSrc}" alt="${item.title}" loading="${i===0?'eager':'lazy'}"
+           onerror="this.src='https://via.placeholder.com/600x260/12121f/555570?text=UpGames'">
+      ${isYT || isMp4 ? '<div class="yt-play-badge large"><ion-icon name="play-circle"></ion-icon></div>' : ''}
+      <div class="hero-info">
+        <div class="hero-badge">⭐ Top ${i+1}</div>
+        <div class="hero-title">${item.title}</div>
+        <div class="hero-meta">
+          <span class="hero-user">@${item.usuario||'Cloud'}${getBadge(item.usuario)}</span>
+          ${dl ? `<span class="hero-dl"><ion-icon name="download-outline"></ion-icon>${fmt(dl)}</span>` : ''}
+        </div>
+      </div>`;
+    slide.addEventListener('click', () => openDetail(item));
+    track.appendChild(slide);
+
+    // Dot
+    const dot = document.createElement('span');
+    dot.className = 'hero-dot' + (i===0?' active':'');
+    dot.addEventListener('click', (e) => { e.stopPropagation(); heroGoTo(i); });
+    dotsEl.appendChild(dot);
+  });
+
+  heroGoTo(0);
+  heroStartAutoplay();
+
+  // Flechas
+  document.getElementById('hero-prev').onclick = (e) => { e.stopPropagation(); heroPrev(); };
+  document.getElementById('hero-next').onclick = (e) => { e.stopPropagation(); heroNext(); };
+
+  // Swipe táctil
+  carousel.addEventListener('touchstart', e => {
+    heroTouchStartX = e.touches[0].clientX;
+    heroAutoplayPaused = true;
+  }, {passive:true});
+  carousel.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - heroTouchStartX;
+    if(Math.abs(dx) > 40) { dx < 0 ? heroNext() : heroPrev(); }
+    setTimeout(() => { heroAutoplayPaused = false; }, 3000);
+  }, {passive:true});
+  
+  // Pausar al tocar
+  carousel.addEventListener('touchstart', () => { heroAutoplayPaused = true; }, {passive:true});
+}
+
+function heroGoTo(idx) {
+  heroIdx = ((idx % heroItems.length) + heroItems.length) % heroItems.length;
+  document.getElementById('hero-track').style.transform = `translateX(-${heroIdx * 100}%)`;
+  document.querySelectorAll('.hero-dot').forEach((d,i) => d.classList.toggle('active', i===heroIdx));
+}
+function heroNext() { heroGoTo(heroIdx + 1); }
+function heroPrev() { heroGoTo(heroIdx - 1); }
+
+function heroStartAutoplay() {
+  if(heroTimer) clearInterval(heroTimer);
+  heroTimer = setInterval(() => {
+    if(!heroAutoplayPaused) heroNext();
+  }, 5000);
+}
+
+function heroStop() {
+  if(heroTimer) { clearInterval(heroTimer); heroTimer = null; }
+}
+
+// ── LAZY VIDEO LOADER ─────────────────────────────────────
+// Solo carga y reproduce videos cuando entran al viewport
+let _vidObserver = null;
+function initLazyVideos() {
+  if(!('IntersectionObserver' in window)) {
+    document.querySelectorAll('video.lazy-vid[data-src]').forEach(v=>{
+      if(v.dataset.loaded) return;
+      v.dataset.loaded='1'; v.src=v.dataset.src; v.play().catch(()=>{});
+    });
+    return;
+  }
+  if(!_vidObserver) {
+    _vidObserver = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{
+        const v = e.target;
+        if(e.isIntersecting) {
+          if(!v.dataset.loaded && v.dataset.src) {
+            v.dataset.loaded='1'; v.src=v.dataset.src; v.play().catch(()=>{});
+          } else if(v.dataset.loaded) { v.play().catch(()=>{}); }
+        } else { if(v.dataset.loaded) v.pause(); }
+      });
+    },{rootMargin:'150px'});
+  }
+  document.querySelectorAll('video.lazy-vid[data-src]').forEach(v=>{
+    if(!v.dataset.observed){ v.dataset.observed='1'; _vidObserver.observe(v); }
+  });
+}
+
 // ── RENDER ────────────────────────────────────────────────
 function render(list, reset=true) {
   const out = document.getElementById('output');
@@ -2986,8 +3479,10 @@ function render(list, reset=true) {
   if(old) old.remove();
 
   if(reset) {
+    if(typeof _vidObserver!=='undefined'&&_vidObserver){_vidObserver.disconnect();_vidObserver=null;}
     out.innerHTML='';
     itemsRendered=0;
+    if(list.length>0 && typeof initHeroCarousel==='function') initHeroCarousel(list);
   }
 
   if(!list.length && reset) {
@@ -3007,36 +3502,32 @@ function render(list, reset=true) {
 
   batch.forEach((item, idx) => {
     const globalIdx = itemsRendered+idx;
-    // Primer ítem como featured banner
-    if(globalIdx===0) {
-      frag.appendChild(createTile(item, true));
-    } else {
-      // Section header cada 12 ítems (en cualquier carga)
-      if(globalIdx>0 && globalIdx%12===0) {
-        const sh = document.createElement('div');
-        sh.className='section-header';
-        sh.innerHTML=`<span class="section-title">Más Contenido</span><span class="section-count">${list.length} items</span>`;
-        frag.appendChild(sh);
-      }
-      frag.appendChild(createTile(item, false));
+    // Section header cada 12 ítems
+    if(globalIdx>0 && globalIdx%12===0) {
+      const sh = document.createElement('div');
+      sh.className='section-header';
+      sh.innerHTML=`<span class="section-title">Más Contenido</span><span class="section-count">${list.length} items</span>`;
+      frag.appendChild(sh);
     }
+    frag.appendChild(createTile(item, false));
   });
 
   out.appendChild(frag);
   itemsRendered+=batch.length;
+  initLazyVideos();
 
   // Agregar trigger de scroll infinito si quedan más ítems
   if(itemsRendered<list.length) {
     const trigger = document.createElement('div');
     trigger.id='scroll-trigger';
-    trigger.style.height='1px';
+    trigger.style.cssText='height:40px;width:100%;grid-column:1/-1;';
     out.appendChild(trigger);
     currentObserver = new IntersectionObserver((entries)=>{
       entries.forEach(e=>{
         if(e.isIntersecting && !isLoadingMore) loadMore(list);
       });
-    },{rootMargin:'300px'});
-    currentObserver.observe(trigger);
+    },{rootMargin:'0px', threshold:0.1});
+    setTimeout(()=>{ if(currentObserver) currentObserver.observe(trigger); }, 200);
   }
 }
 
@@ -3068,7 +3559,7 @@ function fetchTimeout(url, ms=10000, opts={}) {
 }
 
 async function loadContent() {
-  // ── PASO 1: Mostrar caché instantáneamente si existe ──
+  // ── PASO 1: Caché instantáneo — mostrar ANTES de red ──
   const cachedUsers = cacheGet(CACHE_KEY_USERS);
   if(cachedUsers) {
     cachedUsers.forEach(u=>{ mapaUsuarios[u.usuario]=u.verificadoNivel||0; });
@@ -3078,11 +3569,17 @@ async function loadContent() {
   if(cachedItems && cachedItems.length) {
     todosLosItems = cachedItems;
     filteredItems = cachedItems;
-    window.closePreloader && window.closePreloader();
+    // Mostrar caché y cerrar preloader de inmediato — no esperar la red
     render(filteredItems);
+    window.closePreloader && window.closePreloader();
   }
 
-  // ── PASO 2: Actualizar desde la red en segundo plano ──
+  // ── PASO 2: Wake-up paralelo del backend (Render duerme) ──
+  // Lanzar dos pings simultáneos para despertar más rápido
+  fetch(`${API_URL}/items`, {mode:'no-cors'}).catch(()=>{});
+  fetch(`${API_URL}/auth/users/public`, {mode:'no-cors'}).catch(()=>{});
+
+  // ── PASO 3: Actualizar desde la red en background ──
   try {
     try {
       const ru = await fetchTimeout(`${API_URL}/auth/users/public`, 8000);
@@ -3091,7 +3588,7 @@ async function loadContent() {
       users.forEach(u=>{ mapaUsuarios[u.usuario]=u.verificadoNivel||0; });
     } catch(_){}
 
-    const r = await fetchTimeout(`${API_URL}/items`, 10000);
+    const r = await fetchTimeout(`${API_URL}/items`, 12000);
     const data = await r.json();
     cacheSet(CACHE_KEY_ITEMS, data);
 
@@ -3125,7 +3622,7 @@ async function loadContent() {
       out.innerHTML=`<div class="empty-state">
         <ion-icon name="cloud-offline-outline"></ion-icon>
         <h3>Sin conexión</h3>
-        <p>No se pudo conectar con la nube.<br>Verifica tu internet e intenta de nuevo.</p>
+        <p>No se pudo conectar con el servidor.<br>El servidor puede estar despertando (30s).<br>Verifica tu internet e intenta de nuevo.</p>
         <button class="empty-action" onclick="location.reload()">🔄 Reintentar</button>
       </div>`;
     }
@@ -3136,27 +3633,31 @@ async function loadContent() {
 // Llamar esto cuando el usuario sube, edita o elimina contenido
 function invalidateCache() {
   try {
-    localStorage.removeItem(CACHE_KEY_ITEMS);
+    LS.remove(CACHE_KEY_ITEMS);
   } catch(_) {}
 }
 
-// ── SEARCH ────────────────────────────────────────────────
+// ── SEARCH (con debounce 280ms para no filtrar en cada keystroke) ──────────
+let _searchTimer = null;
 document.getElementById('buscador').addEventListener('input', function(e) {
-  const q = e.target.value.toLowerCase().trim();
-  if(q) {
-    filteredItems = todosLosItems.filter(i=>
-      i.title.toLowerCase().includes(q) ||
-      (i.description&&i.description.toLowerCase().includes(q)) ||
-      i.usuario.toLowerCase().includes(q) ||
-      (i.category&&i.category.toLowerCase().includes(q)) ||
-      (i.tags&&i.tags.some(t=>t.toLowerCase().includes(q)))
-    );
-  } else {
-    filteredItems = activeCategory
-      ? todosLosItems.filter(i=>i.category===activeCategory)
-      : todosLosItems;
-  }
-  render(filteredItems);
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(() => {
+    const q = e.target.value.toLowerCase().trim();
+    if(q) {
+      filteredItems = todosLosItems.filter(i=>
+        i.title.toLowerCase().includes(q) ||
+        (i.description&&i.description.toLowerCase().includes(q)) ||
+        i.usuario.toLowerCase().includes(q) ||
+        (i.category&&i.category.toLowerCase().includes(q)) ||
+        (i.tags&&i.tags.some(t=>t.toLowerCase().includes(q)))
+      );
+    } else {
+      filteredItems = activeCategory
+        ? todosLosItems.filter(i=>i.category===activeCategory)
+        : todosLosItems;
+    }
+    render(filteredItems);
+  }, 280);
 });
 
 // ── CATEGORY CHIPS ────────────────────────────────────────
@@ -3165,16 +3666,12 @@ document.querySelectorAll('.chip').forEach(c=>{
     document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
     this.classList.add('active');
     activeCategory = this.dataset.cat;
+    // Limpiar buscador al cambiar categoría para evitar doble filtro silencioso
+    const buscEl = document.getElementById('buscador');
+    buscEl.value = '';
     filteredItems = activeCategory
       ? todosLosItems.filter(i=>i.category===activeCategory)
       : todosLosItems;
-    const q = document.getElementById('buscador').value.toLowerCase().trim();
-    if(q) {
-      filteredItems = filteredItems.filter(i=>
-        i.title.toLowerCase().includes(q)||
-        i.usuario.toLowerCase().includes(q)
-      );
-    }
     render(filteredItems);
   });
 });
@@ -3183,21 +3680,56 @@ document.querySelectorAll('.chip').forEach(c=>{
 function openDetail(item) {
   currentItem = item;
   const ls = item.linkStatus||(item.reportes>=3?'revision':'online');
-  const isVid = /\.(mp4|webm|mov)$/i.test(item.image);
+  // Construir array completo de medias
+  const allMedias = [item.image, ...(item.images||[])].filter(m=>m&&m.trim());
+  const firstVideo = allMedias.find(m=>isYouTubeUrl(m)||/\.(mp4|webm|mov|avi)(\?.*)?$/i.test(m));
+  const primaryMedia = firstVideo || allMedias[0] || '';
 
-  // Media
-  const img = document.getElementById('ds-media-img');
-  const vid = document.getElementById('ds-media-vid');
-  if(isVid) {
-    img.style.display='none';
-    vid.style.display='block';
-    vid.src=item.image;
-  } else {
-    vid.style.display='none';
-    vid.src='';
-    img.style.display='block';
-    img.src=item.image;
+  function loadSheetMedia(mediaUrl) {
+    const img2 = document.getElementById('ds-media-img');
+    const vid2 = document.getElementById('ds-media-vid');
+    const oldIf = document.getElementById('ds-yt-iframe');
+    if(oldIf) oldIf.remove();
+    const isYT2  = isYouTubeUrl(mediaUrl);
+    const isMp42 = /\.(mp4|webm|mov|avi)(\?.*)?$/i.test(mediaUrl);
+    if(isYT2){
+      img2.style.display='none'; vid2.style.display='none'; vid2.src='';
+      const yti=document.createElement('iframe');
+      yti.id='ds-yt-iframe';
+      yti.src=getYouTubeEmbed(mediaUrl,0);
+      yti.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      yti.allowFullscreen=true;
+      yti.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:16px;';
+      document.querySelector('.sheet-media').appendChild(yti);
+    } else if(isMp42){
+      img2.style.display='none'; vid2.style.display='block'; vid2.src=mediaUrl;
+    } else {
+      vid2.style.display='none'; vid2.src='';
+      img2.style.display='block'; img2.src=mediaUrl;
+      img2.onerror=()=>{img2.src='https://via.placeholder.com/600x340/12121f/555570?text=Sin+imagen';};
+    }
   }
+  loadSheetMedia(primaryMedia);
+
+  // Galería de miniaturas
+  const galleryEl = document.getElementById('ds-gallery');
+  if(allMedias.length > 1) {
+    galleryEl.style.display='flex'; galleryEl.innerHTML='';
+    allMedias.forEach((m,i)=>{
+      const th=document.createElement('div');
+      th.className='gallery-thumb'+(m===primaryMedia?' active':'');
+      const isYTt=isYouTubeUrl(m);
+      const isMp4t=/\.(mp4|webm|mov|avi)(\?.*)?$/i.test(m);
+      const tSrc=isYTt?getYouTubeThumbnail(m):(isMp4t?'https://via.placeholder.com/72x52/12121f/5EFF43?text=▶':m);
+      th.innerHTML=`<img src="${tSrc}" alt="media ${i+1}" onerror="this.src='https://via.placeholder.com/72x52/12121f/555570?text=?'">
+        ${(isYTt||isMp4t)?'<div class="gallery-yt-icon"><ion-icon name="play-circle"></ion-icon></div>':''}`;
+      th.onclick=()=>{
+        document.querySelectorAll('.gallery-thumb').forEach(t2=>t2.classList.remove('active'));
+        th.classList.add('active'); loadSheetMedia(m);
+      };
+      galleryEl.appendChild(th);
+    });
+  } else { galleryEl.style.display='none'; galleryEl.innerHTML=''; }
 
   document.getElementById('ds-cat').textContent=item.category||'General';
   document.getElementById('ds-title').textContent=item.title;
@@ -3216,11 +3748,20 @@ function openDetail(item) {
   sb.className='sheet-status-bar '+ls;
   st.textContent=ls==='online'?'✓ Link Activo':ls==='revision'?'⚠️ En Revisión':'✗ Link Caído';
 
-  // Download
-  document.getElementById('ds-download').href=`puente.html?id=${item._id}`;
+  // Download — advertencia si link caído
+  const dlBtn = document.getElementById('ds-download');
+  dlBtn.href=`puente.html?id=${item._id}`;
+  dlBtn.onclick = function(e) {
+    if(ls === 'caido') {
+      e.preventDefault();
+      if(confirm('⚠️ Este link está reportado como caído.\n¿Deseas intentar acceder de todas formas?')) {
+        window.open(`puente.html?id=${item._id}`, '_blank');
+      }
+    }
+  };
 
   // Fav button
-  const favIds = JSON.parse(localStorage.getItem('favoritos')||'[]');
+  const favIds = LS.getJSON('favoritos', []);
   const isFav = favIds.includes(item._id);
   const btnFav = document.getElementById('ds-btn-fav');
   btnFav.className='action-pill'+(isFav?' fav-active':'');
@@ -3247,15 +3788,59 @@ function openDetail(item) {
 function closeDetail() {
   document.getElementById('detail-overlay').classList.remove('show');
   document.getElementById('detail-sheet').classList.remove('open');
-  document.body.style.overflow='';
+  if(!tutActive && !nxOpen) document.body.style.overflow='';
   currentItem=null;
-  // Stop video
-  const vid=document.getElementById('ds-media-vid');
-  vid.src='';
+  const vid=document.getElementById('ds-media-vid'); vid.src='';
+  const ytIf=document.getElementById('ds-yt-iframe'); if(ytIf) ytIf.remove();
+  const gal=document.getElementById('ds-gallery');
+  if(gal){ gal.innerHTML=''; gal.style.display='none'; }
 }
 
 document.getElementById('ds-close').addEventListener('click', closeDetail);
 document.getElementById('detail-overlay').addEventListener('click', closeDetail);
+
+// ── SWIPE DOWN para cerrar el detail sheet ────────────────
+(function initSheetSwipe() {
+  const sheet = document.getElementById('detail-sheet');
+  const handle = sheet.querySelector('.sheet-handle');
+  let startY = 0, startScroll = 0, dragging = false;
+  const THRESHOLD = 90; // px hacia abajo para cerrar
+
+  function onStart(e) {
+    const scroll = sheet.querySelector('.sheet-scroll');
+    // Solo iniciar swipe si el scroll interno está en top=0
+    if(scroll && scroll.scrollTop > 4) return;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    startScroll = scroll ? scroll.scrollTop : 0;
+    dragging = true;
+    sheet.style.transition = 'none';
+  }
+  function onMove(e) {
+    if(!dragging) return;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const dy = y - startY;
+    if(dy > 0) {
+      e.preventDefault();
+      sheet.style.transform = `translateY(${dy}px)`;
+    }
+  }
+  function onEnd(e) {
+    if(!dragging) return;
+    dragging = false;
+    sheet.style.transition = '';
+    const y = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    const dy = y - startY;
+    if(dy > THRESHOLD) {
+      sheet.style.transform = '';
+      closeDetail();
+    } else {
+      sheet.style.transform = '';
+    }
+  }
+  handle.addEventListener('touchstart', onStart, {passive:true});
+  sheet.addEventListener('touchmove', onMove, {passive:false});
+  sheet.addEventListener('touchend', onEnd, {passive:true});
+})();
 
 // ── COMMENTS ─────────────────────────────────────────────
 async function loadComments(id) {
@@ -3282,7 +3867,7 @@ async function loadComments(id) {
 }
 
 async function postComment(id) {
-  const user = localStorage.getItem('user_admin');
+  const user = LS.get('user_admin');
   if(!user) { toast('⚠️ Debes iniciar sesión para comentar'); return; }
   const input = document.getElementById('ds-comment-input');
   const texto = input.value.trim();
@@ -3303,7 +3888,7 @@ async function postComment(id) {
 
 // ── FAVORITES ────────────────────────────────────────────
 async function fav(id) {
-  const user = localStorage.getItem('user_admin');
+  const user = LS.get('user_admin');
   if(!user) { toast('⚠️ Inicia sesión para guardar favoritos'); return; }
   try {
     const cr = await fetch(`${API_URL}/favoritos/${user}`);
@@ -3316,9 +3901,9 @@ async function fav(id) {
         body:JSON.stringify({usuario:user,itemId:id})
       });
       toast('💔 Eliminado de favoritos');
-      let local=JSON.parse(localStorage.getItem('favoritos')||'[]');
+      let local=LS.getJSON('favoritos', []);
       local=local.filter(f=>f!==id);
-      localStorage.setItem('favoritos',JSON.stringify(local));
+      LS.setJSON('favoritos', local);
     } else {
       await fetch(`${API_URL}/favoritos/add`,{
         method:'POST',
@@ -3326,8 +3911,8 @@ async function fav(id) {
         body:JSON.stringify({usuario:user,itemId:id})
       });
       toast('❤️ Añadido a favoritos');
-      let local=JSON.parse(localStorage.getItem('favoritos')||'[]');
-      if(!local.includes(id)){local.push(id); localStorage.setItem('favoritos',JSON.stringify(local));}
+      let local=LS.getJSON('favoritos', []);
+      if(!local.includes(id)){local.push(id); LS.setJSON('favoritos', local);}
       // Notify author
       const item=todosLosItems.find(i=>i._id===id);
       if(item&&item.usuario!==user) {
@@ -3391,7 +3976,7 @@ document.querySelectorAll('.report-opt').forEach(btn=>{
 
 async function sendReport(id, motivo) {
   try {
-    const user=localStorage.getItem('user_admin')||'Anónimo';
+    const user=LS.get('user_admin','Anónimo');
     const r=await fetch(`${API_URL}/items/report/${id}`,{
       method:'PUT',
       headers:{'Content-Type':'application/json'},
@@ -3443,6 +4028,9 @@ function switchTab(t) {
   if(navBtn) navBtn.classList.add('active');
   document.getElementById('main-view').style.display=t==='main'?'':'none';
   document.getElementById('category-row').style.display=t==='main'?'':'none';
+  // Carousel: reanudar en main, pausar en otros tabs
+  if(t==='main') heroStartAutoplay && heroStartAutoplay();
+  else heroStop && heroStop();
   const favsView=document.getElementById('favs-view');
   const profileView=document.getElementById('profile-view');
   favsView.classList.toggle('active',t==='favs');
@@ -3454,7 +4042,7 @@ function switchTab(t) {
 // ── FAVORITES TAB ─────────────────────────────────────────
 function renderFavs() {
   const grid=document.getElementById('favs-grid');
-  const local=JSON.parse(localStorage.getItem('favoritos')||'[]');
+  const local=LS.getJSON('favoritos', []);
   const favItems=todosLosItems.filter(i=>local.includes(i._id));
   if(!favItems.length) {
     grid.innerHTML=`<div class="empty-state">
@@ -3472,7 +4060,7 @@ function renderFavs() {
 
 // ── PROFILE TAB ──────────────────────────────────────────
 function renderProfile() {
-  const user = localStorage.getItem('user_admin');
+  const user = LS.get('user_admin');
   if(!user) {
     document.getElementById('pf-not-logged').style.display='';
     document.getElementById('pf-logged').style.display='none';
@@ -3632,6 +4220,19 @@ function pfAnalizarLink(url) {
   } catch(e) { return { ok:false, msg:'❌ Formato de enlace inválido.' }; }
 }
 
+function pfPreviewSlot(slotIdx) {
+  const ids = ['pf-addImage','pf-addImage2','pf-addImage3','pf-addImage4'];
+  const url = document.getElementById(ids[slotIdx])?.value.trim();
+  const prev = document.getElementById('pf-slot-prev-' + slotIdx);
+  if(!prev) return;
+  if(!url) { prev.classList.remove('show'); return; }
+  const img = prev.querySelector('img');
+  const displaySrc = isYouTubeUrl(url) ? getYouTubeThumbnail(url) : url;
+  img.src = displaySrc;
+  img.onerror = () => { img.src = 'https://via.placeholder.com/100x44/12121f/555570?text=?'; };
+  prev.classList.add('show');
+}
+
 function pfUpdatePreview() {
   const t = document.getElementById('pf-addTitle')?.value || 'Título del Proyecto';
   const c = document.getElementById('pf-addCategory')?.value || 'Categoría';
@@ -3659,7 +4260,7 @@ function pfValidateTitle() {
 async function pfSubirJuego() {
   if(!pfUser) return alert('Debes iniciar sesión.');
   const ahora = Date.now();
-  const ult = localStorage.getItem('ultima_publicacion');
+  const ult = LS.get('ultima_publicacion');
   if(ult && ahora - parseInt(ult) < 30000) {
     const s = Math.ceil((30000-(ahora-parseInt(ult)))/1000);
     return toast(`⏱️ Anti-spam: Espera ${s}s antes de publicar.`);
@@ -3669,15 +4270,45 @@ async function pfSubirJuego() {
   const link = document.getElementById('pf-addLink').value.trim();
   const imagen = document.getElementById('pf-addImage').value.trim();
   const cat = document.getElementById('pf-addCategory').value;
+  // Recoger medias adicionales slots 2-4 (opcionales)
+  const imagesExtra = [
+    document.getElementById('pf-addImage2')?.value.trim() || '',
+    document.getElementById('pf-addImage3')?.value.trim() || '',
+    document.getElementById('pf-addImage4')?.value.trim() || '',
+  ].filter(u => u.length > 0);
 
   const bad = PF_BANNED.find(k => new RegExp('\\b'+k+'\\b','i').test(titulo.toLowerCase()));
   if(bad) return toast(`🚫 Palabra prohibida: "${bad}"`);
   const vLink = pfAnalizarLink(link);
   if(vLink.ok === false) return toast(vLink.msg);
   if(!titulo || !link) return toast('⚠️ Completa Título y Enlace.');
-  if(imagen && !/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(imagen)) return toast('⚠️ La imagen debe terminar en .jpg .png .webp o .gif');
+  if(!imagen) return toast('⚠️ La portada es obligatoria. Agrega al menos una imagen o video.');
+  // Validar que sea URL válida de imagen o video (acepta URLs sin extensión como Google Drive, Imgur, etc.)
+  function esMediaValida(url) {
+    if(!url) return false;
+    try { new URL(url); } catch(_) { return false; }
+    // Extensión de imagen
+    if(/\.(jpg|jpeg|png|webp|gif|avif|svg)(\?.*)?$/i.test(url)) return true;
+    // Extensión de video
+    if(/\.(mp4|webm|mov|avi)(\?.*)?$/i.test(url)) return true;
+    // URLs de servicios conocidos que no terminan en extensión
+    const knownHosts = ['imgur.com','i.imgur.com','drive.google.com','lh3.googleusercontent.com',
+      'googleusercontent.com','pbs.twimg.com','cdn.discordapp.com','media.discordapp.net',
+      'i.redd.it','preview.redd.it','images.unsplash.com','raw.githubusercontent.com',
+      'user-images.githubusercontent.com','postimg.cc','i.postimg.cc','ibb.co','i.ibb.co',
+      'upload.wikimedia.org','media.tenor.com','c.tenor.com','giphy.com','media.giphy.com',
+      'cloudinary.com','res.cloudinary.com','media1.tenor.com','media2.tenor.com',
+      'via.placeholder.com','placehold.co','picsum.photos'];
+    try {
+      const host = new URL(url).hostname.replace('www.','');
+      if(knownHosts.some(h => host === h || host.endsWith('.'+h))) return true;
+    } catch(_) {}
+    // Si no reconocemos el host, igual la aceptamos (el creador es responsable)
+    return true;
+  }
+  if(imagen && !esMediaValida(imagen)) return toast('⚠️ El enlace de imagen no parece válido. Usa una URL directa de imagen o video.');
 
-  const token = localStorage.getItem('token');
+  const token = LS.get('token');
   if(!token) { alert('⚠️ Sesión expirada.'); location.href='./index.html'; return; }
 
   const btn = document.getElementById('pf-subirBtn');
@@ -3686,15 +4317,21 @@ async function pfSubirJuego() {
     const res = await fetch(`${PF_API}/items/add`, {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-      body: JSON.stringify({ title:titulo, description:desc, link, image:imagen, category:cat, usuario:pfUser, status:'pendiente' })
+      body: JSON.stringify({ title:titulo, description:desc, link, image:imagen, images:imagesExtra, category:cat, usuario:pfUser, status:'pendiente' })
     });
     if(res.ok) {
-      localStorage.setItem('ultima_publicacion', Date.now().toString());
+      LS.set('ultima_publicacion', Date.now().toString());
       toast('✅ Publicado. Esperando aprobación.');
       document.getElementById('pf-addTitle').value='';
       document.getElementById('pf-addDescription').value='';
       document.getElementById('pf-addLink').value='';
       document.getElementById('pf-addImage').value='';
+      ['pf-addImage2','pf-addImage3','pf-addImage4'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.value='';
+      });
+      [0,1,2,3].forEach(i=>{
+        const p=document.getElementById('pf-slot-prev-'+i); if(p) p.classList.remove('show');
+      });
       pfUpdatePreview();
       pfLoadHistorial();
       pfLoadUserData();
@@ -3712,7 +4349,7 @@ async function pfLoadHistorial() {
   if(!cont || !pfUser) return;
   cont.innerHTML = '<div class="pf-empty"><ion-icon name="sync-outline"></ion-icon><p>Cargando...</p></div>';
   try {
-    const token = localStorage.getItem('token');
+    const token = LS.get('token');
     const res = await fetch(`${PF_API}/items/user/${pfUser}`, {
       headers: token ? { Authorization:`Bearer ${token}` } : {}
     });
@@ -3754,7 +4391,7 @@ async function pfLoadHistorial() {
 
 async function pfEliminar(id) {
   if(!confirm('¿Eliminar este archivo de la nube?')) return;
-  const token = localStorage.getItem('token');
+  const token = LS.get('token');
   if(!token) { alert('Sesión expirada'); location.href='./index.html'; return; }
   try {
     const res = await fetch(`${PF_API}/items/${id}`,{
@@ -3769,7 +4406,7 @@ async function pfEliminar(id) {
 async function pfOpenEditModal(itemId) {
   pfCurrentEditId = itemId;
   try {
-    const token = localStorage.getItem('token');
+    const token = LS.get('token');
     const res = await fetch(`${PF_API}/items/user/${pfUser}`,{
       headers: token ? { Authorization:`Bearer ${token}` } : {}
     });
@@ -3782,6 +4419,12 @@ async function pfOpenEditModal(itemId) {
     document.getElementById('pf-edit-link').value = item.link||'';
     document.getElementById('pf-edit-image').value = item.image||'';
     document.getElementById('pf-edit-category').value = item.category||'Juego';
+    // Cargar medias adicionales (images[])
+    const imgs = item.images || [];
+    ['pf-edit-image2','pf-edit-image3','pf-edit-image4'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      if(el) el.value = imgs[i] || '';
+    });
     document.getElementById('pf-editModal').classList.add('show');
     document.body.style.overflow='hidden';
   } catch(e) { toast('❌ Error al cargar'); }
@@ -3791,9 +4434,9 @@ function pfCloseEditModal() {
   document.body.style.overflow='';
   pfCurrentEditId = null;
   // Reset validation states
-  ['pf-edit-title','pf-edit-link','pf-edit-image'].forEach(id=>{
+  ['pf-edit-title','pf-edit-link','pf-edit-image','pf-edit-image2','pf-edit-image3','pf-edit-image4'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el) el.classList.remove('valid','invalid');
+    if(el) { el.classList.remove('valid','invalid'); el.value=''; }
   });
   ['pf-edit-title-hint','pf-edit-link-hint','pf-edit-image-hint'].forEach(id=>{
     const el=document.getElementById(id);
@@ -3836,7 +4479,8 @@ function pfValidateEditImage() {
   if(!el) return;
   const val = el.value.trim();
   if(!val) { el.classList.remove('valid','invalid'); if(hint) hint.textContent=''; return; }
-  const ok = /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(val);
+  // Acepta imagen, video, y URLs conocidas sin extensión
+  const ok = /\.(jpg|jpeg|png|webp|gif|avif|svg|mp4|webm|mov)(\?.*)?$/i.test(val) || val.length > 10;
   el.classList.toggle('valid', ok);
   el.classList.toggle('invalid', !ok);
   if(hint) hint.innerHTML = !ok ? '<span style="color:#ffcc00">⚠️ Debe terminar en .jpg .png .webp o .gif</span>' : '';
@@ -3849,6 +4493,11 @@ async function pfSaveEdit() {
     description: document.getElementById('pf-edit-description').value.trim(),
     link: document.getElementById('pf-edit-link').value.trim(),
     image: document.getElementById('pf-edit-image').value.trim(),
+    images: [
+      document.getElementById('pf-edit-image2')?.value.trim(),
+      document.getElementById('pf-edit-image3')?.value.trim(),
+      document.getElementById('pf-edit-image4')?.value.trim(),
+    ].filter(u => u && u.length > 0),
     category: document.getElementById('pf-edit-category').value
   };
   const vl = pfAnalizarLink(upd.link);
@@ -3856,10 +4505,8 @@ async function pfSaveEdit() {
   if(!upd.title||!upd.link) { toast('⚠️ Título y enlace requeridos'); return; }
   const bad = PF_BANNED.find(k => new RegExp('\\b'+k+'\\b','i').test(upd.title.toLowerCase()));
   if(bad) { toast(`🚫 Palabra prohibida: "${bad}"`); return; }
-  if(upd.image && !/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(upd.image)) {
-    toast('⚠️ La imagen debe terminar en .jpg .png .webp o .gif'); return;
-  }
-  const token = localStorage.getItem('token');
+  // La imagen puede ser cualquier URL válida (imagen, video, CDN sin extensión)
+  const token = LS.get('token');
   if(!token) { toast('Sesión expirada'); return; }
   try {
     const res = await fetch(`${PF_API}/items/${pfCurrentEditId}`,{
@@ -3905,7 +4552,14 @@ async function pfLoadBoveda() {
   } catch(e) { cont.innerHTML='<div class="pf-empty" style="color:#ff4343"><p>Error al cargar favoritos</p></div>'; }
 }
 async function pfRemoveFav(itemId) {
-  if(!confirm('¿Quitar de tu bóveda?')) return;
+  const ok = await customConfirm({
+    icon: '💔',
+    title: '¿Quitar de tu bóveda?',
+    msg: 'Este contenido se eliminará de tus favoritos guardados.',
+    okText: 'Quitar',
+    okDanger: true
+  });
+  if(!ok) return;
   try {
     const res = await fetch(`${PF_API}/favoritos/remove`,{
       method:'DELETE',
@@ -3961,7 +4615,7 @@ async function pfLoadReportes() {
 
 // ── Economía ──
 async function pfLoadEconomia() {
-  const token = localStorage.getItem('token');
+  const token = LS.get('token');
   if(!token) return;
   try {
     const res = await fetch(`${PF_API}/economia/mi-saldo`,{
@@ -3996,7 +4650,7 @@ function pfFmt(n) {
 async function pfGuardarPaypal() {
   const email = document.getElementById('pf-paypal-email-input').value.trim();
   if(!email||!email.includes('@')||!email.includes('.')) { toast('⚠️ Email inválido'); return; }
-  const token = localStorage.getItem('token');
+  const token = LS.get('token');
   try {
     const res = await fetch(`${PF_API}/economia/actualizar-paypal`,{
       method:'PUT',
@@ -4009,8 +4663,15 @@ async function pfGuardarPaypal() {
   } catch(e) { toast('❌ Error de conexión'); }
 }
 async function pfSolicitarPago() {
-  if(!confirm('¿Confirmas que deseas solicitar un pago? El admin revisará tu solicitud.')) return;
-  const token = localStorage.getItem('token');
+  const ok = await customConfirm({
+    icon: '💸',
+    title: 'Solicitar pago',
+    msg: '¿Confirmas que deseas solicitar un pago? El administrador revisará tu solicitud en 24-72h.',
+    okText: 'Solicitar',
+    okDanger: false
+  });
+  if(!ok) return;
+  const token = LS.get('token');
   try {
     const res = await fetch(`${PF_API}/economia/solicitar-pago`,{
       method:'POST', headers:{ Authorization:`Bearer ${token}` }
@@ -4097,9 +4758,16 @@ function pfCloseTooltip(id) {
 }
 
 // ── Logout ──
-function pfLogout() {
-  if(!confirm('¿Cerrar sesión?')) return;
-  ['user_admin','token','RefreshToken','user_avatar','user_verified','user_rol'].forEach(k => localStorage.removeItem(k));
+async function pfLogout() {
+  const ok = await customConfirm({
+    icon: '👋',
+    title: '¿Cerrar sesión?',
+    msg: 'Tu sesión local se eliminará. Podrás volver a iniciar sesión en cualquier momento.',
+    okText: 'Cerrar sesión',
+    okDanger: true
+  });
+  if(!ok) return;
+  ['user_admin','token','RefreshToken','user_avatar','user_verified','user_rol'].forEach(k => LS.remove(k));
   toast('👋 Sesión cerrada');
   setTimeout(()=>{ location.href='./index.html'; }, 800);
 }
@@ -4127,8 +4795,8 @@ document.addEventListener('keydown', e => {
   const btnAccept=document.getElementById('btn-accept-terms');
   const body=document.getElementById('terms-body');
   const TERMS_VER='2026.C';
-  const isFirst=!localStorage.getItem('upgames_onboarding_done');
-  if(localStorage.getItem('upgames_terms_version')!==TERMS_VER) {
+  const isFirst=!LS.get('upgrades_onboarding_done');
+  if(LS.get('upgames_terms_version')!==TERMS_VER) {
     modal.classList.add('show');
     document.body.style.overflow='hidden';
     btnAccept.disabled=true;
@@ -4139,7 +4807,7 @@ document.addEventListener('keydown', e => {
     },{passive:true});
     btnAccept.addEventListener('click',()=>{
       if(btnAccept.disabled) return;
-      localStorage.setItem('upgames_terms_version',TERMS_VER);
+      LS.set('upgames_terms_version',TERMS_VER);
       modal.classList.remove('show');
       document.body.style.overflow='';
       if(isFirst) setTimeout(startTutorial,600);
@@ -4399,7 +5067,7 @@ const TUT_STEPS = [
   {
     sel: '#pf-addImage',
     title: '🖼️ Campo: Imagen de Portada',
-    body: 'URL de la imagen que aparecerá en la tarjeta. El enlace debe terminar en <strong>.jpg .png .webp o .gif</strong>.<br><br>¿Cómo obtenerlo?<br>1. Busca en Google Imágenes<br>2. <strong>Móvil:</strong> Mantén presionada → "Abrir en otra pestaña"<br>3. <strong>PC:</strong> Clic derecho → "Abrir imagen en pestaña nueva"<br>4. Copia la URL y pégala aquí'
+    body: 'URL de la imagen o video de portada. Se aceptan imágenes (.jpg, .png, .webp, .gif), videos (.mp4, .webm) y URLs de servicios como Imgur, Google Drive, Discord CDN y otros.<br><br>¿Cómo obtener una imagen de Google?<br>1. Busca en Google Imágenes<br>2. <strong>Móvil:</strong> Mantén presionada → "Abrir en otra pestaña"<br>3. <strong>PC:</strong> Clic derecho → "Abrir imagen en pestaña nueva"<br>4. Copia la URL y pégala aquí'
   },
   {
     sel: '#pf-addCategory',
@@ -4541,7 +5209,7 @@ function finishTutorial() {
   if(nxOpen) nxToggle();
   closeDetail();
   switchTab('main');
-  localStorage.setItem('upgames_onboarding_done','1');
+  LS.set('upgames_onboarding_done','1');
 }
 
 function renderTut() {
