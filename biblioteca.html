@@ -2798,38 +2798,64 @@ let activeCategory = '';
 let itemsRendered = 0;
 let isLoadingMore = false;
 let reportItemId = null;
+let currentObserver = null;
 const ITEMS_BATCH = 12;
 
 // ── PRELOADER ─────────────────────────────────────────────
 (function initPreloader() {
   const fill = document.getElementById('pl-fill');
   const preloader = document.getElementById('preloader');
-  const steps = [
-    {p:30,d:200},{p:55,d:400},{p:75,d:650}
-  ];
-  let i=0;
-  (function next() {
-    if (i>=steps.length) return;
-    fill.style.width = steps[i].p+'%';
-    i++;
-    if(i<steps.length) setTimeout(next, steps[i].d-(steps[i-1]?.d||0));
-  })();
+  let closed = false;
+
+  // Animar barra con delays absolutos: 30% → 55% → 75%
+  setTimeout(() => { if(!closed) fill.style.width='30%'; }, 0);
+  setTimeout(() => { if(!closed) fill.style.width='55%'; }, 300);
+  setTimeout(() => { if(!closed) fill.style.width='75%'; }, 700);
+
   function afterPreloader() {
-    // Auto-iniciar tutorial si los términos ya fueron aceptados pero el tutorial no se ha visto
     if(localStorage.getItem('upgames_terms_version')==='2026.C' && !localStorage.getItem('upgames_onboarding_done')) {
       setTimeout(startTutorial, 600);
     }
   }
+
   window.closePreloader = function() {
+    if(closed) return;
+    closed = true;
     fill.style.width='100%';
-    setTimeout(()=>{ preloader.classList.add('hide'); afterPreloader(); }, 350);
+    setTimeout(()=>{
+      preloader.classList.add('hide');
+      // afterPreloader solo si startTutorial ya existe
+      if(typeof startTutorial === 'function') afterPreloader();
+    }, 350);
   };
-  // Fail-safe: si el API tarda mucho, igual cerrar el preloader y lanzar tutorial
-  setTimeout(()=>{ preloader.classList.add('hide'); afterPreloader(); }, 5000);
+
+  // Fail-safe: cerrar a los 6s si la API no respondió
+  setTimeout(()=>{ window.closePreloader && window.closePreloader(); }, 6000);
 })();
 
 // ── WAKE UP BACKEND ───────────────────────────────────────
 fetch(`${API_URL}/items`,{mode:'no-cors'}).catch(()=>{});
+
+// ── CACHE SYSTEM ──────────────────────────────────────────
+const CACHE_KEY_ITEMS   = 'upgames_items_cache';
+const CACHE_KEY_USERS   = 'upgames_users_cache';
+const CACHE_TTL         = 5 * 60 * 1000; // 5 minutos
+
+function cacheSet(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
+  } catch(_) {}
+}
+
+function cacheGet(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_TTL) return null;
+    return data;
+  } catch(_) { return null; }
+}
 
 // ── TOAST ─────────────────────────────────────────────────
 function toast(msg, dur=2500) {
@@ -2945,7 +2971,13 @@ function render(list, reset=true) {
   const skel = document.getElementById('skeleton');
   if(skel) skel.remove();
 
-  // Remove old scroll trigger
+  // Desconectar observer anterior para evitar observers fantasma
+  if(currentObserver) {
+    currentObserver.disconnect();
+    currentObserver = null;
+  }
+
+  // Remover trigger anterior
   const old = document.getElementById('scroll-trigger');
   if(old) old.remove();
 
@@ -2965,16 +2997,18 @@ function render(list, reset=true) {
   }
 
   const batch = list.slice(itemsRendered, itemsRendered+ITEMS_BATCH);
+  if(!batch.length) return;
+
   const frag = document.createDocumentFragment();
 
   batch.forEach((item, idx) => {
     const globalIdx = itemsRendered+idx;
-    // First item as featured
-    if(globalIdx===0 && reset) {
+    // Primer ítem como featured banner
+    if(globalIdx===0) {
       frag.appendChild(createTile(item, true));
     } else {
-      // Section headers every 12 items
-      if(globalIdx>0 && globalIdx%12===0 && reset===false) {
+      // Section header cada 12 ítems (en cualquier carga)
+      if(globalIdx>0 && globalIdx%12===0) {
         const sh = document.createElement('div');
         sh.className='section-header';
         sh.innerHTML=`<span class="section-title">Más Contenido</span><span class="section-count">${list.length} items</span>`;
@@ -2987,24 +3021,27 @@ function render(list, reset=true) {
   out.appendChild(frag);
   itemsRendered+=batch.length;
 
-  // Attach scroll trigger if more items
+  // Agregar trigger de scroll infinito si quedan más ítems
   if(itemsRendered<list.length) {
     const trigger = document.createElement('div');
     trigger.id='scroll-trigger';
     trigger.style.height='1px';
     out.appendChild(trigger);
-    const obs = new IntersectionObserver((entries)=>{
+    currentObserver = new IntersectionObserver((entries)=>{
       entries.forEach(e=>{
         if(e.isIntersecting && !isLoadingMore) loadMore(list);
       });
     },{rootMargin:'300px'});
-    obs.observe(trigger);
+    currentObserver.observe(trigger);
   }
 }
 
 function loadMore(list) {
   if(isLoadingMore || itemsRendered>=list.length) return;
   isLoadingMore=true;
+  // Remover trigger mientras carga para evitar disparos múltiples
+  const old = document.getElementById('scroll-trigger');
+  if(old) old.remove();
   const loader = document.createElement('div');
   loader.className='scroll-loader';
   loader.id='inf-loader';
@@ -3018,22 +3055,51 @@ function loadMore(list) {
 }
 
 // ── LOAD DATA ─────────────────────────────────────────────
+// Helper: fetch con timeout configurable
+function fetchTimeout(url, ms=10000, opts={}) {
+  const ctrl = new AbortController();
+  const tid = setTimeout(()=>ctrl.abort(), ms);
+  return fetch(url, {...opts, signal:ctrl.signal})
+    .finally(()=>clearTimeout(tid));
+}
+
 async function loadContent() {
+  // ── PASO 1: Mostrar caché instantáneamente si existe ──
+  const cachedUsers = cacheGet(CACHE_KEY_USERS);
+  if(cachedUsers) {
+    cachedUsers.forEach(u=>{ mapaUsuarios[u.usuario]=u.verificadoNivel||0; });
+  }
+
+  const cachedItems = cacheGet(CACHE_KEY_ITEMS);
+  if(cachedItems && cachedItems.length) {
+    todosLosItems = cachedItems;
+    filteredItems = cachedItems;
+    window.closePreloader && window.closePreloader();
+    render(filteredItems);
+  }
+
+  // ── PASO 2: Actualizar desde la red en segundo plano ──
   try {
-    // Get users map
     try {
-      const ru = await fetch(`${API_URL}/auth/users/public`);
+      const ru = await fetchTimeout(`${API_URL}/auth/users/public`, 8000);
       const users = await ru.json();
+      cacheSet(CACHE_KEY_USERS, users);
       users.forEach(u=>{ mapaUsuarios[u.usuario]=u.verificadoNivel||0; });
     } catch(_){}
 
-    const r = await fetch(`${API_URL}/items`);
+    const r = await fetchTimeout(`${API_URL}/items`, 10000);
     const data = await r.json();
+    cacheSet(CACHE_KEY_ITEMS, data);
+
+    // Solo re-renderizar si los datos cambiaron
+    const changed = JSON.stringify(data) !== JSON.stringify(todosLosItems);
     todosLosItems = data;
-    filteredItems = data;
+    filteredItems = activeCategory
+      ? data.filter(i=>i.category===activeCategory)
+      : data;
 
     window.closePreloader && window.closePreloader();
-    render(filteredItems);
+    if(changed || !cachedItems) render(filteredItems);
 
     // Deep link
     const sid = new URLSearchParams(window.location.search).get('id');
@@ -3047,17 +3113,27 @@ async function loadContent() {
   } catch(e) {
     console.error(e);
     window.closePreloader && window.closePreloader();
-    // Mostrar error en pantalla con botón de reintento
-    const out = document.getElementById('output');
-    const skel = document.getElementById('skeleton');
-    if(skel) skel.remove();
-    out.innerHTML=`<div class="empty-state">
-      <ion-icon name="cloud-offline-outline"></ion-icon>
-      <h3>Sin conexión</h3>
-      <p>No se pudo conectar con la nube.<br>Verifica tu internet e intenta de nuevo.</p>
-      <button class="empty-action" onclick="location.reload()">🔄 Reintentar</button>
-    </div>`;
+    // Si no hay caché tampoco, mostrar error
+    if(!cachedItems || !cachedItems.length) {
+      const out = document.getElementById('output');
+      const skel = document.getElementById('skeleton');
+      if(skel) skel.remove();
+      out.innerHTML=`<div class="empty-state">
+        <ion-icon name="cloud-offline-outline"></ion-icon>
+        <h3>Sin conexión</h3>
+        <p>No se pudo conectar con la nube.<br>Verifica tu internet e intenta de nuevo.</p>
+        <button class="empty-action" onclick="location.reload()">🔄 Reintentar</button>
+      </div>`;
+    }
   }
+}
+
+// ── CACHE INVALIDATION ───────────────────────────────────
+// Llamar esto cuando el usuario sube, edita o elimina contenido
+function invalidateCache() {
+  try {
+    localStorage.removeItem(CACHE_KEY_ITEMS);
+  } catch(_) {}
 }
 
 // ── SEARCH ────────────────────────────────────────────────
