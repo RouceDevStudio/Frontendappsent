@@ -2971,12 +2971,20 @@ function render(list, reset=true) {
   const skel = document.getElementById('skeleton');
   if(skel) skel.remove();
 
-  // Desconectar observer anterior
-  if(currentObserver) { currentObserver.disconnect(); currentObserver = null; }
-  const oldTrigger = document.getElementById('scroll-trigger');
-  if(oldTrigger) oldTrigger.remove();
+  // Desconectar observer anterior para evitar observers fantasma
+  if(currentObserver) {
+    currentObserver.disconnect();
+    currentObserver = null;
+  }
 
-  if(reset) { out.innerHTML=''; itemsRendered=0; }
+  // Remover trigger anterior
+  const old = document.getElementById('scroll-trigger');
+  if(old) old.remove();
+
+  if(reset) {
+    out.innerHTML='';
+    itemsRendered=0;
+  }
 
   if(!list.length && reset) {
     out.innerHTML=`<div class="empty-state">
@@ -2988,21 +2996,22 @@ function render(list, reset=true) {
     return;
   }
 
-  const batch = list.slice(itemsRendered, itemsRendered + ITEMS_BATCH);
+  const batch = list.slice(itemsRendered, itemsRendered+ITEMS_BATCH);
   if(!batch.length) return;
 
   const frag = document.createDocumentFragment();
+
   batch.forEach((item, idx) => {
-    const globalIdx = itemsRendered + idx;
-    if(globalIdx === 0) {
-      // Primer ítem: featured banner (ocupa las 2 columnas)
+    const globalIdx = itemsRendered+idx;
+    // Primer ítem como featured banner
+    if(globalIdx===0) {
       frag.appendChild(createTile(item, true));
     } else {
-      // Section header cada 12 ítems
-      if(globalIdx % 12 === 0) {
+      // Section header cada 12 ítems (en cualquier carga)
+      if(globalIdx>0 && globalIdx%12===0) {
         const sh = document.createElement('div');
-        sh.className = 'section-header';
-        sh.innerHTML = `<span class="section-title">Más Contenido</span><span class="section-count">${list.length} items</span>`;
+        sh.className='section-header';
+        sh.innerHTML=`<span class="section-title">Más Contenido</span><span class="section-count">${list.length} items</span>`;
         frag.appendChild(sh);
       }
       frag.appendChild(createTile(item, false));
@@ -3010,73 +3019,39 @@ function render(list, reset=true) {
   });
 
   out.appendChild(frag);
-  itemsRendered += batch.length;
+  itemsRendered+=batch.length;
 
-  // Si quedan más ítems, poner trigger Y fallback por scroll del window
-  if(itemsRendered < list.length) {
-    attachScrollTrigger(list);
+  // Agregar trigger de scroll infinito si quedan más ítems
+  if(itemsRendered<list.length) {
+    const trigger = document.createElement('div');
+    trigger.id='scroll-trigger';
+    trigger.style.height='1px';
+    out.appendChild(trigger);
+    currentObserver = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting && !isLoadingMore) loadMore(list);
+      });
+    },{rootMargin:'300px'});
+    currentObserver.observe(trigger);
   }
-}
-
-function attachScrollTrigger(list) {
-  // Quitar trigger previo si existe
-  const old = document.getElementById('scroll-trigger');
-  if(old) old.remove();
-
-  const out = document.getElementById('output');
-  const trigger = document.createElement('div');
-  trigger.id = 'scroll-trigger';
-  trigger.style.cssText = 'height:40px; width:100%;';
-  out.appendChild(trigger);
-
-  // IntersectionObserver — dispara cuando el trigger entra en pantalla
-  if(currentObserver) currentObserver.disconnect();
-  currentObserver = new IntersectionObserver((entries) => {
-    if(entries[0].isIntersecting && !isLoadingMore) {
-      loadMore(list);
-    }
-  }, { rootMargin: '400px', threshold: 0 });
-  currentObserver.observe(trigger);
-
-  // Fallback: escuchar scroll del window por si el observer no dispara
-  function onScroll() {
-    if(isLoadingMore) return;
-    const rect = trigger.getBoundingClientRect();
-    if(rect.top <= window.innerHeight + 500) {
-      window.removeEventListener('scroll', onScroll);
-      loadMore(list);
-    }
-  }
-  window.addEventListener('scroll', onScroll, { passive: true });
-  // Guardar referencia para poder limpiarla
-  trigger._scrollHandler = onScroll;
 }
 
 function loadMore(list) {
-  if(isLoadingMore || itemsRendered >= list.length) return;
-  isLoadingMore = true;
-
-  // Desconectar observer y quitar fallback scroll
-  if(currentObserver) { currentObserver.disconnect(); currentObserver = null; }
-  const trigger = document.getElementById('scroll-trigger');
-  if(trigger) {
-    if(trigger._scrollHandler) window.removeEventListener('scroll', trigger._scrollHandler);
-    trigger.remove();
-  }
-
-  // Mostrar loader
-  const out = document.getElementById('output');
+  if(isLoadingMore || itemsRendered>=list.length) return;
+  isLoadingMore=true;
+  // Remover trigger mientras carga para evitar disparos múltiples
+  const old = document.getElementById('scroll-trigger');
+  if(old) old.remove();
   const loader = document.createElement('div');
-  loader.className = 'scroll-loader';
-  loader.id = 'inf-loader';
-  loader.innerHTML = '<ion-icon name="sync-outline"></ion-icon> Cargando más...';
-  out.appendChild(loader);
-
-  setTimeout(() => {
+  loader.className='scroll-loader';
+  loader.id='inf-loader';
+  loader.innerHTML='<ion-icon name="sync-outline"></ion-icon> Cargando más...';
+  document.getElementById('output').appendChild(loader);
+  setTimeout(()=>{
     loader.remove();
     render(list, false);
-    isLoadingMore = false;
-  }, 300);
+    isLoadingMore=false;
+  }, 400);
 }
 
 // ── LOAD DATA ─────────────────────────────────────────────
