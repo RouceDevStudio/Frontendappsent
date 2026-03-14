@@ -444,6 +444,7 @@ input, textarea { font-family:inherit; }
   opacity:0;
   visibility:hidden;
   transition:opacity .3s var(--ease), visibility .3s;
+  touch-action:none;
 }
 #detail-overlay.show { opacity:1; visibility:visible; }
 
@@ -493,6 +494,7 @@ input, textarea { font-family:inherit; }
   flex:1;
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
   padding:0 16px 20px;
 }
 
@@ -817,6 +819,7 @@ input, textarea { font-family:inherit; }
   display:flex; align-items:flex-end; justify-content:center;
   opacity:0; visibility:hidden;
   transition:opacity .3s, visibility .3s;
+  touch-action:none;
 }
 .modal-overlay.show { opacity:1; visibility:visible; }
 .modal-sheet {
@@ -828,6 +831,7 @@ input, textarea { font-family:inherit; }
   transition:transform .4s var(--spring);
   max-height:80dvh;
   overflow-y:auto;
+  overscroll-behavior:contain;
 }
 .modal-overlay.show .modal-sheet { transform:translateY(0); }
 .modal-handle {
@@ -1200,7 +1204,7 @@ input, textarea { font-family:inherit; }
 .nx-ibtn svg { width:12px; height:12px; stroke:currentColor; }
 .nx-ibtn-x { font-size:.9rem; }
 .nx-div { height:1px; background:linear-gradient(90deg,transparent,var(--g),var(--cy),transparent); opacity:.3; flex-shrink:0; }
-.nx-body { flex:1; position:relative; overflow:hidden; }
+.nx-body { flex:1; position:relative; overflow:hidden; overscroll-behavior:contain; }
 .nx-body iframe { position:absolute; inset:0; width:100%; height:100%; border:none; opacity:0; transition:opacity .5s; }
 .nx-body iframe.loaded { opacity:1; }
 #nxBoot {
@@ -4148,8 +4152,13 @@ let nxOpen=false, nxExpanded=false;
 function nxToggle() {
   nxOpen=!nxOpen;
   document.getElementById('nxPanel').classList.toggle('open',nxOpen);
+  document.body.style.overflow = nxOpen ? 'hidden' : '';
 }
-function nxClose() { nxOpen=false; document.getElementById('nxPanel').classList.remove('open'); }
+function nxClose() {
+  nxOpen=false;
+  document.getElementById('nxPanel').classList.remove('open');
+  document.body.style.overflow = '';
+}
 function nxExpand() {
   nxExpanded=!nxExpanded;
   document.getElementById('nxPanel').classList.toggle('expanded',nxExpanded);
