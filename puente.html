@@ -71,8 +71,31 @@
 
     <script>
         // ⭐ CONFIGURACIÓN
-        const API_URL = "https://backendapp-037y.onrender.com";
+        const API_URL   = "https://backendapp-037y.onrender.com";
+        const NEXUS_URL = "https://backendbuscador.onrender.com";
         const DEBUG_MODE = false; // Cambiar a true para ver logs detallados
+
+        // ── Notifica la descarga a NEXUS (fire & forget, no bloquea al usuario) ──
+        function notificarDescargaANexus(itemId, itemData) {
+            try {
+                const usuario = localStorage.getItem('user_admin');
+                if (!usuario) return; // usuario no logueado, no hay perfil que actualizar
+                fetch(`${NEXUS_URL}/api/upgames/evento`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usuario,
+                        tipo: 'download',
+                        datos: {
+                            itemId,
+                            title:    itemData?.title    || '',
+                            category: itemData?.category || '',
+                            tags:     itemData?.tags     || []
+                        }
+                    })
+                }).catch(() => {}); // silenciar errores — nunca bloquear la descarga
+            } catch(_) {}
+        }
         
         // ⭐ ELEMENTOS DOM
         const timerEl = document.getElementById('timer');
@@ -225,7 +248,14 @@
                 if (data.success) {
                     // ⭐ CRÍTICO: Asignar el enlace primero
                     enlaceFinal = data.link;
-                    
+
+                    // Guardar metadata del item para notificar a NEXUS al hacer clic
+                    window._itemData = {
+                        title:    data.title    || data.juego?.title    || '',
+                        category: data.category || data.juego?.category || '',
+                        tags:     data.tags     || data.juego?.tags     || []
+                    };
+
                     // ⭐ VALIDAR que el enlace existe Y es una URL válida
                     if (!enlaceFinal || enlaceFinal.trim() === '') {
                         log(`⚠️ Backend no devolvió enlace. Data completa: ${JSON.stringify(data)}`, 'error');
@@ -293,7 +323,10 @@
             btnEl.onclick = () => {
                 if (enlaceFinal) {
                     log(`Abriendo enlace: ${enlaceFinal}`);
-                    
+
+                    // Notificar a NEXUS que hubo una descarga real (fire & forget)
+                    notificarDescargaANexus(juegoId, window._itemData || {});
+
                     // Abrir en nueva pestaña
                     const nuevaVentana = window.open(enlaceFinal, '_blank');
                     

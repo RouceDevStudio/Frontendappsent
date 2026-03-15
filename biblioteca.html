@@ -5280,6 +5280,271 @@ window.startBibliotecaTutorial = startTutorial;
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded', loadContent);
 } else { loadContent(); }
+
+// ══════════════════════════════════════════════════════════════════
+//  NEXUS ↔ UPGAMES — INTEGRACIÓN REAL
+//  NEXUS puede ver lo que el usuario hace y actuar sobre el feed
+// ══════════════════════════════════════════════════════════════════
+
+const NEXUS_URL = 'https://backendbuscador.onrender.com';
+
+// ── 1. TRACKER DE EVENTOS ────────────────────────────────
+// Envía eventos de comportamiento a NEXUS silenciosamente
+function nexusTrack(tipo, datos = {}) {
+  const usuario = LS.get('user_admin');
+  if (!usuario) return; // sin sesión no hay perfil que construir
+  try {
+    fetch(`${NEXUS_URL}/api/upgames/evento`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario, tipo, datos, ts: new Date().toISOString() })
+    }).catch(() => {}); // nunca bloquear la UI
+  } catch(_) {}
+}
+
+// ── 2. INTERCEPTAR BÚSQUEDAS ────────────────────────────
+// El input del buscador ya tiene listener con debounce — lo extendemos
+const _buscadorEl = document.getElementById('buscador');
+if (_buscadorEl) {
+  _buscadorEl.addEventListener('input', function() {
+    const q = this.value.trim();
+    if (q.length > 2) {
+      // Trackear búsqueda con debounce extra para no spamear
+      clearTimeout(window._nxSearchTimer);
+      window._nxSearchTimer = setTimeout(() => nexusTrack('search', { query: q }), 800);
+    }
+  });
+}
+
+// ── 3. INTERCEPTAR APERTURA DE DETALLE (view) ───────────
+// Wrappear openDetail para capturar qué item vio el usuario
+const _openDetailOriginal = window.openDetail || openDetail;
+let _viewStartTime = null;
+let _viewItemId    = null;
+
+window.openDetail = function(item) {
+  _openDetailOriginal(item);
+  _viewStartTime = Date.now();
+  _viewItemId    = item._id;
+  nexusTrack('view', {
+    itemId:   item._id,
+    title:    item.title,
+    category: item.category || '',
+    tags:     item.tags     || []
+  });
+};
+
+// Cuando cierra el detalle, registrar cuántos segundos estuvo
+const _closeDetailOriginal = window.closeDetail || closeDetail;
+window.closeDetail = function() {
+  _closeDetailOriginal();
+  if (_viewItemId && _viewStartTime) {
+    const segundos = Math.round((Date.now() - _viewStartTime) / 1000);
+    if (segundos > 2) {
+      // Actualizar el evento view con el tiempo real
+      nexusTrack('view', {
+        itemId:  _viewItemId,
+        segundos
+      });
+    }
+    _viewItemId = null; _viewStartTime = null;
+  }
+};
+
+// ── 4. INTERCEPTAR FAVORITOS ─────────────────────────────
+const _favOriginal = window.fav || fav;
+window.fav = async function(id) {
+  await _favOriginal(id);
+  // Detectar si se agregó o se quitó leyendo el estado local actualizado
+  const favIds = LS.getJSON('favoritos', []);
+  const item   = todosLosItems.find(i => i._id === id);
+  if (!item) return;
+  const tipo = favIds.includes(id) ? 'favorite' : 'unfavorite';
+  nexusTrack(tipo, {
+    itemId:   item._id,
+    title:    item.title,
+    category: item.category || '',
+    tags:     item.tags     || []
+  });
+};
+
+// ── 5. INTERCEPTAR CAMBIO DE CATEGORÍA ──────────────────
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    const cat = this.dataset.cat;
+    if (cat) nexusTrack('category', { category: cat });
+  });
+});
+
+// ── 6. CARGAR PERFIL Y REORDENAR FEED ───────────────────
+// Al cargar la página, consultar a NEXUS el perfil del usuario
+// y reordenar el feed manteniendo la jerarquía existente
+let _nexusPerfil = null;
+
+async function nexusCargarPerfil() {
+  const usuario = LS.get('user_admin');
+  if (!usuario) return;
+  try {
+    const r = await fetch(`${NEXUS_URL}/api/upgames/perfil/${encodeURIComponent(usuario)}`);
+    if (!r.ok) return;
+    const perfil = await r.json();
+    if (!perfil || !perfil.categorias?.length) return;
+    _nexusPerfil = perfil;
+    nexusAplicarPerfil(perfil);
+  } catch(_) {}
+}
+
+function nexusAplicarPerfil(perfil) {
+  if (!perfil?.categorias?.length || !todosLosItems.length) return;
+
+  // Mapa de peso por categoría (normalizado 0–10)
+  const maxPeso = perfil.categorias[0]?.peso || 1;
+  const pesoMap = {};
+  perfil.categorias.forEach(c => {
+    pesoMap[c.nombre] = (c.peso / maxPeso) * 10;
+  });
+
+  // Mapa de peso por tag
+  const maxTagCount = perfil.tags[0]?.count || 1;
+  const tagMap = {};
+  perfil.tags.forEach(t => {
+    tagMap[t.tag] = (t.count / maxTagCount) * 5;
+  });
+
+  // Set de items ya vistos/descargados recientemente (bajarlos en el feed)
+  const recientesSet = new Set((perfil.recientes || []).map(r => r.itemId));
+
+  // Reordenar: los top 3 por scoreRecomendacion se quedan fijos (jerarquía)
+  // El resto se ordena con puntuación NEXUS
+  const TOP_FIJOS = 3;
+  const fijos = todosLosItems.slice(0, TOP_FIJOS);
+  const resto  = todosLosItems.slice(TOP_FIJOS);
+
+  const restoOrdenado = resto.map(item => {
+    const puntoCat  = pesoMap[item.category]       || 0;
+    const puntoTags = (item.tags || []).reduce((acc, t) => acc + (tagMap[t] || 0), 0);
+    const penalizar = recientesSet.has(item._id) ? -3 : 0; // bajar ya vistos
+    return {
+      ...item,
+      _nexusScore: (item.scoreRecomendacion || 0) + puntoCat + puntoTags + penalizar
+    };
+  }).sort((a, b) => b._nexusScore - a._nexusScore);
+
+  // Actualizar el array global sin borrar la lista original
+  todosLosItems = [...fijos, ...restoOrdenado];
+
+  // Re-renderizar solo si estamos en el tab principal y sin búsqueda activa
+  const query = document.getElementById('buscador')?.value?.trim() || '';
+  if (currentTab === 'main' && !query) {
+    filteredItems = activeCategory
+      ? todosLosItems.filter(i => i.category === activeCategory)
+      : todosLosItems;
+    render(filteredItems);
+  }
+}
+
+// ── 7. RECEPTOR DE MENSAJES DEL IFRAME DE NEXUS ─────────
+// NEXUS puede mandar instrucciones desde el widget al feed
+window.addEventListener('message', function(event) {
+  // Solo aceptar mensajes del iframe de NEXUS
+  if (!event.origin.includes('backendbuscador.onrender.com')) return;
+  const msg = event.data;
+  if (!msg || typeof msg !== 'object') return;
+
+  switch (msg.type) {
+
+    // NEXUS recomienda reordenar por una categoría específica
+    case 'NX_FILTER_CATEGORY': {
+      const cat = msg.category;
+      if (!cat) return;
+      // Activar el chip de categoría visualmente
+      document.querySelectorAll('.chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.cat === cat);
+      });
+      activeCategory = cat;
+      document.getElementById('buscador').value = '';
+      filteredItems = todosLosItems.filter(i => i.category === cat);
+      render(filteredItems);
+      break;
+    }
+
+    // NEXUS pide limpiar filtros y mostrar todo
+    case 'NX_SHOW_ALL': {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      activeCategory = '';
+      document.getElementById('buscador').value = '';
+      filteredItems = todosLosItems;
+      render(filteredItems);
+      break;
+    }
+
+    // NEXUS manda lista de IDs recomendados para mostrar primero
+    case 'NX_HIGHLIGHT_ITEMS': {
+      const ids = msg.itemIds;
+      if (!Array.isArray(ids) || !ids.length) return;
+      const idSet = new Set(ids);
+      const destacados = todosLosItems.filter(i => idSet.has(i._id));
+      const resto       = todosLosItems.filter(i => !idSet.has(i._id));
+      filteredItems = [...destacados, ...resto];
+      render(filteredItems);
+      // Toast sutil para el usuario
+      toast('🤖 NEXUS personalizó tu feed');
+      break;
+    }
+
+    // NEXUS pide abrir el detalle de un juego específico
+    case 'NX_OPEN_ITEM': {
+      const item = todosLosItems.find(i => i._id === msg.itemId);
+      if (item) window.openDetail(item);
+      break;
+    }
+
+    // NEXUS confirma que recibió el perfil del usuario (debug)
+    case 'NX_READY':
+      console.log('[NEXUS] Widget listo y conectado al feed');
+      break;
+  }
+});
+
+// ── 8. ENVIAR CONTEXTO AL IFRAME CUANDO SE ABRE ─────────
+// Al abrir el widget, pasarle el usuario y el estado actual del feed
+const _nxToggleOriginal = window.nxToggle;
+window.nxToggle = function() {
+  _nxToggleOriginal();
+  if (nxOpen) {
+    const usuario  = LS.get('user_admin');
+    const frame    = document.getElementById('nxFrame');
+    if (!frame || !usuario) return;
+    // Esperar a que el iframe esté cargado antes de postear
+    const enviarContexto = () => {
+      try {
+        frame.contentWindow.postMessage({
+          type:     'UPGAMES_CONTEXT',
+          usuario,
+          feedActual: filteredItems.slice(0, 20).map(i => ({
+            _id:      i._id,
+            title:    i.title,
+            category: i.category || '',
+            tags:     i.tags     || [],
+            descargas: i.descargasEfectivas || 0
+          })),
+          categoriaActiva: activeCategory || null,
+          busquedaActiva:  document.getElementById('buscador')?.value?.trim() || null
+        }, 'https://backendbuscador.onrender.com');
+      } catch(_) {}
+    };
+    // Si ya está cargado, enviar inmediatamente; si no, al load
+    if (frame.contentDocument?.readyState === 'complete') {
+      enviarContexto();
+    } else {
+      frame.addEventListener('load', enviarContexto, { once: true });
+    }
+  }
+};
+
+// ── 9. INIT: cargar perfil al arrancar (500ms de delay para no
+//    interferir con la carga inicial del feed)
+setTimeout(nexusCargarPerfil, 2000);
 </script>
 </body>
 </html>
