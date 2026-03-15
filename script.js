@@ -1686,13 +1686,16 @@ let nxOpen=false, nxExpanded=false;
 function nxToggle() {
   nxOpen=!nxOpen;
   document.getElementById('nxPanel').classList.toggle('open',nxOpen);
+  // Bloquear scroll del body y marcar estado para el CSS
   document.body.style.overflow = nxOpen ? 'hidden' : '';
+  document.body.classList.toggle('nx-open', nxOpen);
   if(nxOpen) nxClockStart(); else nxClockStop();
 }
 function nxClose() {
   nxOpen=false;
   document.getElementById('nxPanel').classList.remove('open');
   document.body.style.overflow = '';
+  document.body.classList.remove('nx-open');
   nxClockStop();
 }
 function nxExpand() {
